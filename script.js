@@ -1,5 +1,58 @@
 // Dati delle destinazioni con itinerari dettagliati per il weekend 6-8 dicembre
 const destinations = {
+    seville: {
+        name: "Siviglia, Spagna",
+        image: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&h=600&fit=crop&crop=center",
+        description: "Il cuore dell'Andalusia tra flamenco e architettura moresca. Siviglia incanta con i suoi vicoli medievali, i palazzi arabi e l'atmosfera calda e accogliente.",
+        itinerary: [
+            {
+                day: "Venerdì 6 Dicembre",
+                title: "Arrivo e primo sguardo su Siviglia",
+                activities: [
+                    "Arrivo all'aeroporto di Siviglia",
+                    "Trasferimento in centro",
+                    "Check-in in hotel nel centro storico",
+                    "Pranzo con tapas tradizionali",
+                    "Visita alla Cattedrale di Siviglia",
+                    "Passeggiata nel Barrio de Santa Cruz",
+                    "Cena con spettacolo di flamenco"
+                ]
+            },
+            {
+                day: "Sabato 7 Dicembre",
+                title: "I tesori di Siviglia",
+                activities: [
+                    "Colazione andalusa",
+                    "Visita all'Alcázar di Siviglia",
+                    "Passeggiata a Plaza de España",
+                    "Pranzo tradizionale",
+                    "Visita alla Torre del Oro",
+                    "Shopping nel centro storico",
+                    "Cena in ristorante tipico"
+                ]
+            },
+            {
+                day: "Domenica 8 Dicembre",
+                title: "Ultimo giorno e partenza",
+                activities: [
+                    "Colazione in hotel",
+                    "Visita al Metropol Parasol",
+                    "Passeggiata finale per la città",
+                    "Pranzo di arrivederci",
+                    "Shopping per souvenir",
+                    "Trasferimento all'aeroporto",
+                    "Partenza per Roma"
+                ]
+            }
+        ],
+        highlights: [
+            "Architettura moresca e gotica",
+            "Flamenco e cultura andalusa",
+            "Tapas e cucina tradizionale",
+            "Vicoli medievali e atmosfera",
+            "Clima mite e accoglienza"
+        ]
+    },
     london: {
         name: "Londra, Regno Unito",
         image: "https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=800&h=600&fit=crop&crop=center",
@@ -157,59 +210,6 @@ const destinations = {
             "Lusso e orologi svizzeri",
             "Cucina raffinata e cioccolato",
             "Natura incontaminata e relax"
-        ]
-    },
-    seville: {
-        name: "Siviglia, Spagna",
-        image: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&h=600&fit=crop&crop=center",
-        description: "Il cuore dell'Andalusia tra flamenco e architettura moresca. Siviglia incanta con i suoi vicoli medievali, i palazzi arabi e l'atmosfera calda e accogliente.",
-        itinerary: [
-            {
-                day: "Venerdì 6 Dicembre",
-                title: "Arrivo e primo sguardo su Siviglia",
-                activities: [
-                    "Arrivo all'aeroporto di Siviglia",
-                    "Trasferimento in centro",
-                    "Check-in in hotel nel centro storico",
-                    "Pranzo con tapas tradizionali",
-                    "Visita alla Cattedrale di Siviglia",
-                    "Passeggiata nel Barrio de Santa Cruz",
-                    "Cena con spettacolo di flamenco"
-                ]
-            },
-            {
-                day: "Sabato 7 Dicembre",
-                title: "I tesori di Siviglia",
-                activities: [
-                    "Colazione andalusa",
-                    "Visita all'Alcázar di Siviglia",
-                    "Passeggiata a Plaza de España",
-                    "Pranzo tradizionale",
-                    "Visita alla Torre del Oro",
-                    "Shopping nel centro storico",
-                    "Cena in ristorante tipico"
-                ]
-            },
-            {
-                day: "Domenica 8 Dicembre",
-                title: "Ultimo giorno e partenza",
-                activities: [
-                    "Colazione in hotel",
-                    "Visita al Metropol Parasol",
-                    "Passeggiata finale per la città",
-                    "Pranzo di arrivederci",
-                    "Shopping per souvenir",
-                    "Trasferimento all'aeroporto",
-                    "Partenza per Roma"
-                ]
-            }
-        ],
-        highlights: [
-            "Architettura moresca e gotica",
-            "Flamenco e cultura andalusa",
-            "Tapas e cucina tradizionale",
-            "Vicoli medievali e atmosfera",
-            "Clima mite e accoglienza"
         ]
     }
 };

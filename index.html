@@ -53,6 +53,47 @@
                 
                 <div class="destinations-grid">
                     <!-- Destination 1 -->
+                    <div class="destination-card" onclick="openDestination('seville')">
+                        <div class="card-image">
+                            <img src="https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&h=600&fit=crop&crop=center" alt="Siviglia" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjZjU1NzZjIi8+Cjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TaXZpZ2xpYTwvdGV4dD4KPC9zdmc+'">
+                            <div class="price-badge">
+                                <div class="price-item">
+                                    <i class="fas fa-plane"></i>
+                                    <span>€75-100</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <h3>Siviglia, Spagna</h3>
+                            <p>Il cuore dell'Andalusia tra flamenco e architettura moresca</p>
+                            <div class="card-features">
+                                <span class="feature"><i class="fas fa-music"></i> Flamenco</span>
+                                <span class="feature"><i class="fas fa-mosque"></i> Architettura</span>
+                                <span class="feature"><i class="fas fa-sun"></i> Clima</span>
+                            </div>
+                            <div class="price-details">
+                                <div class="price-row">
+                                    <span class="price-label"><i class="fas fa-plane"></i> Volo:</span>
+                                    <span class="price-value">€75-100</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="price-label"><i class="fas fa-bed"></i> Hotel:</span>
+                                    <span class="price-value">Da definire</span>
+                                </div>
+                                <div class="price-actions">
+                                    <a href="https://www.skyscanner.it/transport/flights/rome/svq/251206/251208/config/11493-2512062125--31915-0-16628-2512070010%7C16628-2512082050--30596-0-11493-2512082335?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=1&preferdirects=true&outboundaltsenabled=false&inboundaltsenabled=false&sortby=cheapest" target="_blank" class="flight-details-btn" onclick="event.stopPropagation()">
+                                        <i class="fas fa-external-link-alt"></i>
+                                        Vedi dettagli volo
+                                    </a>
+                                </div>
+                            </div>
+                            <button class="card-button">
+                                Scopri il viaggio <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Destination 2 -->
                     <div class="destination-card" onclick="openDestination('london')">
                         <div class="card-image">
                             <img src="https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=800&h=600&fit=crop&crop=center" alt="Londra" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjNjY3ZWVhIi8+Cjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5Mb25kcmE8L3RleHQ+Cjwvc3ZnPg=='">
@@ -93,7 +134,7 @@
                         </div>
                     </div>
 
-                    <!-- Destination 2 -->
+                    <!-- Destination 3 -->
                     <div class="destination-card" onclick="openDestination('birmingham')">
                         <div class="card-image">
                             <img src="https://images.unsplash.com/photo-1582407947304-fd86f028f716?w=800&h=600&fit=crop&crop=center" alt="Birmingham" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjNzY0YmEyIi8+Cjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjAiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CaXJtaW5naGFtPC90ZXh0Pgo8L3N2Zz4='">
@@ -134,7 +175,7 @@
                         </div>
                     </div>
 
-                    <!-- Destination 3 -->
+                    <!-- Destination 4 -->
                     <div class="destination-card" onclick="openDestination('geneva')">
                         <div class="card-image">
                             <img src="https://images.unsplash.com/photo-1528722828814-77b9b83aafb2?w=800&h=600&fit=crop&crop=center" alt="Ginevra" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjZjA5M2ZiIi8+Cjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5HaW5ldnJhPC90ZXh0Pgo8L3N2Zz4='">
@@ -164,47 +205,6 @@
                                 </div>
                                 <div class="price-actions">
                                     <a href="https://www.skyscanner.it/trasporti/voli/rome/gene/251206/251208/config/11493-2512061610--32356-0-12015-2512061745%7C12015-2512080650--32356-0-11493-2512080820?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=1&preferdirects=true&outboundaltsenabled=false&inboundaltsenabled=false" target="_blank" class="flight-details-btn" onclick="event.stopPropagation()">
-                                        <i class="fas fa-external-link-alt"></i>
-                                        Vedi dettagli volo
-                                    </a>
-                                </div>
-                            </div>
-                            <button class="card-button">
-                                Scopri il viaggio <i class="fas fa-arrow-right"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Destination 4 -->
-                    <div class="destination-card" onclick="openDestination('seville')">
-                        <div class="card-image">
-                            <img src="https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800&h=600&fit=crop&crop=center" alt="Siviglia" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgdmlld0JveD0iMCAwIDgwMCA2MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI4MDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjZjU1NzZjIi8+Cjx0ZXh0IHg9IjQwMCIgeT0iMzAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiIGZpbGw9IndoaXRlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5TaXZpZ2xpYTwvdGV4dD4KPC9zdmc+'">
-                            <div class="price-badge">
-                                <div class="price-item">
-                                    <i class="fas fa-plane"></i>
-                                    <span>€75-100</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-content">
-                            <h3>Siviglia, Spagna</h3>
-                            <p>Il cuore dell'Andalusia tra flamenco e architettura moresca</p>
-                            <div class="card-features">
-                                <span class="feature"><i class="fas fa-music"></i> Flamenco</span>
-                                <span class="feature"><i class="fas fa-mosque"></i> Architettura</span>
-                                <span class="feature"><i class="fas fa-sun"></i> Clima</span>
-                            </div>
-                            <div class="price-details">
-                                <div class="price-row">
-                                    <span class="price-label"><i class="fas fa-plane"></i> Volo:</span>
-                                    <span class="price-value">€75-100</span>
-                                </div>
-                                <div class="price-row">
-                                    <span class="price-label"><i class="fas fa-bed"></i> Hotel:</span>
-                                    <span class="price-value">Da definire</span>
-                                </div>
-                                <div class="price-actions">
-                                    <a href="https://www.skyscanner.it/transport/flights/rome/svq/251206/251208/config/11493-2512062125--31915-0-16628-2512070010%7C16628-2512082050--30596-0-11493-2512082335?adultsv2=1&cabinclass=economy&childrenv2=&ref=home&rtn=1&preferdirects=true&outboundaltsenabled=false&inboundaltsenabled=false&sortby=cheapest" target="_blank" class="flight-details-btn" onclick="event.stopPropagation()">
                                         <i class="fas fa-external-link-alt"></i>
                                         Vedi dettagli volo
                                     </a>
