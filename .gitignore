@@ -1,0 +1,21 @@
+# File di sistema
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+
+# Dipendenze (se aggiunte in futuro)
+node_modules/
+package-lock.json
+
+# File temporanei
+*.tmp
+*.temp
