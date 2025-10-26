@@ -46,6 +46,71 @@
 
     <!-- Contenuto principale (mostrato solo dopo login) -->
     <div id="mainContent" class="main-content" style="display: none;">
+    <!-- Fixed Header (sempre visibile in alto) -->
+    <div id="fixedHeader" class="fixed-header">
+        <div class="fixed-header-content">
+            <div class="fixed-header-user">
+                <i class="fas fa-user-circle"></i>
+                <span id="fixedHeaderUserName"></span>
+                <span id="fixedHeaderBadge" class="fixed-header-badge" style="display: none;">
+                    <i class="fas fa-shield-alt"></i> Admin
+                </span>
+            </div>
+            <button class="fixed-header-logout" onclick="logout()" title="Logout">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Scroll Header (appare quando si scrolla) -->
+    <div id="scrollHeader" class="scroll-header">
+        <div class="scroll-header-content">
+            <div class="scroll-header-user">
+                <i class="fas fa-user-circle"></i>
+                <span id="scrollHeaderUserName"></span>
+            </div>
+            <div class="scroll-header-actions">
+                <button class="scroll-logout-btn" onclick="logout()" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Esci</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Admin Dashboard (solo per admin) -->
+    <div id="adminDashboard" class="admin-dashboard" style="display: none;">
+        <div class="admin-dashboard-content">
+            <div class="admin-dashboard-header">
+                <div class="admin-dashboard-title">
+                    <i class="fas fa-chart-bar"></i>
+                    <h2>Dashboard Votazioni</h2>
+                </div>
+                <div style="display: flex; gap: 1rem;">
+                    <button class="admin-refresh-btn" onclick="openAdminVotesModal()" title="Aggiorna votazioni">
+                        <i class="fas fa-sync-alt"></i>
+                        Vedi tutte le votazioni
+                    </button>
+                    <button class="admin-reset-btn" onclick="resetFirstLogins()" title="Ripulisci primi accessi di test">
+                        <i class="fas fa-trash-alt"></i>
+                        Reset primi accessi
+                    </button>
+                </div>
+            </div>
+            <div id="adminVotesPreview" class="admin-votes-preview">
+                <p>Caricamento votazioni...</p>
+            </div>
+            
+            <!-- Sezione primi login -->
+            <div id="firstLoginsSection" class="first-logins-section">
+                <h3><i class="fas fa-user-check"></i> Primi accessi oggi</h3>
+                <div id="firstLoginsList" class="first-logins-list">
+                    <p>Caricamento...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <header class="header">
         <nav class="navbar">
             <div class="nav-brand">
@@ -57,6 +122,14 @@
                 <a href="#destinations">Destinazioni</a>
                 <a href="#about">Chi Siamo</a>
                 <a href="#contact">Contatti</a>
+                <div id="userInfoNav" class="user-info-nav" style="display: none;">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="userNameNav"></span>
+                </div>
+                <button id="adminVotesBtn" class="admin-btn" onclick="openAdminVotesModal()" title="Vedi tutte le votazioni" style="display: none;">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Vedi votazioni</span>
+                </button>
                 <button class="logout-btn" onclick="logout()" title="Logout">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Esci</span>
@@ -325,6 +398,42 @@
                     <i class="fas fa-paper-plane"></i>
                     Invia votazione
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Votes Modal -->
+    <div id="adminVotesModal" class="modal">
+        <div class="modal-content admin-votes-modal">
+            <span class="close" onclick="closeAdminVotesModal()">&times;</span>
+            <div class="admin-votes-content">
+                <h2><i class="fas fa-chart-bar"></i> Tutte le votazioni</h2>
+                <div id="allVotesContainer">
+                    <p>Caricamento votazioni...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="modal">
+        <div class="modal-content logout-modal">
+            <div class="logout-modal-content">
+                <div class="logout-modal-icon">
+                    <i class="fas fa-sign-out-alt"></i>
+                </div>
+                <h3>Conferma logout</h3>
+                <p>Sei sicuro di voler uscire?</p>
+                <div class="logout-modal-buttons">
+                    <button class="logout-confirm-btn" onclick="confirmLogout()">
+                        <i class="fas fa-check"></i>
+                        Sì, esci
+                    </button>
+                    <button class="logout-cancel-btn" onclick="cancelLogout()">
+                        <i class="fas fa-times"></i>
+                        Annulla
+                    </button>
+                </div>
             </div>
         </div>
     </div>

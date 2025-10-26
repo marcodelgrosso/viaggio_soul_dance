@@ -7,6 +7,7 @@ const AUTH_CONFIG = {
     
     // Lista degli utenti ammessi al sistema di votazione
     allowedUsers: [
+        'marco.delgrosso', // Admin
         'roberta.denoto',
         'cinzia.carriero',
         'cecilia.tinti',

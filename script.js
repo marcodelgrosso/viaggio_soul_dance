@@ -219,6 +219,163 @@ let currentDestination = null;
 let currentVote = null;
 let authenticatedUser = null; // Utente autenticato
 let userVotes = {}; // Cache dei voti dell'utente
+const ADMIN_USER = 'marco.delgrosso'; // Utente admin autorizzato
+
+// Funzione per tracciare i primi login
+function trackFirstLogin(userCode) {
+    try {
+        const today = new Date().toDateString();
+        const firstLogins = JSON.parse(localStorage.getItem('firstLogins') || '[]');
+        
+        // Controlla se questo utente ha già fatto il primo login oggi
+        const todayLogins = firstLogins.filter(login => 
+            login.date === today && login.user === userCode
+        );
+        
+        // Controlla se questo utente ha già fatto login prima nella sua vita (controlla localStorage persistente)
+        const userFirstLoginKey = `hasLoggedIn_${userCode}`;
+        const userHasLoggedIn = localStorage.getItem(userFirstLoginKey);
+        
+        if (!userHasLoggedIn) {
+            // È il primo login EVER di questo utente
+            // Marca come loggato
+            localStorage.setItem(userFirstLoginKey, 'true');
+            
+            // Aggiungi alla lista dei primi login di oggi (solo se non esiste già)
+            const alreadyExists = firstLogins.some(login => 
+                login.date === today && login.user === userCode
+            );
+            
+            if (!alreadyExists) {
+                firstLogins.push({
+                    user: userCode,
+                    date: today,
+                    timestamp: new Date().toISOString(),
+                    time: new Date().toLocaleTimeString('it-IT')
+                });
+                
+                localStorage.setItem('firstLogins', JSON.stringify(firstLogins));
+                console.log('✅ Primo login tracciato per:', userCode);
+            }
+        }
+    } catch (error) {
+        console.error('Errore nel tracciamento del primo login:', error);
+    }
+}
+
+// Funzione per pulire i vecchi primi login
+function cleanupOldFirstLogins() {
+    try {
+        const today = new Date().toDateString();
+        const firstLogins = JSON.parse(localStorage.getItem('firstLogins') || '[]');
+        
+        // Mantieni solo i login di oggi
+        const todayLogins = firstLogins.filter(login => login.date === today);
+        
+        // Salva solo i login di oggi
+        localStorage.setItem('firstLogins', JSON.stringify(todayLogins));
+    } catch (error) {
+        console.error('Errore nella pulizia dei primi login:', error);
+    }
+}
+
+// Funzione per ottenere i primi login di oggi
+function getTodayFirstLogins() {
+    try {
+        // Pulisci i vecchi login
+        cleanupOldFirstLogins();
+        
+        const today = new Date().toDateString();
+        const firstLogins = JSON.parse(localStorage.getItem('firstLogins') || '[]');
+        
+        // Filtra solo i login di oggi
+        const todayLogins = firstLogins.filter(login => login.date === today);
+        
+        // Ordina per timestamp (più recente per primo)
+        todayLogins.sort((a, b) => {
+            if (a.timestamp && b.timestamp) {
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            }
+            return 0;
+        });
+        
+        return todayLogins;
+    } catch (error) {
+        console.error('Errore nel recupero dei primi login:', error);
+        return [];
+    }
+}
+
+// Funzione per controllare se l'utente è admin
+function checkAdminAccess() {
+    const adminBtn = document.getElementById('adminVotesBtn');
+    if (adminBtn) {
+        if (authenticatedUser === ADMIN_USER) {
+            adminBtn.style.display = 'inline-flex';
+        } else {
+            adminBtn.style.display = 'none';
+        }
+    }
+}
+
+// Funzione per aggiornare il nome utente nello scroll header
+function updateScrollHeader() {
+    const userNameEl = document.getElementById('scrollHeaderUserName');
+    if (userNameEl && authenticatedUser) {
+        userNameEl.textContent = authenticatedUser;
+    }
+}
+
+// Funzione per gestire l'header fisso
+function updateFixedHeader() {
+    const fixedHeader = document.getElementById('fixedHeader');
+    const fixedUserNameEl = document.getElementById('fixedHeaderUserName');
+    const fixedHeaderBadge = document.getElementById('fixedHeaderBadge');
+    
+    if (authenticatedUser) {
+        if (fixedHeader) {
+            fixedHeader.classList.add('visible');
+        }
+        if (fixedUserNameEl) {
+            fixedUserNameEl.textContent = authenticatedUser;
+        }
+        
+        // Mostra badge admin solo per marco.delgrosso
+        if (fixedHeaderBadge) {
+            if (authenticatedUser === ADMIN_USER) {
+                fixedHeaderBadge.style.display = 'inline-flex';
+            } else {
+                fixedHeaderBadge.style.display = 'none';
+            }
+        }
+    } else {
+        if (fixedHeader) {
+            fixedHeader.classList.remove('visible');
+        }
+        if (fixedHeaderBadge) {
+            fixedHeaderBadge.style.display = 'none';
+        }
+    }
+}
+
+// Funzione per aggiornare il nome utente nella navbar
+function updateNavbarUserInfo() {
+    const userInfoNav = document.getElementById('userInfoNav');
+    const userNameNav = document.getElementById('userNameNav');
+    
+    if (authenticatedUser) {
+        if (userInfoNav) {
+            userInfoNav.style.display = 'flex';
+        }
+        if (userNameNav) {
+            userNameNav.textContent = authenticatedUser;
+        }
+    } else {
+        if (userInfoNav) {
+            userInfoNav.style.display = 'none';
+        }
+    }
+}
 
 // Funzione per caricare i voti dell'utente
 async function loadUserVotes() {
@@ -311,6 +468,9 @@ async function handleLogin() {
         // Autentica l'utente
         const authenticatedUserCode = authenticateUser(userCode, password);
         
+        // Controlla e traccia se è il primo login
+        trackFirstLogin(authenticatedUserCode);
+        
         // Salva lo stato di autenticazione
         sessionStorage.setItem('authenticatedUser', authenticatedUserCode);
         sessionStorage.setItem('loginTime', Date.now());
@@ -330,6 +490,19 @@ async function handleLogin() {
         
         // Carica i voti dell'utente dopo il login
         await loadUserVotes();
+        
+        // Controlla accesso admin
+        checkAdminAccess();
+        
+        // Aggiorna scroll header, navbar e fixed header
+        updateScrollHeader();
+        updateNavbarUserInfo();
+        updateFixedHeader();
+        
+        // Se è l'admin, mostra la vista admin dedicata
+        if (authenticatedUser === ADMIN_USER) {
+            showAdminView();
+        }
     } catch (error) {
         console.error('❌ Errore login:', error.message);
         errorElement.textContent = error.message;
@@ -340,39 +513,259 @@ async function handleLogin() {
 function checkAuthentication() {
     const savedUser = sessionStorage.getItem('authenticatedUser');
     const loginTime = sessionStorage.getItem('loginTime');
+    const loginScreen = document.getElementById('loginScreen');
+    const mainContent = document.getElementById('mainContent');
     
     // Se c'è un utente salvato e la sessione è valida (24 ore)
     if (savedUser && loginTime && (Date.now() - loginTime) < 86400000) {
         authenticatedUser = savedUser;
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('mainContent').style.display = 'block';
+        loginScreen.style.display = 'none';
+        mainContent.style.display = 'block';
         console.log('✅ Utente già autenticato:', authenticatedUser);
         
         // Carica i voti dell'utente
         loadUserVotes();
+        
+        // Controlla accesso admin
+        checkAdminAccess();
+        
+        // Aggiorna scroll header, navbar e fixed header
+        updateScrollHeader();
+        updateNavbarUserInfo();
+        updateFixedHeader();
+        
+        // Se è l'admin, mostra la vista admin dedicata
+        if (authenticatedUser === ADMIN_USER) {
+            setTimeout(() => {
+                showAdminView();
+            }, 500);
+        }
     } else {
-        // Reset se la sessione è scaduta
+        // RESET COMPLETO: mostra login e nascondi contenuto principale
         if (savedUser) {
             sessionStorage.clear();
+            authenticatedUser = null;
         }
+        
+        // Assicurati che il login sia visibile
+        loginScreen.style.display = 'flex';
+        loginScreen.style.opacity = '1';
+        mainContent.style.display = 'none';
+        
+        // Nascondi info utente dalla navbar e fixed header
+        updateNavbarUserInfo();
+        updateFixedHeader();
+        
+        console.log('❌ Utente non autenticato - mostro schermata login');
     }
 }
 
-// Funzione per il logout
+// Funzione per caricare le votazioni nella dashboard admin
+async function loadAdminVotesPreview() {
+    const previewContainer = document.getElementById('adminVotesPreview');
+    if (!previewContainer) return;
+    
+    previewContainer.innerHTML = '<p>Caricamento votazioni...</p>';
+    
+    try {
+        const response = await fetch(
+            `${window.SUPABASE_CONFIG.url}/rest/v1/destination_votes?select=*&order=created_at.desc`,
+            {
+                headers: {
+                    'apikey': window.SUPABASE_CONFIG.anonKey,
+                    'Authorization': `Bearer ${window.SUPABASE_CONFIG.anonKey}`
+                }
+            }
+        );
+        
+        if (response.ok) {
+            const votes = await response.json();
+            
+            if (votes.length === 0) {
+                previewContainer.innerHTML = `
+                    <div class="no-votes-message">
+                        <i class="fas fa-inbox" style="font-size: 3rem; color: var(--text-light); margin-bottom: 1rem;"></i>
+                        <p style="font-size: 1.2rem; color: var(--text-light);">Nessuna votazione ancora registrata.</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 0.5rem;">Le votazioni appariranno qui quando gli utenti inizieranno a votare.</p>
+                    </div>
+                `;
+            } else {
+                // Mostra un'anteprima delle votazioni
+                const destinationNames = {
+                    'seville': 'Siviglia, Spagna',
+                    'london': 'Londra, Regno Unito',
+                    'birmingham': 'Birmingham, Regno Unito',
+                    'geneva': 'Ginevra, Svizzera'
+                };
+                
+                const stats = {};
+                votes.forEach(vote => {
+                    if (!stats[vote.destination_id]) {
+                        stats[vote.destination_id] = { total: 0, yes: 0, no: 0 };
+                    }
+                    stats[vote.destination_id].total++;
+                    if (vote.vote_type === 'yes') stats[vote.destination_id].yes++;
+                    else stats[vote.destination_id].no++;
+                });
+                
+                let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; width: 100%;">';
+                Object.keys(stats).forEach(destId => {
+                    const stat = stats[destId];
+                    const percentage = stat.total > 0 ? Math.round((stat.yes / stat.total) * 100) : 0;
+                    html += `
+                        <div style="background: var(--white); padding: 1.5rem; border-radius: 12px; box-shadow: var(--shadow-light);">
+                            <div style="font-weight: 600; color: var(--primary-color); margin-bottom: 1rem; font-size: 1.1rem;">${destinationNames[destId] || destId}</div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <i class="fas fa-thumbs-up" style="color: #48bb78;"></i>
+                                Positivi: <strong>${stat.yes}</strong>
+                            </div>
+                            <div style="margin-bottom: 0.5rem;">
+                                <i class="fas fa-thumbs-down" style="color: #f56565;"></i>
+                                Negativi: <strong>${stat.no}</strong>
+                            </div>
+                            <div style="margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid var(--light-bg);">
+                                Totale: <strong>${stat.total}</strong> (${percentage}% positivi)
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                previewContainer.innerHTML = html;
+            }
+        }
+    } catch (error) {
+        console.error('Errore nel caricamento delle votazioni:', error);
+        previewContainer.innerHTML = '<p style="color: #f56565;">Errore nel caricamento delle votazioni.</p>';
+    }
+    
+    // Carica anche i primi login
+    loadFirstLogins();
+}
+
+// Funzione per resettare i primi login (pulisce localStorage)
+function resetFirstLogins() {
+    if (confirm('Vuoi resettare tutti i primi accessi registrati?')) {
+        // Pulisci la lista dei primi login
+        localStorage.setItem('firstLogins', '[]');
+        
+        // Pulisci anche i flag che indicano se un utente ha già fatto login
+        // Rimuove tutte le chiavi che iniziano con "hasLoggedIn_"
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('hasLoggedIn_')) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => localStorage.removeItem(key));
+        
+        // Ricarica i primi login nella dashboard
+        loadFirstLogins();
+        
+        console.log('✅ Primi accessi resettati');
+        alert('Primi accessi resettati con successo!');
+    }
+}
+
+// Funzione per caricare e mostrare i primi login nella dashboard
+function loadFirstLogins() {
+    const firstLoginsList = document.getElementById('firstLoginsList');
+    if (!firstLoginsList) return;
+    
+    const logins = getTodayFirstLogins();
+    
+    if (logins.length === 0) {
+        firstLoginsList.innerHTML = `
+            <div class="no-first-logins">
+                <i class="fas fa-user-slash"></i>
+                <p>Nessun primo accesso registrato oggi.</p>
+            </div>
+        `;
+    } else {
+        let html = '';
+        logins.forEach(login => {
+            html += `
+                <div class="first-login-item">
+                    <i class="fas fa-user-plus"></i>
+                    <div>
+                        <span>${login.user}</span>
+                        <div class="first-login-item-time">${login.time}</div>
+                    </div>
+                </div>
+            `;
+        });
+        firstLoginsList.innerHTML = html;
+    }
+}
+
+// Funzione per mostrare la vista admin dedicata
+function showAdminView() {
+    // Mostra la dashboard admin
+    const adminDashboard = document.getElementById('adminDashboard');
+    if (adminDashboard) {
+        adminDashboard.style.display = 'block';
+    }
+    
+    // Nascondi la hero section
+    const heroSection = document.querySelector('.hero');
+    if (heroSection) {
+        heroSection.style.display = 'none';
+    }
+    
+    // Nascondi il footer temporaneamente
+    const footer = document.querySelector('.footer');
+    if (footer) {
+        footer.style.display = 'none';
+    }
+    
+    // Carica e mostra le votazioni nella dashboard
+    loadAdminVotesPreview();
+}
+
+// Funzione per il logout - apre la modale di conferma
 function logout() {
-    if (confirm('Vuoi uscire?')) {
-        sessionStorage.clear();
-        authenticatedUser = null;
-        document.getElementById('mainContent').style.display = 'none';
-        document.getElementById('loginScreen').style.display = 'flex';
-        document.getElementById('loginScreen').style.opacity = '1';
-        
-        // Reset form login
-        document.getElementById('loginUserCode').value = '';
-        document.getElementById('loginPassword').value = '';
-        document.getElementById('loginError').textContent = '';
-        
-        console.log('✅ Logout effettuato');
+    const logoutModal = document.getElementById('logoutModal');
+    if (logoutModal) {
+        logoutModal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+// Funzione per confermare il logout
+function confirmLogout() {
+    // Chiudi la modale
+    const logoutModal = document.getElementById('logoutModal');
+    if (logoutModal) {
+        logoutModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+    
+    // Esegui il logout
+    sessionStorage.clear();
+    authenticatedUser = null;
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('loginScreen').style.opacity = '1';
+    
+    // Reset form login
+    document.getElementById('loginUserCode').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').textContent = '';
+    
+    // Nascondi info utente dalla navbar e fixed header
+    updateNavbarUserInfo();
+    updateFixedHeader();
+    
+    console.log('✅ Logout effettuato');
+}
+
+// Funzione per annullare il logout
+function cancelLogout() {
+    const logoutModal = document.getElementById('logoutModal');
+    if (logoutModal) {
+        logoutModal.style.display = 'none';
+        document.body.style.overflow = 'auto';
     }
 }
 
@@ -384,6 +777,13 @@ function scrollToDestinations() {
 }
 
 async function openDestination(destinationId) {
+    // Controlla che l'utente sia autenticato
+    if (!authenticatedUser) {
+        console.error('Utente non autenticato');
+        enforceAuthentication();
+        return;
+    }
+    
     currentDestination = destinationId;
     const destination = destinations[destinationId];
     
@@ -485,6 +885,14 @@ function closeModal() {
 }
 
 function openVotingModal(destinationId = null) {
+    // Controlla che l'utente sia autenticato
+    if (!authenticatedUser) {
+        console.error('Utente non autenticato');
+        // Forza il redirect al login
+        enforceAuthentication();
+        return;
+    }
+    
     // Se viene passato un destinationId, usa quello, altrimenti usa currentDestination
     if (destinationId) {
         currentDestination = destinationId;
@@ -528,6 +936,136 @@ function closeVotingModal() {
         btn.style.opacity = '1';
         btn.style.transform = 'scale(1)';
     });
+}
+
+// Funzione per aprire il modal admin delle votazioni
+async function openAdminVotesModal() {
+    const modal = document.getElementById('adminVotesModal');
+    const container = document.getElementById('allVotesContainer');
+    
+    container.innerHTML = '<p>Caricamento votazioni...</p>';
+    modal.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+    
+    // Scrolla in cima per mostrare meglio il modal
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    try {
+        // Carica tutti i voti da Supabase
+        const response = await fetch(
+            `${window.SUPABASE_CONFIG.url}/rest/v1/destination_votes?select=*&order=created_at.desc`,
+            {
+                headers: {
+                    'apikey': window.SUPABASE_CONFIG.anonKey,
+                    'Authorization': `Bearer ${window.SUPABASE_CONFIG.anonKey}`
+                }
+            }
+        );
+        
+        if (response.ok) {
+            const votes = await response.json();
+            
+            if (votes.length === 0) {
+                container.innerHTML = `
+                    <div class="no-votes-message">
+                        <i class="fas fa-inbox"></i>
+                        <p>Nessuna votazione ancora registrata.</p>
+                    </div>
+                `;
+            } else {
+                // Crea la tabella con i voti
+                const tableHTML = createVotesTable(votes);
+                container.innerHTML = tableHTML;
+            }
+        } else {
+            container.innerHTML = '<p style="color: #f56565;">Errore nel caricamento delle votazioni.</p>';
+        }
+    } catch (error) {
+        console.error('Errore nel caricamento dei voti:', error);
+        container.innerHTML = '<p style="color: #f56565;">Errore nel caricamento delle votazioni.</p>';
+    }
+}
+
+// Funzione per creare la tabella HTML dei voti
+function createVotesTable(votes) {
+    const destinationNames = {
+        'seville': 'Siviglia, Spagna',
+        'london': 'Londra, Regno Unito',
+        'birmingham': 'Birmingham, Regno Unito',
+        'geneva': 'Ginevra, Svizzera'
+    };
+    
+    // Conta i voti per destinazione
+    const stats = {};
+    votes.forEach(vote => {
+        if (!stats[vote.destination_id]) {
+            stats[vote.destination_id] = { total: 0, yes: 0, no: 0 };
+        }
+        stats[vote.destination_id].total++;
+        if (vote.vote_type === 'yes') stats[vote.destination_id].yes++;
+        else stats[vote.destination_id].no++;
+    });
+    
+    // Crea statistiche
+    let statsHTML = '<div style="margin-bottom: 2rem;"><h3 style="margin-bottom: 1rem;">📊 Statistiche</h3><div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">';
+    Object.keys(stats).forEach(destId => {
+        const stat = stats[destId];
+        const percentage = stat.total > 0 ? Math.round((stat.yes / stat.total) * 100) : 0;
+        statsHTML += `
+            <div style="background: var(--light-bg); padding: 1rem; border-radius: 8px;">
+                <div style="font-weight: 600; color: var(--primary-color); margin-bottom: 0.5rem;">${destinationNames[destId] || destId}</div>
+                <div>✓ Voti positivi: <strong>${stat.yes}</strong></div>
+                <div>✗ Voti negativi: <strong>${stat.no}</strong></div>
+                <div style="margin-top: 0.5rem; color: var(--text-light);">Totale: <strong>${stat.total}</strong> (${percentage}% positivi)</div>
+            </div>
+        `;
+    });
+    statsHTML += '</div></div>';
+    
+    // Crea la tabella
+    const tableHTML = `
+        ${statsHTML}
+        <div class="votes-table-container">
+            <table class="votes-table">
+                <thead>
+                    <tr>
+                        <th>Utente</th>
+                        <th>Destinazione</th>
+                        <th>Voto</th>
+                        <th>Commento</th>
+                        <th>Data</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${votes.map(vote => `
+                        <tr>
+                            <td><strong>${vote.user_code}</strong></td>
+                            <td>${destinationNames[vote.destination_id] || vote.destination_id}</td>
+                            <td class="vote-type-${vote.vote_type}">${vote.vote_type === 'yes' ? 'Ti piace' : 'Non ti convince'}</td>
+                            <td class="vote-comment-cell" title="${vote.comment || ''}">${vote.comment || '-'}</td>
+                            <td>${new Date(vote.created_at).toLocaleDateString('it-IT')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    return tableHTML;
+}
+
+// Funzione per chiudere il modal admin
+function closeAdminVotesModal() {
+    const modal = document.getElementById('adminVotesModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    
+    // Aggiorna la dashboard admin se visibile
+    const adminDashboard = document.getElementById('adminDashboard');
+    if (adminDashboard && adminDashboard.style.display === 'block') {
+        loadAdminVotesPreview();
+        loadFirstLogins(); // Aggiorna anche i primi login
+    }
 }
 
 function vote(voteType) {
@@ -678,10 +1216,35 @@ function showSubmissionConfirmation() {
     }, 3000);
 }
 
+// Controllo periodico dell'autenticazione
+function enforceAuthentication() {
+    if (!authenticatedUser) {
+        // Se l'utente non è autenticato ma vede il contenuto principale, rimuovilo
+        const loginScreen = document.getElementById('loginScreen');
+        const mainContent = document.getElementById('mainContent');
+        
+        if (loginScreen && mainContent) {
+            loginScreen.style.display = 'flex';
+            loginScreen.style.opacity = '1';
+            mainContent.style.display = 'none';
+        }
+    }
+}
+
 // Gestione eventi
 document.addEventListener('DOMContentLoaded', function() {
     // Controlla se l'utente è già autenticato
     checkAuthentication();
+    
+    // Controllo periodico ogni 5 secondi
+    setInterval(enforceAuthentication, 5000);
+    
+    // Aggiorna lo scroll header, navbar e fixed header dopo che il DOM è pronto
+    setTimeout(() => {
+        updateScrollHeader();
+        updateNavbarUserInfo();
+        updateFixedHeader();
+    }, 500);
     
     // Supporto per il tasto Enter nei campi di login
     document.getElementById('loginUserCode')?.addEventListener('keypress', function(e) {
@@ -714,6 +1277,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('click', function(event) {
         const destinationModal = document.getElementById('destinationModal');
         const votingModal = document.getElementById('votingModal');
+        const adminVotesModal = document.getElementById('adminVotesModal');
+        const logoutModal = document.getElementById('logoutModal');
         
         if (event.target === destinationModal) {
             closeModal();
@@ -721,6 +1286,28 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (event.target === votingModal) {
             closeVotingModal();
+        }
+        
+        if (event.target === adminVotesModal) {
+            closeAdminVotesModal();
+        }
+        
+        if (event.target === logoutModal) {
+            cancelLogout();
+        }
+    });
+    
+    // Gestione scroll header
+    window.addEventListener('scroll', function() {
+        const scrollHeader = document.getElementById('scrollHeader');
+        const scrollPos = window.scrollY || window.pageYOffset;
+        
+        if (scrollPos > 200) {
+            scrollHeader.classList.add('visible');
+            document.body.classList.add('scrolling'); // Nascondi fixed header
+        } else {
+            scrollHeader.classList.remove('visible');
+            document.body.classList.remove('scrolling'); // Mostra fixed header
         }
     });
     
