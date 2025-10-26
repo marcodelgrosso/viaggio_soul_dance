@@ -25,7 +25,11 @@ const AUTH_CONFIG = {
 
 // Funzione per verificare se l'utente esiste
 function isUserAllowed(userCode) {
-    return AUTH_CONFIG.allowedUsers.includes(userCode.toLowerCase());
+    // Normalizza anche l'utente in input
+    const normalizedUser = userCode.toLowerCase().trim();
+    
+    // Controlla se è nella lista (tutti gli utenti sono già lowercase)
+    return AUTH_CONFIG.allowedUsers.some(allowedUser => allowedUser.toLowerCase() === normalizedUser);
 }
 
 // Funzione per verificare la password
@@ -35,19 +39,28 @@ function verifyPassword(inputPassword) {
 
 // Funzione per autenticare l'utente
 function authenticateUser(userCode, password) {
+    console.log('🔍 Tentativo login per:', userCode);
+    
     // Normalizza il codice utente (lowercase e trim)
     const normalizedUserCode = userCode.toLowerCase().trim();
+    console.log('🔍 Normalizzato come:', normalizedUserCode);
+    console.log('🔍 Utenti disponibili:', AUTH_CONFIG.allowedUsers);
     
     // Verifica che l'utente sia nella lista
     if (!isUserAllowed(normalizedUserCode)) {
+        console.error('❌ Utente non trovato:', normalizedUserCode);
         throw new Error('Codice utente non valido. Assicurati di inserire il codice corretto.');
     }
     
+    console.log('✅ Utente trovato:', normalizedUserCode);
+    
     // Verifica la password
     if (!verifyPassword(password)) {
+        console.error('❌ Password errata');
         throw new Error('Password non corretta.');
     }
     
+    console.log('✅ Autenticazione riuscita per:', normalizedUserCode);
     return normalizedUserCode;
 }
 
