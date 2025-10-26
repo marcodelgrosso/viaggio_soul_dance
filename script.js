@@ -451,6 +451,22 @@ function addVoteBadgeToCard(destinationId, vote) {
     }
 }
 
+// Funzione per toggle visibilità password
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('loginPassword');
+    const toggleIcon = document.getElementById('passwordToggle');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    }
+}
+
 // Funzione per gestire il login
 async function handleLogin() {
     const userCode = document.getElementById('loginUserCode').value.trim();
