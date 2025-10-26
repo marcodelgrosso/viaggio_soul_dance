@@ -1,0 +1,89 @@
+═══════════════════════════════════════════════════════════════
+📧 MESSAGGIO DA INVIARE AI TUOI AMICI
+═══════════════════════════════════════════════════════════════
+
+Ciao a tutti! 🎉
+
+Per il Viaggio Soul Dance di dicembre, ho creato un sistema di votazione online 
+per scegliere insieme la destinazione migliore!
+
+Come votare:
+1. Apri questo link: [INSERISCI QUI IL TUO LINK/URL]
+2. Clicca su "Vota questa destinazione" sulla destinazione che preferisci
+3. Inserisci:
+   - Il tuo codice: [VEDI TABELLA SOTTO ⬇️]
+   - Password: SOUL2024
+4. Scegli Sì o No
+5. (Opzionale) Lascia un commento
+6. Clicca "Invia votazione"
+
+Puoi votare tutte e 4 le destinazioni! 
+E se cambi idea, puoi ri-votare e cambiare il voto.
+
+═══════════════════════════════════════════════════════════════
+👥 TUTTI I CODICI UTENTE
+═══════════════════════════════════════════════════════════════
+
+1.  roberta.denoto
+2.  cinzia.carriero
+3.  cecilia.tinti
+4.  angelo.mazzuolo
+5.  francesca.franzini
+6.  gianluca.raffa
+7.  raffaello.fiorentini
+8.  vanessa.proietti
+9.  barbara.napoli
+10. rosanna
+11. mary.russo
+12. ciccio.palma
+
+═══════════════════════════════════════════════════════════════
+📝 MESSAGGIO PERSONALIZZATO (ESEMPIO PER ROBERTA)
+═══════════════════════════════════════════════════════════════
+
+Ciao Roberta! 🎉
+
+Per il Viaggio Soul Dance di dicembre, voglio la tua opinione sulla destinazione!
+
+Come votare:
+1. Apri: [INSERISCI QUI IL TUO LINK]
+2. Clicca "Vota questa destinazione"
+3. Inserisci:
+   - Il tuo codice: roberta.denoto
+   - Password: SOUL2024
+4. Scegli la tua preferenza e invia!
+
+Puoi votare tutte le destinazioni!
+Se cambi idea puoi ri-votare.
+
+Grazie! ✈️❤️
+
+═══════════════════════════════════════════════════════════════
+🔒 SICUREZZA
+═══════════════════════════════════════════════════════════════
+
+⚠️ IMPORTANTE: 
+La password 'SOUL2024' è un placeholder.
+MODIFICALA nel file auth-config.js prima di pubblicare!
+
+Suggerimenti per una password sicura:
+- Uso lettere maiuscole e minuscole
+- Include numeri
+- Lunga almeno 8 caratteri
+- Esempio: 'Soul2024!', 'ViaggioDance#24', etc.
+
+═══════════════════════════════════════════════════════════════
+✅ CHECKLIST PRIMA DI INVIARE
+═══════════════════════════════════════════════════════════════
+
+☐ Ho modificato la password in auth-config.js
+☐ Ho eseguito lo script SQL su Supabase (supabase_setup.sql o update_existing_table.sql)
+☐ Ho testato che funzioni votando io stesso
+☐ Ho verificato che i voti si vedano su Supabase
+☐ Ho creato il link/share del sito
+☐ Sono pronto per inviare! 🚀
+
+═══════════════════════════════════════════════════════════════
+
+Buon divertimento! 🎉✈️
+

@@ -217,6 +217,164 @@ const destinations = {
 // Variabili globali
 let currentDestination = null;
 let currentVote = null;
+let authenticatedUser = null; // Utente autenticato
+let userVotes = {}; // Cache dei voti dell'utente
+
+// Funzione per caricare i voti dell'utente
+async function loadUserVotes() {
+    if (!authenticatedUser || typeof window.SUPABASE_CONFIG === 'undefined') {
+        return;
+    }
+    
+    try {
+        const response = await fetch(
+            `${window.SUPABASE_CONFIG.url}/rest/v1/destination_votes?user_code=eq.${authenticatedUser}`,
+            {
+                headers: {
+                    'apikey': window.SUPABASE_CONFIG.anonKey,
+                    'Authorization': `Bearer ${window.SUPABASE_CONFIG.anonKey}`
+                }
+            }
+        );
+        
+        if (response.ok) {
+            const votes = await response.json();
+            
+            // Crea un oggetto con destination_id come chiave
+            userVotes = {};
+            votes.forEach(vote => {
+                userVotes[vote.destination_id] = vote;
+            });
+            
+            // Aggiorna i badge nelle card
+            updateVoteBadges();
+            
+            console.log('Voti caricati:', userVotes);
+        }
+    } catch (error) {
+        console.error('Errore nel caricamento dei voti:', error);
+    }
+}
+
+// Funzione per aggiornare i badge nelle card
+function updateVoteBadges() {
+    const destinations = ['seville', 'london', 'birmingham', 'geneva'];
+    
+    destinations.forEach(destId => {
+        const vote = userVotes[destId];
+        if (vote) {
+            addVoteBadgeToCard(destId, vote);
+        }
+    });
+}
+
+// Funzione per aggiungere il badge di voto a una card
+function addVoteBadgeToCard(destinationId, vote) {
+    const card = document.querySelector(`.destination-card[onclick*="${destinationId}"]`);
+    if (!card) return;
+    
+    // Rimuovi badge esistenti
+    const existingBadge = card.querySelector('.user-vote-badge-card');
+    if (existingBadge) {
+        existingBadge.remove();
+    }
+    
+    const badge = document.createElement('div');
+    badge.className = `user-vote-badge-card ${vote.vote_type === 'yes' ? 'vote-yes-card' : 'vote-no-card'}`;
+    badge.innerHTML = `
+        <i class="fas fa-${vote.vote_type === 'yes' ? 'thumbs-up' : 'thumbs-down'}"></i>
+        <span>Hai votato: ${vote.vote_type === 'yes' ? 'Ti piace' : 'Non ti convince'}</span>
+    `;
+    
+    // Aggiungi il badge dopo card-content o nell'apposita posizione
+    const cardContent = card.querySelector('.card-content');
+    if (cardContent) {
+        // Inserisci il badge all'inizio del card-content
+        cardContent.insertBefore(badge, cardContent.firstChild);
+    }
+}
+
+// Funzione per gestire il login
+async function handleLogin() {
+    const userCode = document.getElementById('loginUserCode').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const errorElement = document.getElementById('loginError');
+    
+    errorElement.textContent = '';
+    
+    if (!userCode || !password) {
+        errorElement.textContent = 'Compila tutti i campi';
+        return;
+    }
+    
+    try {
+        // Autentica l'utente
+        const authenticatedUserCode = authenticateUser(userCode, password);
+        
+        // Salva lo stato di autenticazione
+        sessionStorage.setItem('authenticatedUser', authenticatedUserCode);
+        sessionStorage.setItem('loginTime', Date.now());
+        authenticatedUser = authenticatedUserCode;
+        
+        // Nasconde lo schermo di login con animazione
+        const loginScreen = document.getElementById('loginScreen');
+        loginScreen.style.opacity = '0';
+        loginScreen.style.transition = 'opacity 0.5s ease-out';
+        
+        setTimeout(() => {
+            loginScreen.style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }, 500);
+        
+        console.log('✅ Login riuscito:', authenticatedUserCode);
+        
+        // Carica i voti dell'utente dopo il login
+        await loadUserVotes();
+    } catch (error) {
+        console.error('❌ Errore login:', error.message);
+        errorElement.textContent = error.message;
+    }
+}
+
+// Controlla se l'utente è già autenticato
+function checkAuthentication() {
+    const savedUser = sessionStorage.getItem('authenticatedUser');
+    const loginTime = sessionStorage.getItem('loginTime');
+    
+    // Se c'è un utente salvato e la sessione è valida (24 ore)
+    if (savedUser && loginTime && (Date.now() - loginTime) < 86400000) {
+        authenticatedUser = savedUser;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainContent').style.display = 'block';
+        console.log('✅ Utente già autenticato:', authenticatedUser);
+        
+        // Carica i voti dell'utente
+        loadUserVotes();
+    } else {
+        // Reset se la sessione è scaduta
+        if (savedUser) {
+            sessionStorage.clear();
+        }
+    }
+}
+
+// Funzione per il logout
+function logout() {
+    if (confirm('Vuoi uscire?')) {
+        sessionStorage.clear();
+        authenticatedUser = null;
+        document.getElementById('mainContent').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'flex';
+        document.getElementById('loginScreen').style.opacity = '1';
+        
+        // Reset form login
+        document.getElementById('loginUserCode').value = '';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginError').textContent = '';
+        
+        console.log('✅ Logout effettuato');
+    }
+}
 
 // Funzioni di utilità
 function scrollToDestinations() {
@@ -225,7 +383,7 @@ function scrollToDestinations() {
     });
 }
 
-function openDestination(destinationId) {
+async function openDestination(destinationId) {
     currentDestination = destinationId;
     const destination = destinations[destinationId];
     
@@ -234,17 +392,56 @@ function openDestination(destinationId) {
         return;
     }
     
+    // Recupera il voto esistente dell'utente per questa destinazione
+    let existingVote = null;
+    if (authenticatedUser && typeof getDestinationVoteCount === 'function') {
+        try {
+            const response = await fetch(
+                `${window.SUPABASE_CONFIG.url}/rest/v1/destination_votes?destination_id=eq.${destinationId}&user_code=eq.${authenticatedUser}`,
+                {
+                    headers: {
+                        'apikey': window.SUPABASE_CONFIG.anonKey,
+                        'Authorization': `Bearer ${window.SUPABASE_CONFIG.anonKey}`
+                    }
+                }
+            );
+            
+            if (response.ok) {
+                const votes = await response.json();
+                if (votes.length > 0) {
+                    existingVote = votes[0];
+                }
+            }
+        } catch (error) {
+            console.error('Errore nel recupero del voto:', error);
+        }
+    }
+    
     const modalBody = document.getElementById('modalBody');
-    modalBody.innerHTML = createDestinationDetailHTML(destination);
+    modalBody.innerHTML = createDestinationDetailHTML(destination, existingVote);
     
     const modal = document.getElementById('destinationModal');
     modal.style.display = 'block';
     document.body.style.overflow = 'hidden';
 }
 
-function createDestinationDetailHTML(destination) {
+function createDestinationDetailHTML(destination, existingVote = null) {
+    // Se esiste un voto, mostra il badge
+    const voteBadge = existingVote ? `
+        <div class="user-vote-badge ${existingVote.vote_type === 'yes' ? 'vote-yes-badge' : 'vote-no-badge'}">
+            <i class="fas fa-${existingVote.vote_type === 'yes' ? 'thumbs-up' : 'thumbs-down'}"></i>
+            <span>Hai già votato: ${existingVote.vote_type === 'yes' ? 'Ti piace!' : 'Non ti convince'}</span>
+            ${existingVote.comment ? `<p class="vote-comment">"${existingVote.comment}"</p>` : ''}
+        </div>
+    ` : '';
+    
     return `
         <div class="destination-detail">
+            <div class="destination-user-info">
+                <i class="fas fa-user-circle"></i>
+                <span>Connesso come: <strong>${authenticatedUser || 'N/A'}</strong></span>
+            </div>
+            ${voteBadge}
             <h2>${destination.name}</h2>
             <img src="${destination.image}" alt="${destination.name}">
             <p>${destination.description}</p>
@@ -275,7 +472,7 @@ function createDestinationDetailHTML(destination) {
             
             <button class="vote-button" onclick="openVotingModal()">
                 <i class="fas fa-vote-yea"></i>
-                Vota questa destinazione
+                ${existingVote ? 'Cambia voto' : 'Vota questa destinazione'}
             </button>
         </div>
     `;
@@ -287,7 +484,25 @@ function closeModal() {
     document.body.style.overflow = 'auto';
 }
 
-function openVotingModal() {
+function openVotingModal(destinationId = null) {
+    // Se viene passato un destinationId, usa quello, altrimenti usa currentDestination
+    if (destinationId) {
+        currentDestination = destinationId;
+    }
+    
+    // Mostra il nome della destinazione nel modal
+    const destinationNameEl = document.getElementById('votingDestinationName');
+    if (destinationNameEl && currentDestination) {
+        const destinationName = destinations[currentDestination]?.name || '';
+        destinationNameEl.textContent = destinationName;
+    }
+    
+    // Mostra l'utente autenticato
+    const votingUserInfoEl = document.getElementById('votingUserInfo');
+    if (votingUserInfoEl && authenticatedUser) {
+        votingUserInfoEl.textContent = authenticatedUser;
+    }
+    
     const votingModal = document.getElementById('votingModal');
     votingModal.style.display = 'block';
     document.body.style.overflow = 'hidden';
@@ -301,6 +516,12 @@ function closeVotingModal() {
     // Reset del form
     currentVote = null;
     document.getElementById('commentText').value = '';
+    
+    // Reset messaggi di errore
+    const authError = document.getElementById('authError');
+    if (authError) {
+        authError.textContent = '';
+    }
     
     // Reset dei pulsanti di voto
     document.querySelectorAll('.vote-btn').forEach(btn => {
@@ -355,31 +576,75 @@ function showVoteFeedback(voteType) {
     }, 2000);
 }
 
-function submitVote() {
+async function submitVote() {
+    console.log('🚀 submitVote() chiamata');
+    
+    // Reset errori
+    const authError = document.getElementById('authError');
+    authError.textContent = '';
+    
+    // Validazione campi obbligatori
     if (!currentVote) {
-        alert('Per favore, seleziona prima la tua preferenza (Sì o No)');
+        console.log('❌ Nessun voto selezionato');
+        authError.textContent = 'Per favore, seleziona prima la tua preferenza (Sì o No)';
         return;
     }
     
-    const comment = document.getElementById('commentText').value.trim();
+    console.log('✅ Voto selezionato:', currentVote);
     
-    // Simula l'invio della votazione
+    // Usa l'utente già autenticato
+    if (!authenticatedUser) {
+        console.error('❌ Nessun utente autenticato');
+        authError.textContent = 'Errore: sessione non valida. Ricarica la pagina.';
+        return;
+    }
+    
+    console.log('✅ Utente autenticato:', authenticatedUser);
+    
+    const comment = document.getElementById('commentText').value.trim();
+    console.log('📝 Commento:', comment || '(nessun commento)');
+    
+    // Prepara i dati per la votazione
     const voteData = {
         destination: currentDestination,
         vote: currentVote,
         comment: comment,
+        userCode: authenticatedUser, // Usa l'utente già autenticato
         timestamp: new Date().toISOString()
     };
     
-    console.log('Votazione inviata:', voteData);
+    console.log('📊 Dati votazione:', voteData);
     
-    // Mostra conferma
-    showSubmissionConfirmation();
-    
-    // Chiudi il modal dopo un breve delay
-    setTimeout(() => {
-        closeVotingModal();
-    }, 2000);
+    try {
+        console.log('🔍 Verifico se submitVoteToSupabase è disponibile...');
+        console.log('typeof submitVoteToSupabase:', typeof submitVoteToSupabase);
+        
+        // Prova a inviare a Supabase se configurato
+        if (typeof submitVoteToSupabase === 'function') {
+            console.log('✅ Funzione submitVoteToSupabase trovata, invio votazione...');
+            await submitVoteToSupabase(voteData);
+            console.log('✅ Votazione salvata su Supabase');
+            
+            // Ricarica i voti dell'utente per aggiornare i badge
+            await loadUserVotes();
+        } else {
+            console.error('❌ FUNZIONE submitVoteToSupabase NON TROVATA!');
+            console.log('Prova a controllare se supabase-config.js è caricato correttamente.');
+        }
+        
+        // Mostra conferma
+        showSubmissionConfirmation();
+        
+        // Chiudi il modal dopo un breve delay
+        setTimeout(() => {
+            closeVotingModal();
+        }, 2000);
+    } catch (error) {
+        console.error('Errore nell\'invio della votazione:', error);
+        
+        // Mostra errore specifico
+        authError.textContent = 'Errore nell\'invio della votazione. Riprova.';
+    }
 }
 
 function showSubmissionConfirmation() {
@@ -415,6 +680,22 @@ function showSubmissionConfirmation() {
 
 // Gestione eventi
 document.addEventListener('DOMContentLoaded', function() {
+    // Controlla se l'utente è già autenticato
+    checkAuthentication();
+    
+    // Supporto per il tasto Enter nei campi di login
+    document.getElementById('loginUserCode')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleLogin();
+        }
+    });
+    
+    document.getElementById('loginPassword')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            handleLogin();
+        }
+    });
+    
     // Smooth scrolling per i link di navigazione
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {

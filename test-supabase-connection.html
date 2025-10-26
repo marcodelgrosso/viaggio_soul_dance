@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Connessione Supabase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        button {
+            background-color: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #5568d3;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Connessione Supabase</h1>
+    <p>Questo test verifica che la connessione a Supabase funzioni correttamente.</p>
+    
+    <button onclick="testConnection()">🔍 Esegui Test</button>
+    
+    <div id="results"></div>
+
+    <script src="supabase-config.js"></script>
+    
+    <script>
+        async function testConnection() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Eseguendo test...</p>';
+            
+            const results = [];
+            
+            // Test 1: Verifica configurazione
+            results.push('<div class="test-result info"><strong>Test 1:</strong> Verifica configurazione');
+            try {
+                if (!SUPABASE_CONFIG.url || SUPABASE_CONFIG.url.includes('YOUR_')) {
+                    results.push('<div class="test-result error"><strong>❌ ERRORE:</strong> URL di Supabase non configurato</div>');
+                } else {
+                    results.push('<div class="test-result success"><strong>✅ OK:</strong> URL configurato: ' + SUPABASE_CONFIG.url + '</div>');
+                }
+                
+                if (!SUPABASE_CONFIG.anonKey || SUPABASE_CONFIG.anonKey.includes('YOUR_')) {
+                    results.push('<div class="test-result error"><strong>❌ ERRORE:</strong> Anon Key non configurata</div>');
+                } else {
+                    results.push('<div class="test-result success"><strong>✅ OK:</strong> Anon Key configurata</div>');
+                }
+            } catch (error) {
+                results.push('<div class="test-result error"><strong>❌ ERRORE:</strong> ' + error.message + '</div>');
+            }
+            
+            // Test 2: Verifica accesso alla tabella
+            results.push('<div class="test-result info"><strong>Test 2:</strong> Verifica accesso alla tabella');
+            try {
+                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/destination_votes?limit=1`, {
+                    headers: {
+                        'apikey': SUPABASE_CONFIG.anonKey,
+                        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    results.push('<div class="test-result success"><strong>✅ OK:</strong> Tabella accessibile. Voti presenti: ' + (data.length || 0) + '</div>');
+                } else {
+                    const errorText = await response.text();
+                    results.push('<div class="test-result error"><strong>❌ ERRORE:</strong> ' + response.status + ' - ' + errorText + '</div>');
+                }
+            } catch (error) {
+                results.push('<div class="test-result error"><strong>❌ ERRORE:</strong> ' + error.message + '</div>');
+            }
+            
+            // Test 3: Test inserimento (simulato)
+            results.push('<div class="test-result info"><strong>Test 3:</strong> Test inserimento votazione');
+            try {
+                const testData = {
+                    destination_id: 'test',
+                    vote_type: 'yes',
+                    user_code: 'test.user',
+                    comment: 'Test di connessione'
+                };
+                
+                const insertResponse = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/destination_votes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_CONFIG.anonKey,
+                        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                if (insertResponse.ok) {
+                    results.push('<div class="test-result success"><strong>✅ OK:</strong> Inserimento funzionante!</div>');
+                    
+                    // Prova a eliminare il record di test
+                    setTimeout(async () => {
+                        await fetch(`${SUPABASE_CONFIG.url}/rest/v1/destination_votes?user_code=eq.test.user`, {
+                            method: 'DELETE',
+                            headers: {
+                                'apikey': SUPABASE_CONFIG.anonKey,
+                                'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+                            }
+                        });
+                    }, 1000);
+                } else {
+                    const errorText = await insertResponse.text();
+                    results.push('<div class="test-result error"><strong>❌ ERRORE:</strong> ' + insertResponse.status + ' - ' + errorText + '</div>');
+                    
+                    if (insertResponse.status === 401 || insertResponse.status === 403) {
+                        results.push('<div class="test-result error"><strong>⚠️ PROBLEMA POSSIBILE:</strong> RLS (Row Level Security) attivo. Devi disattivarlo per permettere le inserzioni.</div>');
+                        results.push('<div class="test-result info"><strong>💡 SOLUZIONE:</strong> Vai su Supabase → Table Editor → destination_votes → RLS Settings → Disattiva RLS</div>');
+                    }
+                }
+            } catch (error) {
+                results.push('<div class="test-result error"><strong>❌ ERRORE:</strong> ' + error.message + '</div>');
+            }
+            
+            resultsDiv.innerHTML = results.join('');
+        }
+        
+        // Esegui il test automaticamente quando la pagina si carica
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(testConnection, 1000);
+        });
+    </script>
+</body>
+</html>
+

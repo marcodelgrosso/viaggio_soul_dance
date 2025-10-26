@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Votazioni Supabase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .debug-section {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px 10px 0;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐛 Debug Sistema di Votazione</h1>
+    
+    <div class="debug-section">
+        <h2>1️⃣ Test Configurazione</h2>
+        <button onclick="testConfig()">Test Config</button>
+        <div id="config-result"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>2️⃣ Test Connessione Supabase</h2>
+        <button onclick="testSupabaseConnection()">Test Connessione</button>
+        <div id="connection-result"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>3️⃣ Test Inserimento Voto</h2>
+        <button onclick="testVoteInsert()">Test Inserimento</button>
+        <div id="insert-result"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>4️⃣ Test Query Completa</h2>
+        <button onclick="testFullFlow()">Test Flusso Completo</button>
+        <div id="fullflow-result"></div>
+    </div>
+
+    <script src="supabase-config.js"></script>
+    
+    <script>
+        function log(elementId, message, isError = false) {
+            const div = document.getElementById(elementId);
+            const className = isError ? 'error' : 'success';
+            const icon = isError ? '❌' : '✅';
+            div.innerHTML = `<div class="${className}">${icon} ${message}</div>`;
+        }
+        
+        function logError(elementId, error) {
+            const div = document.getElementById(elementId);
+            div.innerHTML = `<div class="error">❌ ERRORE: ${error}<pre>${JSON.stringify(error, null, 2)}</pre></div>`;
+        }
+        
+        async function testConfig() {
+            const elementId = 'config-result';
+            try {
+                if (!SUPABASE_CONFIG) {
+                    logError(elementId, 'SUPABASE_CONFIG non definito');
+                    return;
+                }
+                
+                log(elementId, `URL: ${SUPABASE_CONFIG.url}`, false);
+                
+                if (SUPABASE_CONFIG.url.includes('YOUR_') || !SUPABASE_CONFIG.url) {
+                    logError(elementId, 'URL Supabase non configurato');
+                    return;
+                }
+                
+                log(elementId, `Anon Key presente: ${SUPABASE_CONFIG.anonKey ? 'Sì' : 'No'}`, false);
+                
+            } catch (error) {
+                logError(elementId, error);
+            }
+        }
+        
+        async function testSupabaseConnection() {
+            const elementId = 'connection-result';
+            try {
+                log(elementId, 'Tentativo connessione...', false);
+                
+                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/destination_votes?limit=1`, {
+                    headers: {
+                        'apikey': SUPABASE_CONFIG.anonKey,
+                        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(elementId, `Connessione OK! Voti presenti: ${data.length}`);
+                } else {
+                    const errorText = await response.text();
+                    logError(elementId, `Status ${response.status}: ${errorText}`);
+                    
+                    if (response.status === 401 || response.status === 403) {
+                        log(elementId, '⚠️ Possibile problema con RLS (Row Level Security)', true);
+                    }
+                }
+            } catch (error) {
+                logError(elementId, error);
+            }
+        }
+        
+        async function testVoteInsert() {
+            const elementId = 'insert-result';
+            try {
+                log(elementId, 'Tentativo inserimento...', false);
+                
+                const testData = {
+                    destination_id: 'test',
+                    vote_type: 'yes',
+                    user_code: `test.user.${Date.now()}`,
+                    comment: 'Test di debug'
+                };
+                
+                const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/destination_votes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_CONFIG.anonKey,
+                        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    log(elementId, `Inserimento riuscito! ID: ${result[0].id}`);
+                    
+                    // Elimina il record di test dopo 2 secondi
+                    setTimeout(async () => {
+                        try {
+                            await fetch(`${SUPABASE_CONFIG.url}/rest/v1/destination_votes?id=eq.${result[0].id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'apikey': SUPABASE_CONFIG.anonKey,
+                                    'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+                                }
+                            });
+                            log(elementId, 'Record di test eliminato');
+                        } catch (e) {
+                            console.error('Errore eliminazione test:', e);
+                        }
+                    }, 2000);
+                } else {
+                    logError(elementId, JSON.stringify(result));
+                    
+                    if (response.status === 401 || response.status === 403) {
+                        log(elementId, `
+                            ⚠️ RLS (Row Level Security) BLOCCA LE INSERZIONI!<br><br>
+                            <strong>SOLUZIONE RAPIDA:</strong><br>
+                            1. Vai su Supabase Dashboard<br>
+                            2. Table Editor → destination_votes<br>
+                            3. Icona 🔒 (lock) → Disable RLS<br>
+                            4. Ricarica questa pagina e riprova
+                        `, true);
+                    }
+                }
+            } catch (error) {
+                logError(elementId, error);
+            }
+        }
+        
+        async function testFullFlow() {
+            const elementId = 'fullflow-result';
+            try {
+                log(elementId, 'Test flusso completo...', false);
+                
+                // Simula l'intero processo
+                const userCode = `test.${Date.now()}`;
+                const destination = 'seville';
+                
+                // 1. Check esistenza
+                log(elementId, 'Step 1: Verifica voto esistente...', false);
+                const checkResponse = await fetch(
+                    `${SUPABASE_CONFIG.url}/rest/v1/destination_votes?destination_id=eq.${destination}&user_code=eq.${userCode}`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_CONFIG.anonKey,
+                            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+                        }
+                    }
+                );
+                
+                const existing = await checkResponse.json();
+                log(elementId, `Step 1 OK: ${existing.length} voti esistenti trovati`);
+                
+                // 2. Inserimento
+                log(elementId, 'Step 2: Inserimento nuovo voto...', false);
+                const insertResponse = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/destination_votes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_CONFIG.anonKey,
+                        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify({
+                        destination_id: destination,
+                        vote_type: 'yes',
+                        user_code: userCode,
+                        comment: 'Test completo'
+                    })
+                });
+                
+                if (insertResponse.ok) {
+                    const data = await insertResponse.json();
+                    log(elementId, `✅ TEST COMPLETO RIUSCITO! Voto inserito con ID: ${data[0].id}`);
+                    
+                    // 3. Verifica lettura
+                    log(elementId, 'Step 3: Verifica lettura...', false);
+                    const readResponse = await fetch(
+                        `${SUPABASE_CONFIG.url}/rest/v1/destination_votes?id=eq.${data[0].id}`,
+                        {
+                            headers: {
+                                'apikey': SUPABASE_CONFIG.anonKey,
+                                'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+                            }
+                        }
+                    );
+                    
+                    if (readResponse.ok) {
+                        const readData = await readResponse.json();
+                        log(elementId, `✅ Lettura OK! Dati: ${JSON.stringify(readData[0], null, 2)}`);
+                    } else {
+                        logError(elementId, 'Errore nella lettura');
+                    }
+                } else {
+                    const errorData = await insertResponse.json();
+                    logError(elementId, JSON.stringify(errorData));
+                }
+                
+            } catch (error) {
+                logError(elementId, error);
+            }
+        }
+        
+        // Auto-esegui test config al caricamento
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(testConfig, 500);
+        });
+    </script>
+</body>
+</html>
+
+
