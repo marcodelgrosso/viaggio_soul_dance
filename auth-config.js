@@ -26,10 +26,17 @@ const AUTH_CONFIG = {
 // Funzione per verificare se l'utente esiste
 function isUserAllowed(userCode) {
     // Normalizza anche l'utente in input
-    const normalizedUser = userCode.toLowerCase().trim();
+    const normalizedUser = (userCode || '').toLowerCase().trim();
+    console.log('🔍 Verificando utente:', normalizedUser);
     
     // Controlla se è nella lista (tutti gli utenti sono già lowercase)
-    return AUTH_CONFIG.allowedUsers.some(allowedUser => allowedUser.toLowerCase() === normalizedUser);
+    const found = AUTH_CONFIG.allowedUsers.some(allowedUser => {
+        const normalizedAllowed = allowedUser.toLowerCase().trim();
+        return normalizedAllowed === normalizedUser;
+    });
+    
+    console.log('🔍 Risultato verifica:', found);
+    return found;
 }
 
 // Funzione per verificare la password
