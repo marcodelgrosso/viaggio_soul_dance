@@ -42,7 +42,6 @@
 // Fix per viewport su mobile
 @supports (-webkit-touch-callout: none) {
   // iOS Safari fix
-  .hero,
   .login-screen {
     min-height: -webkit-fill-available;
   }
@@ -50,9 +49,7 @@
 
 // Ottimizza performance animazioni su mobile
 @media (max-width: 768px) {
-  .floating-element,
-  .hero::before,
-  .hero::after {
+  .floating-element {
     will-change: transform;
     transform: translateZ(0);
   }
@@ -60,9 +57,6 @@
 
 // Nascondi elementi decorativi pesanti su mobile
 @media (max-width: 480px) {
-  .hero::after {
-    display: none; // Rimuovi animazione costosa su mobile piccolo
-  }
 }
 
 // Ottimizza scrollbar su mobile

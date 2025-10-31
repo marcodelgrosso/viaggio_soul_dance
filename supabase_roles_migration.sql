@@ -12,10 +12,13 @@ CREATE TABLE IF NOT EXISTS user_roles (
 );
 
 -- Tabella per i permessi utente
-CREATE TABLE IF NOT EXISTS user_permissions (
+-- Prima rimuovi se esiste già con il vecchio constraint
+DROP TABLE IF EXISTS user_permissions CASCADE;
+
+CREATE TABLE user_permissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  permission VARCHAR(50) NOT NULL CHECK (permission IN ('travel_editor', 'prices_editor', 'view_statistics')),
+  permission VARCHAR(50) NOT NULL CHECK (permission IN ('travel_editor', 'prices_editor', 'view_statistics', 'is_creator')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, permission)
 );
@@ -36,19 +39,45 @@ CREATE POLICY "Users can view their own role"
   TO authenticated
   USING (auth.uid() = user_id);
 
+-- Funzione SECURITY DEFINER per verificare se un utente è superadmin
+-- Questa funzione bypassa RLS quindi non causa ricorsione
+CREATE OR REPLACE FUNCTION is_superadmin(user_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = user_uuid AND role = 'superadmin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Funzione SECURITY DEFINER per verificare se un utente ha un permesso
+CREATE OR REPLACE FUNCTION user_has_permission(user_uuid UUID, perm VARCHAR(50))
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM user_permissions
+    WHERE user_id = user_uuid AND permission = perm
+  ) OR EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = user_uuid AND role = 'superadmin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Policy per user_roles: solo superadmin può modificare ruoli
+-- Usa la funzione is_superadmin per evitare ricorsione RLS
 CREATE POLICY "Superadmin can manage roles"
   ON user_roles
   FOR ALL
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND role = 'superadmin'
-    )
-  );
+  USING (is_superadmin(auth.uid()));
 
 -- Policy per user_permissions: gli utenti possono vedere solo i propri permessi
+-- Prima rimuoviamo eventuali policy esistenti
+DROP POLICY IF EXISTS "Users can view their own permissions" ON user_permissions;
+DROP POLICY IF EXISTS "Superadmin can manage permissions" ON user_permissions;
+
 CREATE POLICY "Users can view their own permissions"
   ON user_permissions
   FOR SELECT
@@ -56,16 +85,12 @@ CREATE POLICY "Users can view their own permissions"
   USING (auth.uid() = user_id);
 
 -- Policy per user_permissions: solo superadmin può gestire permessi
+-- Usa la funzione is_superadmin per evitare ricorsione RLS
 CREATE POLICY "Superadmin can manage permissions"
   ON user_permissions
   FOR ALL
   TO authenticated
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_id = auth.uid() AND role = 'superadmin'
-    )
-  );
+  USING (is_superadmin(auth.uid()));
 
 -- Funzione per ottenere il ruolo di un utente
 CREATE OR REPLACE FUNCTION get_user_role(user_uuid UUID)

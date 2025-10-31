@@ -12,6 +12,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  actualIsSuperAdmin: boolean; // Ruolo reale superadmin (non influenzato da selectedRole)
   role: UserRole | null;
   permissions: UserPermission[];
   hasPermission: (permission: UserPermission) => boolean;
@@ -19,6 +20,9 @@ interface AuthContextType {
   // Preview mode (per testare come user normale)
   previewMode: boolean;
   togglePreviewMode: () => void;
+  // Role selection
+  selectedRole: 'user' | 'superadmin' | null;
+  selectRole: (role: 'user' | 'superadmin') => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissions, setPermissions] = useState<UserPermission[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewMode, setPreviewMode] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'user' | 'superadmin' | null>(null);
 
   // Carica ruolo e permessi dell'utente
   const loadUserRoleAndPermissions = async (userId: string) => {
@@ -41,21 +46,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user?.email === SUPERADMIN_EMAIL || user?.email?.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()) {
         console.log('Superadmin rilevato via email:', user?.email);
         setRole('superadmin');
-        setPermissions(['travel_editor', 'prices_editor', 'view_statistics']);
+        setPermissions(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator']);
         setLoading(false);
         return;
       }
 
-      // Carica ruolo dal database
-      const { data: roleData, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .single();
+      // Carica ruolo dal database (gestisce gracefully se la tabella non esiste)
+      let roleData = null;
+      let roleError = null;
+      
+      try {
+        const result = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .single();
+        
+        roleData = result.data;
+        roleError = result.error;
+      } catch (err: any) {
+        // Se la tabella non esiste o c'è un errore di accesso, ignoralo
+        console.warn('Errore nel caricamento ruolo (tabella potrebbe non esistere o accesso negato):', err);
+        roleError = { code: 'TABLE_NOT_FOUND', message: err.message };
+      }
 
       if (roleError && roleError.code !== 'PGRST116') {
         // PGRST116 = no rows returned, ignoriamo se non esiste ancora un ruolo
-        console.warn('Tabelle ruoli non trovate o errore:', roleError.code);
+        // Se è un errore di tabella non trovata (42P01), permesso negato (42501), o altro, continua
+        if (roleError.code !== '42501' && roleError.code !== '42P01' && 
+            !roleError.message?.includes('relation') && 
+            !roleError.message?.includes('permission denied') &&
+            !roleError.message?.includes('does not exist')) {
+          console.warn('Errore nel caricamento ruolo:', roleError.code, roleError.message);
+        }
       }
 
       const userRole: UserRole = roleData?.role || 'user';
@@ -64,24 +87,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userRole === 'superadmin') {
         console.log('Superadmin rilevato dal database');
         setRole('superadmin');
-        setPermissions(['travel_editor', 'prices_editor', 'view_statistics']);
+        setPermissions(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator']);
         setLoading(false);
         return;
       } else {
         setRole(userRole);
       }
 
-      // Carica permessi
-      const { data: permissionsData, error: permissionsError } = await supabase
-        .from('user_permissions')
-        .select('permission')
-        .eq('user_id', userId);
+      // Carica permessi (se la tabella esiste)
+      try {
+        const { data: permissionsData, error: permissionsError } = await supabase
+          .from('user_permissions')
+          .select('permission')
+          .eq('user_id', userId);
 
-      if (permissionsError) {
-        console.error('Errore nel caricamento dei permessi:', permissionsError);
+        if (permissionsError) {
+          // Se l'errore è perché la tabella non esiste (42501 o PGRST116), ignoralo
+          if (permissionsError.code === 'PGRST116' || permissionsError.code === '42501' || permissionsError.message?.includes('relation') || permissionsError.message?.includes('permission denied')) {
+            console.warn('Tabelle permessi non ancora create o accesso negato:', permissionsError.code);
+            setPermissions([]);
+          } else {
+            console.error('Errore nel caricamento dei permessi:', permissionsError);
+            setPermissions([]);
+          }
+        } else {
+          setPermissions((permissionsData || []).map((p: { permission: UserPermission }) => p.permission));
+        }
+      } catch (permError: any) {
+        console.warn('Errore nel tentativo di caricare permessi (tabella potrebbe non esistere):', permError);
         setPermissions([]);
-      } else {
-        setPermissions((permissionsData || []).map((p: { permission: UserPermission }) => p.permission));
       }
     } catch (error) {
       console.error('Errore nel caricamento di ruolo e permessi:', error);
@@ -89,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (user?.email === SUPERADMIN_EMAIL || user?.email?.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()) {
         console.log('Superadmin rilevato via email (fallback)');
         setRole('superadmin');
-        setPermissions(['travel_editor', 'prices_editor', 'view_statistics']);
+        setPermissions(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator']);
       } else {
         setRole('user');
         setPermissions([]);
@@ -174,6 +208,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setRole(null);
     setPermissions([]);
+    setSelectedRole(null);
+    setPreviewMode(false);
+    localStorage.removeItem('selectedRole');
+    localStorage.removeItem('previewMode');
   };
 
   const actualIsSuperAdmin = role === 'superadmin' || 
@@ -181,10 +219,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user?.email === SUPERADMIN_EMAIL;
   const actualIsAdmin = actualIsSuperAdmin || permissions.includes('view_statistics');
 
+  // Se l'utente è superadmin e ha selezionato un ruolo, usa quello selezionato
+  // Altrimenti usa il ruolo reale (per utenti normali o se non ha ancora selezionato)
+  const effectiveSelectedRole = actualIsSuperAdmin && selectedRole ? selectedRole : null;
+  
   // Se preview mode è attivo, maschera i permessi superadmin
-  const isSuperAdmin = previewMode ? false : actualIsSuperAdmin;
-  const isAdmin = previewMode ? false : actualIsAdmin;
-  const effectivePermissions = previewMode ? [] : permissions;
+  // Se è superadmin ma ha scelto "user", maschera i permessi
+  const useUserMode = previewMode || (actualIsSuperAdmin && effectiveSelectedRole === 'user');
+  const isSuperAdmin = useUserMode ? false : (effectiveSelectedRole === 'superadmin' || (!effectiveSelectedRole && actualIsSuperAdmin));
+  const isAdmin = useUserMode ? false : (isSuperAdmin || (!effectiveSelectedRole && actualIsAdmin));
+  const effectivePermissions = useUserMode ? [] : permissions;
   
   const email = user?.email ?? null;
 
@@ -194,11 +238,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('previewMode', String(!previewMode));
   };
 
-  // Carica preview mode dal localStorage all'avvio
+  const selectRole = (role: 'user' | 'superadmin') => {
+    setSelectedRole(role);
+    localStorage.setItem('selectedRole', role);
+    // Reset preview mode quando si cambia ruolo
+    setPreviewMode(false);
+    localStorage.setItem('previewMode', 'false');
+  };
+
+  // Carica preview mode e selected role dal localStorage all'avvio
   useEffect(() => {
     const savedPreviewMode = localStorage.getItem('previewMode');
     if (savedPreviewMode === 'true') {
       setPreviewMode(true);
+    }
+
+    const savedSelectedRole = localStorage.getItem('selectedRole');
+    if (savedSelectedRole === 'user' || savedSelectedRole === 'superadmin') {
+      setSelectedRole(savedSelectedRole as 'user' | 'superadmin');
     }
   }, []);
 
@@ -208,20 +265,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Auth State:', {
         email: user.email,
         role,
+        selectedRole,
         isSuperAdmin,
         isAdmin,
-        permissions,
+        permissions: effectivePermissions,
       });
     }
-  }, [user, role, isSuperAdmin, isAdmin, permissions, loading]);
+  }, [user, role, selectedRole, isSuperAdmin, isAdmin, effectivePermissions, loading]);
 
   const hasPermission = (permission: UserPermission): boolean => {
     // Se preview mode è attivo, nessun permesso
     if (previewMode) {
       return false;
     }
-    // Superadmin ha tutti i permessi
-    if (actualIsSuperAdmin) {
+    // Se è superadmin ma ha scelto modalità user, nessun permesso admin
+    if (actualIsSuperAdmin && effectiveSelectedRole === 'user') {
+      return false;
+    }
+    // Superadmin ha tutti i permessi (solo se ha scelto modalità superadmin)
+    if (isSuperAdmin) {
       return true;
     }
     return permissions.includes(permission);
@@ -238,12 +300,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         isAdmin,
         isSuperAdmin,
+        actualIsSuperAdmin,
         role,
         permissions: effectivePermissions,
         hasPermission,
         loading,
         previewMode,
         togglePreviewMode,
+        selectedRole,
+        selectRole,
       }}
     >
       {children}

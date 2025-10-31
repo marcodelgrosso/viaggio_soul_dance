@@ -4,7 +4,7 @@ import LogoutModal from './LogoutModal';
 import '../styles/components/Header.scss';
 
 const Header: React.FC = () => {
-  const { email, isAdmin, isSuperAdmin, role, logout, previewMode, togglePreviewMode, isSuperAdmin: actualIsSuperAdmin } = useAuth();
+  const { email, isAdmin, isSuperAdmin, role, logout, previewMode, togglePreviewMode, isSuperAdmin: actualIsSuperAdmin, selectRole, selectedRole } = useAuth();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -62,7 +62,6 @@ const Header: React.FC = () => {
             <span>Viaggio Soul Dance</span>
           </div>
           <div className="nav-links">
-            <a href="#home">Home</a>
             <a href="#destinations">Destinazioni</a>
             <a href="#about">Chi Siamo</a>
             <a href="#contact">Contatti</a>
@@ -83,17 +82,17 @@ const Header: React.FC = () => {
                     <i className="fas fa-user-circle"></i>
                     <div className="profile-info">
                       <span className="profile-email">{email}</span>
-                      {previewMode && (
-                        <span className="profile-badge profile-badge-preview">
-                          <i className="fas fa-eye"></i> Preview Mode
-                        </span>
-                      )}
-                      {!previewMode && actualIsSuperAdmin && (
+                      {actualIsSuperAdmin && selectedRole === 'superadmin' && (
                         <span className="profile-badge profile-badge-superadmin">
-                          <i className="fas fa-crown"></i> Superadmin
+                          <i className="fas fa-crown"></i> Amministratore
                         </span>
                       )}
-                      {!previewMode && !actualIsSuperAdmin && isAdmin && (
+                      {actualIsSuperAdmin && selectedRole === 'user' && (
+                        <span className="profile-badge">
+                          <i className="fas fa-user"></i> Utente
+                        </span>
+                      )}
+                      {!actualIsSuperAdmin && isAdmin && (
                         <span className="profile-badge">
                           <i className="fas fa-shield-alt"></i> Admin
                         </span>
@@ -103,14 +102,31 @@ const Header: React.FC = () => {
                   {actualIsSuperAdmin && (
                     <>
                       <div className="profile-dropdown-divider"></div>
-                      <button 
-                        className={`profile-dropdown-item ${previewMode ? 'preview-active' : ''}`}
-                        onClick={togglePreviewMode}
-                        title={previewMode ? 'Disattiva modalità preview' : 'Attiva modalità preview (vedi come user)'}
-                      >
-                        <i className={`fas ${previewMode ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                        <span>{previewMode ? 'Esci da Preview' : 'Modalità Preview'}</span>
-                      </button>
+                      {selectedRole === 'user' ? (
+                        <button 
+                          className="profile-dropdown-item"
+                          onClick={() => {
+                            selectRole('superadmin');
+                            setShowProfileDropdown(false);
+                          }}
+                          title="Passa a modalità Amministratore"
+                        >
+                          <i className="fas fa-crown"></i>
+                          <span>Modalità Amministratore</span>
+                        </button>
+                      ) : selectedRole === 'superadmin' ? (
+                        <button 
+                          className="profile-dropdown-item"
+                          onClick={() => {
+                            selectRole('user');
+                            setShowProfileDropdown(false);
+                          }}
+                          title="Passa a modalità Utente"
+                        >
+                          <i className="fas fa-user"></i>
+                          <span>Modalità Utente</span>
+                        </button>
+                      ) : null}
                     </>
                   )}
                   <div className="profile-dropdown-divider"></div>

@@ -18,35 +18,6 @@
     padding: 0 1.5rem;
   }
 
-  .hero {
-    min-height: 50vh;
-    padding: 2rem 1.5rem;
-
-    h1 {
-      font-size: 3rem;
-    }
-
-    .travel-dates {
-      font-size: 1.3rem;
-    }
-
-    p {
-      font-size: 1.2rem;
-    }
-  }
-
-  .hero-content {
-    padding: 0 1.5rem;
-  }
-
-  .hero-image {
-    height: 50vh;
-  }
-
-  .floating-elements {
-    width: 250px;
-    height: 250px;
-  }
 
   .floating-element {
     width: 80px;
@@ -97,51 +68,6 @@
 
   .nav-links {
     display: none; // Nascondi link di navigazione su tablet
-  }
-
-  // Hero Section
-  .hero {
-    flex-direction: column;
-    text-align: center;
-    padding: 2rem 1rem;
-    min-height: auto;
-    padding-top: calc(40px + 60px + 2rem); // Spazio per header
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.8rem;
-    }
-
-    .travel-dates {
-      font-size: 1.2rem;
-      margin-bottom: 0.8rem;
-    }
-
-    p {
-      font-size: 1.1rem;
-      margin-bottom: 1.5rem;
-    }
-  }
-
-  .hero-content {
-    padding: 0 1rem;
-    width: 100%;
-  }
-
-  .hero-image {
-    height: 300px;
-    width: 100%;
-  }
-
-  .floating-elements {
-    width: 200px;
-    height: 200px;
-  }
-
-  .floating-element {
-    width: 70px;
-    height: 70px;
-    font-size: 2rem;
   }
 
   .cta-button {
@@ -298,46 +224,6 @@
     }
   }
 
-
-  // Hero
-  .hero {
-    padding: 1.5rem 0.8rem;
-    padding-top: calc(50px + 1.5rem);
-
-    h1 {
-      font-size: 2rem;
-      line-height: 1.1;
-    }
-
-    .travel-dates {
-      font-size: 1rem;
-      margin-bottom: 0.6rem;
-    }
-
-    p {
-      font-size: 1rem;
-      margin-bottom: 1.2rem;
-    }
-  }
-
-  .hero-content {
-    padding: 0 0.5rem;
-  }
-
-  .hero-image {
-    height: 250px;
-  }
-
-  .floating-elements {
-    width: 150px;
-    height: 150px;
-  }
-
-  .floating-element {
-    width: 55px;
-    height: 55px;
-    font-size: 1.5rem;
-  }
 
   .cta-button {
     padding: 0.8rem 1.2rem;
@@ -784,17 +670,6 @@
 // SMARTPHONE PICCOLO (max-width: 320px)
 // ============================================
 @media (max-width: 320px) {
-  .hero h1 {
-    font-size: 1.7rem;
-  }
-
-  .hero .travel-dates {
-    font-size: 0.9rem;
-  }
-
-  .hero p {
-    font-size: 0.95rem;
-  }
 
   .destinations h2 {
     font-size: 1.6rem;
@@ -825,13 +700,6 @@
     max-width: 1140px;
   }
 
-  .hero {
-    min-height: 65vh;
-  }
-
-  .hero-content {
-    padding: 0 3rem;
-  }
 
   .destinations-grid {
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -842,19 +710,6 @@
 // LANDSCAPE ORIENTATION (tablet/smartphone)
 // ============================================
 @media (max-height: 600px) and (orientation: landscape) {
-  .hero {
-    min-height: auto;
-    padding: 1.5rem 0;
-  }
-
-  .hero-image {
-    height: 250px;
-  }
-
-  .floating-elements {
-    width: 180px;
-    height: 180px;
-  }
 
   .login-screen {
     .login-container {

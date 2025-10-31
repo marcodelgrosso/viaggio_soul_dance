@@ -2,10 +2,11 @@ import React from 'react';
 import { AuthProvider } from './context/AuthContext';
 import LoginScreen from './components/LoginScreen';
 import MainContent from './components/MainContent';
+import RoleSelectionScreen from './components/RoleSelectionScreen';
 import { useAuth } from './context/AuthContext';
 
 function AppContent() {
-  const { user, loading } = useAuth();
+  const { user, loading, actualIsSuperAdmin, selectedRole } = useAuth();
 
   if (loading) {
     return (
@@ -25,6 +26,11 @@ function AppContent() {
 
   if (!user) {
     return <LoginScreen />;
+  }
+
+  // Se è superadmin e non ha ancora selezionato un ruolo, mostra schermata di selezione
+  if (actualIsSuperAdmin && !selectedRole) {
+    return <RoleSelectionScreen />;
   }
 
   return <MainContent />;

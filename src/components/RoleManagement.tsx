@@ -198,7 +198,7 @@ const RoleManagement: React.FC = () => {
                   <div className="form-group">
                     <label>Permessi:</label>
                     <div className="permissions-list">
-                      {(['travel_editor', 'prices_editor', 'view_statistics'] as UserPermission[]).map(perm => (
+                      {(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator'] as UserPermission[]).map(perm => (
                         <label key={perm} className="permission-checkbox">
                           <input
                             type="checkbox"
@@ -210,6 +210,7 @@ const RoleManagement: React.FC = () => {
                             {perm === 'travel_editor' && '✏️ Editor Viaggi'}
                             {perm === 'prices_editor' && '💰 Editor Prezzi'}
                             {perm === 'view_statistics' && '📊 Visualizza Statistiche'}
+                            {perm === 'is_creator' && '🎯 Creator Avventure'}
                           </span>
                         </label>
                       ))}
@@ -256,6 +257,7 @@ const RoleManagement: React.FC = () => {
                             {perm === 'travel_editor' && '✏️ Editor Viaggi'}
                             {perm === 'prices_editor' && '💰 Editor Prezzi'}
                             {perm === 'view_statistics' && '📊 Visualizza Statistiche'}
+                            {perm === 'is_creator' && '🎯 Creator Avventure'}
                           </span>
                         ))}
                       </div>
@@ -286,6 +288,7 @@ const RoleManagement: React.FC = () => {
               <li><strong>travel_editor</strong>: Modificare le destinazioni di viaggio</li>
               <li><strong>prices_editor</strong>: Modificare i prezzi</li>
               <li><strong>view_statistics</strong>: Visualizzare le statistiche</li>
+              <li><strong>is_creator</strong>: Creare e gestire avventure</li>
             </ul>
           </li>
         </ul>

@@ -1,0 +1,269 @@
+@import '../variables';
+
+.adventures-manager {
+  padding: 2rem;
+  background: $white;
+  border-radius: 12px;
+  margin: 2rem auto;
+  max-width: 1400px;
+  box-shadow: $shadow-light;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    margin: 1rem auto;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem;
+  }
+}
+
+.adventures-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  h2 {
+    color: $text-dark;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+
+    i {
+      color: $primary-color;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 1.5rem;
+    }
+  }
+}
+
+.create-adventure-btn {
+  background: $gradient-primary;
+  color: $white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $transition;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-medium;
+  }
+
+  i {
+    font-size: 1rem;
+  }
+}
+
+.loading,
+.no-adventures,
+.access-denied {
+  text-align: center;
+  padding: 3rem;
+  color: $text-light;
+
+  i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    color: $primary-color;
+  }
+
+  p {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.access-denied {
+  i {
+    color: #e53e3e;
+  }
+}
+
+.adventures-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.adventure-card {
+  background: $white;
+  border: 2px solid $light-bg;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: $transition;
+  box-shadow: $shadow-light;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: $shadow-medium;
+    border-color: $primary-color;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.2rem;
+  }
+}
+
+.adventure-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+
+  h3 {
+    color: $text-dark;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+    flex: 1;
+
+    @media (max-width: 480px) {
+      font-size: 1.2rem;
+    }
+  }
+}
+
+.creator-badge {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: $white;
+  padding: 0.3rem 0.7rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+
+  i {
+    font-size: 0.7rem;
+  }
+}
+
+.adventure-description {
+  color: $text-light;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.adventure-places {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: $light-bg;
+  border-radius: 8px;
+
+  h4 {
+    color: $primary-color;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 0.9rem;
+    }
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  li {
+    display: flex;
+    gap: 0.8rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .place-number {
+      color: $primary-color;
+      font-weight: 700;
+      min-width: 25px;
+    }
+
+    strong {
+      color: $text-dark;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .place-desc {
+      color: $text-light;
+      font-size: 0.85rem;
+      display: block;
+    }
+  }
+}
+
+.adventure-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid $light-bg;
+  margin-top: 1rem;
+}
+
+.adventure-date {
+  color: $text-light;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  i {
+    font-size: 0.8rem;
+  }
+}
+
+.view-adventure-btn {
+  background: $gradient-secondary;
+  color: $white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 15px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: $transition;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-light;
+  }
+
+  i {
+    font-size: 0.8rem;
+  }
+}
+
