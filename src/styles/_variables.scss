@@ -1,0 +1,32 @@
+// Variabili SCSS
+
+// Colori
+$primary-color: #667eea;
+$secondary-color: #764ba2;
+$accent-color: #f093fb;
+$text-dark: #2d3748;
+$text-light: #718096;
+$white: #ffffff;
+$light-bg: #f7fafc;
+
+// Gradients
+$gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+
+// Shadows
+$shadow-light: 0 4px 6px rgba(0, 0, 0, 0.1);
+$shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.15);
+$shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.2);
+
+// Spacing & Sizing
+$border-radius: 12px;
+$transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+// Export per uso in JavaScript (se necessario)
+:export {
+  primaryColor: $primary-color;
+  secondaryColor: $secondary-color;
+  accentColor: $accent-color;
+}
+
+

@@ -1,0 +1,89 @@
+@import './variables';
+
+// Ottimizzazioni specifiche per dispositivi mobili
+
+// Migliora la leggibilità del testo su schermi piccoli
+@media (max-width: 480px) {
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  // Aumenta dimensione font minima per leggibilità
+  p, span, label {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+
+  // Migliora spaziatura touch
+  button, a, input, textarea {
+    -webkit-tap-highlight-color: rgba(102, 126, 234, 0.2);
+  }
+}
+
+// Prevenire zoom su input focus (iOS Safari)
+@media (max-width: 768px) {
+  input[type='text'],
+  input[type='email'],
+  input[type='password'],
+  textarea,
+  select {
+    font-size: 16px; // Previene zoom automatico su iOS
+  }
+}
+
+// Smooth scrolling su mobile
+@media (max-width: 768px) {
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+// Fix per viewport su mobile
+@supports (-webkit-touch-callout: none) {
+  // iOS Safari fix
+  .hero,
+  .login-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+
+// Ottimizza performance animazioni su mobile
+@media (max-width: 768px) {
+  .floating-element,
+  .hero::before,
+  .hero::after {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+}
+
+// Nascondi elementi decorativi pesanti su mobile
+@media (max-width: 480px) {
+  .hero::after {
+    display: none; // Rimuovi animazione costosa su mobile piccolo
+  }
+}
+
+// Ottimizza scrollbar su mobile
+.votes-table-container,
+.modal-content {
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $light-bg;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $primary-color;
+    border-radius: 10px;
+
+    &:hover {
+      background: $secondary-color;
+    }
+  }
+}
+

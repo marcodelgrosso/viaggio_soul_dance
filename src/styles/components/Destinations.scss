@@ -1,0 +1,395 @@
+@import '../variables';
+
+.destinations {
+  padding: 6rem 0;
+  background: $light-bg;
+
+  @media (max-width: 1024px) {
+    padding: 4rem 0;
+  }
+
+  @media (max-width: 768px) {
+    padding: 3rem 0;
+  }
+
+  @media (max-width: 480px) {
+    padding: 2.5rem 0;
+  }
+
+  h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: $text-dark;
+    margin-bottom: 1rem;
+    padding: 0 1rem;
+
+    @media (max-width: 1024px) {
+      font-size: 2.2rem;
+    }
+
+    @media (max-width: 768px) {
+      font-size: 2rem;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 1.8rem;
+      margin-bottom: 0.8rem;
+    }
+  }
+}
+
+.section-subtitle {
+  text-align: center;
+  font-size: 1.2rem;
+  color: $text-light;
+  margin-bottom: 3rem;
+  padding: 0 1rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0 1rem;
+  }
+}
+
+.destinations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-top: 3rem;
+
+  // Responsive grid
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+}
+
+.destination-card {
+  background: $white;
+  border-radius: $border-radius;
+  overflow: hidden;
+  box-shadow: $shadow-light;
+  transition: $transition;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &:hover {
+    transform: translateY(-10px);
+    box-shadow: $shadow-heavy;
+
+    .card-image img {
+      transform: scale(1.1);
+    }
+  }
+
+  @media (max-width: 768px) {
+    &:hover {
+      transform: translateY(-5px);
+    }
+  }
+
+  // Touch feedback su mobile
+  &:active {
+    @media (max-width: 768px) {
+      transform: scale(0.98);
+    }
+  }
+}
+
+.user-vote-badge-card {
+  background: $light-bg;
+  padding: 0.8rem 1rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-left: 4px solid;
+  box-shadow: $shadow-light;
+
+  i {
+    font-size: 1.2rem;
+  }
+
+  &.vote-yes-card {
+    border-left-color: #48bb78;
+    background: linear-gradient(135deg, rgba(72, 187, 120, 0.1), rgba(56, 161, 105, 0.05));
+    color: #48bb78;
+  }
+
+  &.vote-no-card {
+    border-left-color: #f56565;
+    background: linear-gradient(135deg, rgba(245, 101, 101, 0.1), rgba(229, 62, 62, 0.05));
+    color: #f56565;
+  }
+}
+
+.card-image {
+  position: relative;
+  height: 250px;
+  overflow: hidden;
+  background-color: $light-bg;
+  background-image: linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+    linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+    linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: $transition;
+    display: block;
+    background-color: $light-bg;
+  }
+}
+
+.price-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  box-shadow: $shadow-light;
+  z-index: 2;
+
+  .price-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    color: $primary-color;
+    font-size: 0.9rem;
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+.price-details {
+  background: $light-bg;
+  padding: 1rem;
+  border-radius: $border-radius;
+  margin: 1rem 0;
+  border-left: 4px solid $primary-color;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.5rem 0;
+  padding: 0.3rem 0;
+}
+
+.price-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: $text-light;
+  font-weight: 500;
+  font-size: 0.9rem;
+
+  i {
+    color: $primary-color;
+    font-size: 0.9rem;
+  }
+}
+
+.price-value {
+  font-weight: 600;
+  color: $primary-color;
+  font-size: 1rem;
+}
+
+.price-actions {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.flight-details-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: $gradient-primary;
+  color: $white;
+  text-decoration: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: $transition;
+  box-shadow: $shadow-light;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-medium;
+    color: $white;
+    text-decoration: none;
+  }
+
+  i {
+    font-size: 0.8rem;
+  }
+}
+
+.card-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+
+  @media (max-width: 768px) {
+    padding: 1.2rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: $text-dark;
+    margin-bottom: 0.5rem;
+
+    @media (max-width: 480px) {
+      font-size: 1.2rem;
+      margin-bottom: 0.4rem;
+    }
+  }
+
+  p {
+    color: $text-light;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+
+    @media (max-width: 480px) {
+      font-size: 0.9rem;
+      margin-bottom: 0.8rem;
+    }
+  }
+}
+
+.card-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.feature {
+  background: $light-bg;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: $text-dark;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+
+  i {
+    color: $primary-color;
+  }
+}
+
+.card-button {
+  width: 100%;
+  background: $gradient-primary;
+  color: $white;
+  border: none;
+  padding: 0.8rem 1rem;
+  border-radius: $border-radius;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $transition;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px; // Touch target
+
+  @media (max-width: 480px) {
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-medium;
+  }
+
+  &:active {
+    @media (max-width: 768px) {
+      transform: scale(0.98);
+    }
+  }
+}
+
+.card-vote-button {
+  width: 100%;
+  background: $gradient-secondary;
+  color: $white;
+  border: none;
+  padding: 0.8rem 1rem;
+  border-radius: $border-radius;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $transition;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  min-height: 44px; // Touch target
+
+  @media (max-width: 480px) {
+    padding: 0.7rem 0.9rem;
+    font-size: 0.9rem;
+    margin-top: 0.4rem;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-medium;
+  }
+
+  &:active {
+    @media (max-width: 768px) {
+      transform: scale(0.98);
+    }
+  }
+}
+
+.card-buttons-container {
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
+  margin-top: auto; // Spinge i bottoni in fondo alla card
+}
+
+

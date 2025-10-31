@@ -1,0 +1,232 @@
+@import '../variables';
+
+.hero {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  background: linear-gradient(135deg, #4A90E2 0%, #50C9CE 50%, #7BA7E4 100%);
+  position: relative;
+  overflow: hidden;
+  padding-top: calc(60px + 2rem); // Spazio per main header
+
+  @media (max-width: 768px) {
+    min-height: auto;
+    flex-direction: column;
+    padding-top: calc(55px + 1rem);
+  }
+
+  @media (max-width: 480px) {
+    padding-top: calc(50px + 0.5rem);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><path d="M0,60 Q30,20 60,60 T120,60" fill="none" stroke="white" stroke-width="0.5" opacity="0.3"><animate attributeName="d" values="M0,60 Q30,20 60,60 T120,60;M0,60 Q30,100 60,60 T120,60;M0,60 Q30,20 60,60 T120,60" dur="8s" repeatCount="indefinite"/></path></svg>');
+    background-size: 200px 200px;
+    animation: moveBackground 20s linear infinite;
+    opacity: 0.4;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="10" cy="10" r="1" fill="white" opacity="0.3"/><circle cx="30" cy="30" r="1" fill="white" opacity="0.3"/><circle cx="50" cy="20" r="1" fill="white" opacity="0.3"/><circle cx="70" cy="40" r="1" fill="white" opacity="0.3"/><circle cx="90" cy="30" r="1" fill="white" opacity="0.3"/></svg>');
+    animation: rotateClouds 25s linear infinite;
+  }
+}
+
+@keyframes rotateClouds {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.hero-content {
+  flex: 1;
+  padding: 0 2rem;
+  z-index: 2;
+  position: relative;
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: $white;
+  margin-bottom: 1rem;
+  line-height: 1.2;
+
+  @media (max-width: 1024px) {
+    font-size: 3rem;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 2rem;
+  }
+
+  @media (max-width: 320px) {
+    font-size: 1.7rem;
+  }
+}
+
+.travel-dates {
+  font-size: 1.5rem;
+  color: $accent-color;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+  @media (max-width: 1024px) {
+    font-size: 1.3rem;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1rem;
+  }
+}
+
+.hero p {
+  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 2rem;
+  font-weight: 300;
+
+  @media (max-width: 1024px) {
+    font-size: 1.2rem;
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    margin-bottom: 1.2rem;
+  }
+}
+
+.cta-button {
+  background: $white;
+  color: $primary-color;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: $border-radius;
+  cursor: pointer;
+  transition: $transition;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: $shadow-medium;
+  min-height: 44px; // Touch target
+  min-width: 200px;
+
+  @media (max-width: 768px) {
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0.8rem 1.2rem;
+    font-size: 0.95rem;
+    width: 100%;
+    max-width: 280px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-heavy;
+  }
+
+  &:active {
+    @media (max-width: 768px) {
+      transform: scale(0.98);
+    }
+  }
+}
+
+.hero-image {
+  flex: 1;
+  position: relative;
+  height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-elements {
+  position: relative;
+  width: 300px;
+  height: 300px;
+}
+
+.floating-element {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: $white;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  animation: float 8s ease-in-out infinite;
+  transition: all 0.3s;
+
+  &:hover {
+    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.35);
+  }
+
+  &.element-1 {
+    top: 20%;
+    left: 20%;
+    animation-delay: 0s;
+  }
+
+  &.element-2 {
+    top: 60%;
+    right: 20%;
+    animation-delay: 2.5s;
+  }
+
+  &.element-3 {
+    bottom: 20%;
+    left: 50%;
+    animation-delay: 5s;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-25px) rotate(120deg);
+  }
+  66% {
+    transform: translateY(-15px) rotate(240deg);
+  }
+}
+
+
