@@ -1,0 +1,843 @@
+@import '../variables';
+
+.adventure-voting-page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (max-width: 768px) {
+    padding: 1rem;
+  }
+
+  .voting-page-loading,
+  .voting-page-error {
+    text-align: center;
+    padding: 3rem;
+    color: $text-light;
+
+    i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+      color: $primary-color;
+    }
+
+    p {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+
+    .back-btn {
+      padding: 0.75rem 1.5rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 auto;
+      transition: background 0.3s ease;
+
+      &:hover {
+        background: #5568d3;
+      }
+    }
+  }
+
+  .voting-page-error {
+    i {
+      color: #e53e3e;
+    }
+  }
+
+  .voting-page-header {
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .back-btn {
+      padding: 0.75rem 1.5rem;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.3s ease;
+
+      &:hover {
+        background: #5568d3;
+      }
+
+      i {
+        font-size: 0.9rem;
+      }
+    }
+
+    .header-content {
+      flex: 1;
+
+      h1 {
+        font-size: 2rem;
+        color: $text-dark;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+
+        i {
+          color: $primary-color;
+        }
+
+        @media (max-width: 768px) {
+          font-size: 1.5rem;
+        }
+      }
+    }
+  }
+
+  .voting-page-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  // Sezione Grafico
+  .voting-chart-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    @media (max-width: 768px) {
+      padding: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      color: $text-dark;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      i {
+        color: $primary-color;
+      }
+    }
+  }
+
+  .votes-chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .chart-item {
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+
+    .chart-destination-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: $text-dark;
+      margin-bottom: 1rem;
+    }
+
+    .chart-bars {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .chart-bar-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+
+      .chart-bar-label {
+        min-width: 60px;
+        font-weight: 600;
+        color: $text-dark;
+        font-size: 0.9rem;
+      }
+
+      .chart-bar-wrapper {
+        flex: 1;
+        height: 30px;
+        background: #e2e8f0;
+        border-radius: 6px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .chart-bar {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 0.5rem;
+        border-radius: 6px;
+        transition: width 0.3s ease;
+        min-width: 40px;
+
+        .chart-bar-value {
+          color: white;
+          font-weight: 700;
+          font-size: 0.85rem;
+        }
+
+        &.chart-bar-yes {
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+
+        &.chart-bar-no {
+          background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+        }
+
+        &.chart-bar-proponi {
+          background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+      }
+    }
+
+    .chart-total {
+      text-align: right;
+      font-weight: 600;
+      color: $text-light;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+  }
+
+  // Toggle Vista
+  .view-mode-toggle-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .view-mode-toggle {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      color: $text-dark;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+
+      i {
+        color: $primary-color;
+      }
+
+      &:hover {
+        border-color: $primary-color;
+        background: rgba(102, 126, 234, 0.05);
+      }
+
+      &.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+        color: white;
+
+        i {
+          color: white;
+        }
+      }
+    }
+  }
+
+  // Sezione riepilogo
+  .voting-summary-section,
+  .voting-details-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    @media (max-width: 768px) {
+      padding: 1.5rem;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      color: $text-dark;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      i {
+        color: $primary-color;
+      }
+    }
+  }
+
+  // Statistiche generali
+  .summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .summary-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+
+    .stat-icon {
+      width: 60px;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      i {
+        font-size: 1.5rem;
+        color: white;
+      }
+    }
+
+    .stat-content {
+      flex: 1;
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: white;
+        line-height: 1;
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+      }
+    }
+  }
+
+  // Lista destinazioni con votazioni
+  .destinations-voting-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .destination-voting-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: $primary-color;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    }
+  }
+
+  .destination-voting-header {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    align-items: flex-start;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      padding: 1rem;
+    }
+
+    .destination-voting-image {
+      width: 120px;
+      min-width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f1f5f9;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      @media (max-width: 768px) {
+        width: 100%;
+        height: 200px;
+      }
+    }
+
+    .destination-voting-info {
+      flex: 1;
+
+      h3 {
+        margin: 0 0 0.5rem 0;
+        color: $text-dark;
+        font-size: 1.3rem;
+        font-weight: 700;
+      }
+
+      .destination-description {
+        color: $text-light;
+        margin-bottom: 0.75rem;
+        line-height: 1.6;
+      }
+
+      .destination-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      .destination-tag {
+        background: #e2e8f0;
+        color: #64748b;
+        padding: 0.25rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 400;
+        border: 1px solid #cbd5e1;
+      }
+    }
+
+    .expand-toggle-btn {
+      background: transparent;
+      border: 2px solid #e2e8f0;
+      color: $primary-color;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+
+      &:hover {
+        border-color: $primary-color;
+        background: rgba(102, 126, 234, 0.1);
+      }
+
+      i {
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  // Statistiche voti per destinazione
+  .destination-voting-stats {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: #f8fafc;
+    border-top: 2px solid #e2e8f0;
+    flex-wrap: wrap;
+
+    @media (max-width: 480px) {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .vote-stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      flex: 1;
+      min-width: 140px;
+
+      i {
+        font-size: 1.1rem;
+      }
+
+      .stat-label {
+        flex: 1;
+        color: $text-light;
+        font-size: 0.9rem;
+      }
+
+      .stat-value {
+        font-weight: 700;
+        color: $text-dark;
+        font-size: 1.1rem;
+      }
+    }
+  }
+
+  // Lista dettagliata voti
+  .votes-detail-list {
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-top: 2px solid #e2e8f0;
+
+    .no-votes {
+      text-align: center;
+      padding: 2rem;
+      color: $text-light;
+
+      i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+        color: #cbd5e1;
+      }
+    }
+
+    .votes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .vote-item {
+      background: white;
+      padding: 1.25rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+
+      &:hover {
+        border-color: $primary-color;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+      }
+
+      .vote-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+
+        .vote-user-info {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: $text-dark;
+          font-weight: 600;
+
+          i {
+            color: $primary-color;
+          }
+
+          .vote-user-email {
+            font-size: 0.95rem;
+          }
+        }
+
+        .vote-type-badge {
+          padding: 0.4rem 0.9rem;
+          border-radius: 20px;
+          color: white;
+          font-size: 0.85rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          i {
+            font-size: 0.85rem;
+          }
+        }
+      }
+
+      .vote-comment {
+        margin: 0.75rem 0;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-left: 3px solid $primary-color;
+        border-radius: 4px;
+        display: flex;
+        gap: 0.75rem;
+
+        i {
+          color: $primary-color;
+          margin-top: 0.2rem;
+          flex-shrink: 0;
+        }
+
+        p {
+          margin: 0;
+          color: $text-dark;
+          line-height: 1.6;
+          flex: 1;
+        }
+      }
+
+      .vote-date {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: $text-light;
+        font-size: 0.85rem;
+
+        i {
+          font-size: 0.8rem;
+        }
+
+        .vote-updated {
+          margin-left: 0.5rem;
+          font-style: italic;
+          color: #94a3b8;
+        }
+      }
+    }
+  }
+
+  .no-destinations,
+  .no-participants {
+    text-align: center;
+    padding: 3rem;
+    color: $text-light;
+
+    i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+      color: #cbd5e1;
+    }
+
+    p {
+      font-size: 1.1rem;
+    }
+  }
+
+  // Vista per Partecipante
+  .participants-voting-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .participant-voting-card {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: $primary-color;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    }
+  }
+
+  .participant-voting-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem;
+    gap: 1rem;
+
+    .participant-voting-info {
+      display: flex;
+      gap: 1rem;
+      flex: 1;
+
+      .participant-avatar-large {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+
+        i {
+          font-size: 1.5rem;
+          color: white;
+        }
+      }
+
+      h3 {
+        margin: 0 0 0.5rem 0;
+        color: $text-dark;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+
+      .participant-meta {
+        color: $text-light;
+        font-size: 0.9rem;
+        margin: 0 0 0.75rem 0;
+      }
+
+      .participant-votes-summary {
+        font-size: 0.9rem;
+        color: $text-dark;
+        font-weight: 500;
+
+        .no-votes-badge {
+          display: inline-block;
+          padding: 0.25rem 0.75rem;
+          background: #fee2e2;
+          color: #991b1b;
+          border-radius: 12px;
+          font-size: 0.85rem;
+        }
+      }
+    }
+  }
+
+  .participant-votes-detail {
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-top: 2px solid #e2e8f0;
+  }
+
+  .participant-votes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .participant-vote-item {
+    background: white;
+    padding: 1.25rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    @media (min-width: 768px) {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+
+    .participant-vote-destination {
+      flex: 1;
+
+      .vote-destination-header {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+
+        .vote-destination-thumb {
+          width: 80px;
+          height: 80px;
+          border-radius: 8px;
+          object-fit: cover;
+          flex-shrink: 0;
+        }
+
+        h4 {
+          margin: 0 0 0.5rem 0;
+          color: $text-dark;
+          font-size: 1.1rem;
+          font-weight: 700;
+        }
+
+        .vote-destination-desc {
+          margin: 0;
+          color: $text-light;
+          font-size: 0.9rem;
+          line-height: 1.5;
+        }
+      }
+    }
+
+    .participant-vote-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-width: 200px;
+
+      .participant-vote-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: fit-content;
+
+        i {
+          font-size: 0.85rem;
+        }
+      }
+
+      .participant-vote-comment {
+        padding: 0.75rem;
+        background: #f8fafc;
+        border-left: 3px solid $primary-color;
+        border-radius: 4px;
+        display: flex;
+        gap: 0.75rem;
+
+        i {
+          color: $primary-color;
+          margin-top: 0.2rem;
+          flex-shrink: 0;
+        }
+
+        p {
+          margin: 0;
+          color: $text-dark;
+          line-height: 1.6;
+          font-size: 0.9rem;
+          flex: 1;
+        }
+      }
+
+      .participant-vote-date {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: $text-light;
+        font-size: 0.85rem;
+
+        i {
+          font-size: 0.8rem;
+        }
+      }
+    }
+  }
+}
+

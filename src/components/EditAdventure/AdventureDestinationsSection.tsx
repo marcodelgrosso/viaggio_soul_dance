@@ -72,6 +72,11 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
         {adventure.destinations.length > 0 ? (
           adventure.destinations.map((destination) => (
             <div key={destination.id} className="destination-card-editable">
+              {destination.image_url && (
+                <div className="destination-card-image">
+                  <img src={destination.image_url} alt={destination.name} />
+                </div>
+              )}
               <div className="card-header">
                 <div className="card-title">
                   <h3>{destination.name}</h3>
@@ -99,6 +104,15 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
               </div>
 
               <div className="card-content">
+                {destination.tags && destination.tags.length > 0 && (
+                  <div className="destination-tags">
+                    {destination.tags.map((tag, index) => (
+                      <span key={index} className="destination-tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="places-summary">
                   <h4>
                     <i className="fas fa-map-marker-alt"></i>

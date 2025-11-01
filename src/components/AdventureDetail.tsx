@@ -9,9 +9,10 @@ interface AdventureDetailProps {
   adventureId: string;
   onBack: () => void;
   onEdit?: (adventureId: string) => void;
+  onViewVoting?: (adventureId: string) => void;
 }
 
-const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, onEdit }) => {
+const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, onEdit, onViewVoting }) => {
   const { user, actualIsSuperAdmin } = useAuth();
   const [adventure, setAdventure] = useState<AdventureWithDestinations | null>(null);
   const [participants, setParticipants] = useState<AdventureParticipant[]>([]);
@@ -19,6 +20,9 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
   const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
   const [canManageParticipants, setCanManageParticipants] = useState(false);
   const [canEditAdventure, setCanEditAdventure] = useState(false);
+  const [showVoteModal, setShowVoteModal] = useState(false);
+  const [pendingVote, setPendingVote] = useState<{ destinationId: string; voteType: 'yes' | 'no' | 'proponi' } | null>(null);
+  const [voteComment, setVoteComment] = useState('');
 
   useEffect(() => {
     loadAdventureDetails();
@@ -83,6 +87,7 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
 
           const voteCountYes = votesWithEmails.filter(v => v.vote_type === 'yes').length;
           const voteCountNo = votesWithEmails.filter(v => v.vote_type === 'no').length;
+          const voteCountProponi = votesWithEmails.filter(v => v.vote_type === 'proponi').length;
           const userVote = user ? votesWithEmails.find(v => v.user_id === user.id) || null : null;
 
           return {
@@ -91,7 +96,10 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             votes: votesWithEmails,
             vote_count_yes: voteCountYes,
             vote_count_no: voteCountNo,
+            vote_count_proponi: voteCountProponi,
             user_vote: userVote,
+            // I tags vengono restituiti come array JSON da Supabase
+            tags: destination.tags ? (Array.isArray(destination.tags) ? destination.tags : JSON.parse(destination.tags as any)) : [],
           };
         })
       );
@@ -153,25 +161,40 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
     }
   };
 
-  const handleVote = async (destinationId: string, voteType: 'yes' | 'no', comment?: string) => {
+  const handleVoteClick = (destinationId: string, voteType: 'yes' | 'no' | 'proponi') => {
     if (!user) return;
+    setPendingVote({ destinationId, voteType });
+    setVoteComment('');
+    setShowVoteModal(true);
+  };
+
+  const handleVoteConfirm = async () => {
+    if (!user || !pendingVote) return;
+
+    // Il commento è obbligatorio solo per "proponi"
+    if (pendingVote.voteType === 'proponi' && !voteComment.trim()) {
+      alert('Il commento è obbligatorio per la proposta di modifiche');
+      return;
+    }
 
     try {
       // Verifica se esiste già un voto
       const { data: existingVote } = await supabase
         .from('adventure_destination_votes')
         .select('*')
-        .eq('destination_id', destinationId)
+        .eq('destination_id', pendingVote.destinationId)
         .eq('user_id', user.id)
         .single();
+
+      const commentToSave = voteComment.trim() || null;
 
       if (existingVote) {
         // Aggiorna voto esistente
         const { error } = await supabase
           .from('adventure_destination_votes')
           .update({
-            vote_type: voteType,
-            comment: comment || null,
+            vote_type: pendingVote.voteType,
+            comment: commentToSave,
             updated_at: new Date().toISOString(),
           })
           .eq('id', existingVote.id);
@@ -182,21 +205,30 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
         const { error } = await supabase
           .from('adventure_destination_votes')
           .insert({
-            destination_id: destinationId,
+            destination_id: pendingVote.destinationId,
             user_id: user.id,
-            vote_type: voteType,
-            comment: comment || null,
+            vote_type: pendingVote.voteType,
+            comment: commentToSave,
           });
 
         if (error) throw error;
       }
 
-      // Ricarica i dettagli
+      // Chiudi modal e ricarica
+      setShowVoteModal(false);
+      setPendingVote(null);
+      setVoteComment('');
       loadAdventureDetails();
     } catch (error) {
       console.error('Errore nella votazione:', error);
       alert('Errore nel salvataggio del voto');
     }
+  };
+
+  const handleVoteCancel = () => {
+    setShowVoteModal(false);
+    setPendingVote(null);
+    setVoteComment('');
   };
 
   const handleRemoveParticipant = async (participantId: string) => {
@@ -248,16 +280,28 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
         </button>
         <div className="header-content">
           <h1>{adventure.name}</h1>
-          {canEditAdventure && onEdit && (
-            <button
-              className="edit-adventure-btn"
-              title="Modifica avventura"
-              onClick={() => onEdit(adventureId)}
-            >
-              <i className="fas fa-edit"></i>
-              Modifica
-            </button>
-          )}
+          <div className="header-actions">
+            {onViewVoting && (
+              <button
+                className="view-voting-btn"
+                title="Visualizza riepilogo votazioni"
+                onClick={() => onViewVoting(adventureId)}
+              >
+                <i className="fas fa-chart-bar"></i>
+                Votazioni
+              </button>
+            )}
+            {canEditAdventure && onEdit && (
+              <button
+                className="edit-adventure-btn"
+                title="Modifica avventura"
+                onClick={() => onEdit(adventureId)}
+              >
+                <i className="fas fa-edit"></i>
+                Modifica
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -309,11 +353,26 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             {adventure.destinations.length > 0 ? (
               adventure.destinations.map((destination) => (
                 <div key={destination.id} className="destination-card">
+                  {destination.image_url && (
+                    <div className="destination-image">
+                      <img src={destination.image_url} alt={destination.name} />
+                    </div>
+                  )}
                   <div className="destination-header">
                     <h3>{destination.name}</h3>
                   </div>
                   {destination.description && (
                     <p className="destination-description">{destination.description}</p>
+                  )}
+                  
+                  {destination.tags && destination.tags.length > 0 && (
+                    <div className="destination-tags">
+                      {destination.tags.map((tag, index) => (
+                        <span key={index} className="destination-tag">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   )}
 
                   <div className="destination-places">
@@ -340,22 +399,33 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
                         <i className="fas fa-thumbs-down"></i>
                         <span>{destination.vote_count_no || 0}</span>
                       </div>
+                      <div className="vote-stat-item">
+                        <i className="fas fa-lightbulb"></i>
+                        <span>{destination.vote_count_proponi || 0}</span>
+                      </div>
                     </div>
                     {user && (
                       <div className="vote-actions">
                         <button
-                          className={`vote-btn ${destination.user_vote?.vote_type === 'yes' ? 'active' : ''}`}
-                          onClick={() => handleVote(destination.id, 'yes')}
+                          className={`vote-btn vote-yes ${destination.user_vote?.vote_type === 'yes' ? 'active' : ''}`}
+                          onClick={() => handleVoteClick(destination.id, 'yes')}
                         >
                           <i className="fas fa-thumbs-up"></i>
                           Sì
                         </button>
                         <button
-                          className={`vote-btn ${destination.user_vote?.vote_type === 'no' ? 'active' : ''}`}
-                          onClick={() => handleVote(destination.id, 'no')}
+                          className={`vote-btn vote-no ${destination.user_vote?.vote_type === 'no' ? 'active' : ''}`}
+                          onClick={() => handleVoteClick(destination.id, 'no')}
                         >
                           <i className="fas fa-thumbs-down"></i>
                           No
+                        </button>
+                        <button
+                          className={`vote-btn vote-proponi ${destination.user_vote?.vote_type === 'proponi' ? 'active' : ''}`}
+                          onClick={() => handleVoteClick(destination.id, 'proponi')}
+                        >
+                          <i className="fas fa-lightbulb"></i>
+                          Proponi
                         </button>
                       </div>
                     )}
@@ -420,6 +490,67 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
         onClose={() => setShowAddParticipantModal(false)}
         onSuccess={loadAdventureDetails}
       />
+
+      {/* Modal per il commento del voto */}
+      {showVoteModal && pendingVote && (
+        <div className="modal-overlay" onClick={handleVoteCancel}>
+          <div className="modal-content vote-comment-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>
+                <i className={`fas fa-${
+                  pendingVote.voteType === 'yes' ? 'thumbs-up' :
+                  pendingVote.voteType === 'no' ? 'thumbs-down' :
+                  'lightbulb'
+                }`}></i>
+                {pendingVote.voteType === 'yes' ? 'Vota: Ti Piace' :
+                 pendingVote.voteType === 'no' ? 'Vota: Non ti Convince' :
+                 'Vota: Proponi Modifiche'}
+              </h3>
+              <button className="modal-close" onClick={handleVoteCancel}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="vote-modal-hint">
+                {pendingVote.voteType === 'proponi' 
+                  ? 'Il commento è obbligatorio per proporre modifiche. Spiega quali modifiche vorresti vedere.'
+                  : pendingVote.voteType === 'yes'
+                  ? 'Aggiungi un commento opzionale per spiegare perché ti piace questa destinazione.'
+                  : 'Aggiungi un commento opzionale per spiegare perché non ti convince questa destinazione.'}
+              </p>
+              <div className="form-group">
+                <label htmlFor="voteComment">
+                  <i className="fas fa-comment"></i> Commento {pendingVote.voteType === 'proponi' ? '*' : '(opzionale)'}
+                </label>
+                <textarea
+                  id="voteComment"
+                  value={voteComment}
+                  onChange={(e) => setVoteComment(e.target.value)}
+                  placeholder={
+                    pendingVote.voteType === 'yes' ? 'Spiega perché ti piace questa destinazione... (opzionale)' :
+                    pendingVote.voteType === 'no' ? 'Spiega perché non ti convince... (opzionale)' :
+                    'Spiega quali modifiche vorresti proporre... (obbligatorio)'
+                  }
+                  rows={5}
+                  required={pendingVote.voteType === 'proponi'}
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={handleVoteCancel}>
+                <i className="fas fa-times"></i> Annulla
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleVoteConfirm}
+                disabled={pendingVote.voteType === 'proponi' && !voteComment.trim()}
+              >
+                <i className="fas fa-check"></i> Conferma Voto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -7,12 +7,14 @@ import RoleManagement from './RoleManagement';
 import AdventuresManager from './AdventuresManager';
 import AdventureDetail from './AdventureDetail';
 import EditAdventurePage from './EditAdventurePage';
+import AdventureVotingPage from './AdventureVotingPage';
 import { useAuth } from '../context/AuthContext';
 
 const MainContent: React.FC = () => {
   const { user, isAdmin, isSuperAdmin, hasPermission, loading, role, selectedRole, actualIsSuperAdmin, permissions } = useAuth();
   const [selectedAdventureId, setSelectedAdventureId] = useState<string | null>(null);
   const [editAdventureId, setEditAdventureId] = useState<string | null>(null);
+  const [votingAdventureId, setVotingAdventureId] = useState<string | null>(null);
 
   // Debug
   console.log('MainContent render:', { 
@@ -48,15 +50,22 @@ const MainContent: React.FC = () => {
                   adventureId={editAdventureId}
                   onBack={() => setEditAdventureId(null)}
                 />
+              ) : votingAdventureId ? (
+                <AdventureVotingPage
+                  adventureId={votingAdventureId}
+                  onBack={() => setVotingAdventureId(null)}
+                />
               ) : selectedAdventureId ? (
                 <AdventureDetail
                   adventureId={selectedAdventureId}
                   onBack={() => setSelectedAdventureId(null)}
                   onEdit={(adventureId) => setEditAdventureId(adventureId)}
+                  onViewVoting={(adventureId) => setVotingAdventureId(adventureId)}
                 />
               ) : (
                 <AdventuresManager
                   onViewAdventure={(adventureId) => setSelectedAdventureId(adventureId)}
+                  onViewVoting={(adventureId) => setVotingAdventureId(adventureId)}
                 />
               )}
             </div>

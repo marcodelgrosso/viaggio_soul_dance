@@ -145,6 +145,8 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
           return {
             ...destination,
             places: placesData || [],
+            // I tags vengono restituiti come array JSON da Supabase
+            tags: destination.tags ? (Array.isArray(destination.tags) ? destination.tags : JSON.parse(destination.tags as any)) : [],
           };
         })
       );

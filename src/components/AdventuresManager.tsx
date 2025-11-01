@@ -8,15 +8,17 @@ import '../styles/components/AdventuresManager.scss';
 
 interface AdventuresManagerProps {
   onViewAdventure?: (adventureId: string) => void;
+  onViewVoting?: (adventureId: string) => void;
 }
 
-const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure }) => {
+const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, onViewVoting }) => {
   const { user, hasPermission, isSuperAdmin, actualIsSuperAdmin, permissions } = useAuth();
   const [adventures, setAdventures] = useState<AdventureWithDestinations[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
   const [adventureForParticipants, setAdventureForParticipants] = useState<string | null>(null);
+  const [expandedDestinations, setExpandedDestinations] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadAdventures();
@@ -51,9 +53,15 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure }
             .select('*')
             .eq('adventure_id', adventure.id);
 
+          // Processa le destinazioni per includere tags (se sono array JSON)
+          const processedDestinations = (destinationsData || []).map((dest: any) => ({
+            ...dest,
+            tags: dest.tags ? (Array.isArray(dest.tags) ? dest.tags : JSON.parse(dest.tags as any)) : [],
+          }));
+
           return {
             ...adventure,
-            destinations: destinationsData || [],
+            destinations: processedDestinations,
             creators: [], // Caricato separatamente se necessario
             participants: participantsData || [],
           };
@@ -133,21 +141,56 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure }
               )}
 
               <div className="adventure-destinations">
-                <h4>
-                  <i className="fas fa-map"></i>
-                  Destinazioni Proposte ({adventure.destinations.length})
-                </h4>
-                <ul>
-                  {adventure.destinations.map((destination, index) => (
-                    <li key={destination.id}>
-                      <span className="destination-number">{index + 1}.</span>
-                      <div>
-                        <strong>{destination.name}</strong>
-                        {destination.description && <span className="destination-desc">{destination.description}</span>}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <button
+                  className="destinations-toggle"
+                  onClick={() => {
+                    const newExpanded = new Set(expandedDestinations);
+                    if (newExpanded.has(adventure.id)) {
+                      newExpanded.delete(adventure.id);
+                    } else {
+                      newExpanded.add(adventure.id);
+                    }
+                    setExpandedDestinations(newExpanded);
+                  }}
+                >
+                  <h4>
+                    <i className="fas fa-map"></i>
+                    Destinazioni Proposte ({adventure.destinations.length})
+                  </h4>
+                  <i className={`fas fa-chevron-${expandedDestinations.has(adventure.id) ? 'up' : 'down'}`}></i>
+                </button>
+                {expandedDestinations.has(adventure.id) && (
+                  <div className="destinations-list">
+                    {adventure.destinations.length > 0 ? (
+                      adventure.destinations.map((destination) => (
+                        <div key={destination.id} className="destination-item">
+                          {destination.image_url && (
+                            <div className="destination-item-image">
+                              <img src={destination.image_url} alt={destination.name} />
+                            </div>
+                          )}
+                          <div className="destination-item-content">
+                            <strong className="destination-item-name">{destination.name}</strong>
+                            {destination.description && (
+                              <p className="destination-item-desc">{destination.description}</p>
+                            )}
+                            {destination.tags && destination.tags.length > 0 && (
+                              <div className="destination-item-tags">
+                                {destination.tags.map((tag: string, index: number) => (
+                                  <span key={index} className="destination-item-tag">
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="no-destinations">Nessuna destinazione proposta ancora.</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="adventure-footer">
@@ -169,16 +212,28 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure }
                       <i className="fas fa-user-plus"></i>
                     </button>
                   )}
+                  {onViewVoting && (
+                    <button
+                      className="view-voting-icon-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewVoting(adventure.id);
+                      }}
+                      title="Visualizza votazioni"
+                    >
+                      <i className="fas fa-chart-bar"></i>
+                    </button>
+                  )}
                   <button
-                    className="view-adventure-btn"
+                    className="view-adventure-icon-btn"
                     onClick={() => {
                       if (onViewAdventure) {
                         onViewAdventure(adventure.id);
                       }
                     }}
+                    title="Visualizza dettagli"
                   >
                     <i className="fas fa-eye"></i>
-                    Visualizza
                   </button>
                 </div>
               </div>

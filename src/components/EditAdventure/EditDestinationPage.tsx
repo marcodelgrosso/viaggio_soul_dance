@@ -22,6 +22,9 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,6 +34,8 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
     if (destination) {
       setName(destination.name);
       setDescription(destination.description || '');
+      setImageUrl(destination.image_url || '');
+      setTags(destination.tags || []);
       setPlaces(
         destination.places.length > 0
           ? destination.places.map(p => ({ id: p.id, name: p.name, description: p.description || '' }))
@@ -53,6 +58,24 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
     const updated = [...places];
     updated[index] = { ...updated[index], [field]: value };
     setPlaces(updated);
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
+      setTags([...tags, tagInput.trim()]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleAddTag();
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,6 +103,8 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
         .update({
           name: name.trim(),
           description: description.trim() || null,
+          image_url: imageUrl.trim() || null,
+          tags: tags.length > 0 ? tags : null,
         })
         .eq('id', destination.id);
 
@@ -189,6 +214,75 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
               rows={4}
               disabled={loading}
             />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="destinationImage">
+              <i className="fas fa-image"></i> Immagine (URL) (opzionale)
+            </label>
+            <input
+              type="url"
+              id="destinationImage"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://example.com/immagine.jpg"
+              disabled={loading}
+            />
+            <p className="form-hint">
+              Inserisci l'URL di un'immagine rappresentativa della destinazione.
+            </p>
+            {imageUrl && (
+              <div className="image-preview">
+                <img src={imageUrl} alt="Anteprima" onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }} />
+              </div>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="destinationTags">
+              <i className="fas fa-tags"></i> Tag (opzionale)
+            </label>
+            <div className="tags-input-container">
+              <input
+                type="text"
+                id="destinationTags"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagInputKeyDown}
+                placeholder="Inserisci un tag e premi Invio"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="add-tag-btn"
+                onClick={handleAddTag}
+                disabled={loading || !tagInput.trim()}
+              >
+                <i className="fas fa-plus"></i>
+              </button>
+            </div>
+            {tags.length > 0 && (
+              <div className="tags-display">
+                {tags.map((tag, index) => (
+                  <span key={index} className="tag-item">
+                    {tag}
+                    <button
+                      type="button"
+                      className="remove-tag-btn"
+                      onClick={() => handleRemoveTag(tag)}
+                      disabled={loading}
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <p className="form-hint">
+              Aggiungi tag per categorizzare la destinazione (es: "Storia", "Cultura", "Gastronomia").
+            </p>
           </div>
 
           <div className="form-group">
