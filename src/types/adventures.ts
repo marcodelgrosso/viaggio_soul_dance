@@ -71,6 +71,7 @@ export interface AdventureDestinationWithPlaces extends AdventureDestination {
   vote_count_yes?: number;
   vote_count_no?: number;
   vote_count_proponi?: number;
+  total_votes?: number;
   user_vote?: AdventureDestinationVote | null;
 }
 

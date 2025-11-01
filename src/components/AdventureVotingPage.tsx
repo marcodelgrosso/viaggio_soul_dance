@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
 import { AdventureWithDestinations, AdventureDestinationWithPlaces } from '../types/adventures';
 import '../styles/components/AdventureVotingPage.scss';
 
@@ -12,7 +11,6 @@ interface AdventureVotingPageProps {
 type ViewMode = 'by-destination' | 'by-participant';
 
 const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, onBack }) => {
-  const { user } = useAuth();
   const [adventure, setAdventure] = useState<AdventureWithDestinations | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedDestinations, setExpandedDestinations] = useState<Set<string>>(new Set());
