@@ -76,16 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // 406 = Not Acceptable (spesso causato da RLS)
         // 42501 = permission denied
         // 42P01 = relation does not exist
+        const errorStatus = 'status' in roleError ? (roleError as any).status : undefined;
+        const errorStatusCode = 'statusCode' in roleError ? (roleError as any).statusCode : undefined;
         if (roleError.code === 'PGRST116' || 
             roleError.code === '42501' || 
             roleError.code === '42P01' ||
             roleError.message?.includes('relation') || 
-            roleError.message?.includes('permission denied') ||
+            roleError.message?.includes('permission denied') || 
             roleError.message?.includes('does not exist') ||
-            roleError.status === 406 ||
-            roleError.statusCode === 406) {
+            errorStatus === 406 ||
+            errorStatusCode === 406) {
           // Errori comuni che possiamo ignorare - l'utente avrà ruolo 'user' di default
-          if (roleError.code !== 'PGRST116' && roleError.status !== 406 && roleError.statusCode !== 406) {
+          if (roleError.code !== 'PGRST116' && errorStatus !== 406 && errorStatusCode !== 406) {
             console.warn('Errore nel caricamento ruolo (ignorato):', roleError.code, roleError.message);
           }
         } else {
@@ -97,7 +99,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let userRole: UserRole = roleData?.role || 'user';
       
       // Se non esiste un ruolo per l'utente e non c'è stato un errore grave, crealo
-      if (!roleData && (!roleError || roleError.code === 'PGRST116' || roleError.status === 406 || roleError.statusCode === 406)) {
+      const errorStatus = roleError && 'status' in roleError ? (roleError as any).status : undefined;
+      const errorStatusCode = roleError && 'statusCode' in roleError ? (roleError as any).statusCode : undefined;
+      if (!roleData && (!roleError || roleError.code === 'PGRST116' || errorStatus === 406 || errorStatusCode === 406)) {
         try {
           const { error: insertError } = await supabase
             .from('user_roles')

@@ -230,7 +230,7 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
             </section>
           )}
 
-          {destination.tags && destination.tags.length > 0 && (
+          {destination.tags && (Array.isArray(destination.tags) ? destination.tags : []).length > 0 && (
             <section className="destination-detail-section destination-tags-section">
               <h2>
                 <i className="fas fa-tags"></i>
@@ -238,7 +238,7 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
               </h2>
               <div className="section-content">
                 <div className="tags-list">
-                  {destination.tags.map((tag, index) => (
+                  {(Array.isArray(destination.tags) ? destination.tags : []).map((tag: string, index: number) => (
                     <span key={index} className="tag-item">
                       <i className="fas fa-check"></i>
                       {tag}
@@ -325,7 +325,7 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
                             <div>
                               <strong>Costo:</strong>
                               <span>
-                                €{transport.cost.toFixed(2)}
+                                €{transport.cost ? transport.cost.toFixed(2) : 'N/A'}
                                 <span className={`cost-type-badge ${transport.cost_type}`}>
                                   ({getCostTypeLabel(transport.cost_type)})
                                 </span>

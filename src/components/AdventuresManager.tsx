@@ -287,9 +287,9 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
                             {destination.description && (
                               <p className="destination-item-desc">{destination.description}</p>
                             )}
-                            {destination.tags && destination.tags.length > 0 && (
+                            {destination.tags && (Array.isArray(destination.tags) ? destination.tags : []).length > 0 && (
                               <div className="destination-item-tags">
-                                {destination.tags.map((tag: string, index: number) => (
+                                {(Array.isArray(destination.tags) ? destination.tags : []).map((tag: string, index: number) => (
                                   <span key={index} className="destination-item-tag">
                                     {tag}
                                   </span>
@@ -318,6 +318,7 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
                       className="accept-invitation-btn"
                       onClick={async (e) => {
                         e.stopPropagation();
+                        if (!user) return;
                         try {
                           const { error: updateError } = await supabase
                             .from('adventure_participants')

@@ -363,9 +363,9 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
                       {destination.description && (
                         <p className="destination-description">{destination.description}</p>
                       )}
-                      {destination.tags && destination.tags.length > 0 && (
+                      {destination.tags && (Array.isArray(destination.tags) ? destination.tags : []).length > 0 && (
                         <div className="destination-tags">
-                          {destination.tags.map((tag, index) => (
+                          {(Array.isArray(destination.tags) ? destination.tags : []).map((tag: string, index: number) => (
                             <span key={index} className="destination-tag">
                               {tag}
                             </span>

@@ -21,7 +21,6 @@ const BookingDatePicker: React.FC<BookingDatePickerProps> = ({
   const [selectedEndDate, setSelectedEndDate] = useState<Date | null>(
     arrivalDate ? new Date(arrivalDate) : null
   );
-  const [isSelecting, setIsSelecting] = useState(false);
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -156,7 +155,6 @@ const BookingDatePicker: React.FC<BookingDatePickerProps> = ({
       setSelectedStartDate(date);
       setSelectedEndDate(null);
       setHoverDate(null);
-      setIsSelecting(true);
       setIsOpen(true);
     } else {
       // Seconda selezione
@@ -176,7 +174,6 @@ const BookingDatePicker: React.FC<BookingDatePickerProps> = ({
         const endStr = formatDateForInput(date);
         onDatesChange(startStr, endStr);
       }
-      setIsSelecting(false);
       setHoverDate(null);
       // Chiudi il calendario dopo aver selezionato entrambe le date
       setTimeout(() => {
@@ -194,7 +191,6 @@ const BookingDatePicker: React.FC<BookingDatePickerProps> = ({
   const handleReset = () => {
     setSelectedStartDate(null);
     setSelectedEndDate(null);
-    setIsSelecting(false);
     setHoverDate(null);
     onDatesChange(null, null);
   };

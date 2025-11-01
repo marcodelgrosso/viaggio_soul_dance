@@ -35,7 +35,7 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
       setName(destination.name);
       setDescription(destination.description || '');
       setImageUrl(destination.image_url || '');
-      setTags(destination.tags || []);
+      setTags(Array.isArray(destination.tags) ? destination.tags : (destination.tags ? JSON.parse(destination.tags as any) : []));
       setPlaces(
         destination.places.length > 0
           ? destination.places.map(p => ({ id: p.id, name: p.name, description: p.description || '' }))

@@ -63,11 +63,11 @@ const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> 
       </div>
 
       <div className="participants-list-editable">
-        {adventure.participants.length > 0 ? (
+        {(adventure.participants || []).length > 0 ? (
           <div className="participants-grid">
-            {adventure.participants.map((participant) => {
+            {(adventure.participants || []).map((participant) => {
               // Verifica se il partecipante è anche un creator
-              const isCreator = adventure.creators.some(creator => creator.user_id === participant.user_id) || 
+              const isCreator = (adventure.creators || []).some(creator => creator.user_id === participant.user_id) || 
                                adventure.created_by === participant.user_id;
               
               return (

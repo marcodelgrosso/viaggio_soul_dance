@@ -104,9 +104,9 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
               </div>
 
               <div className="card-content">
-                {destination.tags && destination.tags.length > 0 && (
+                {destination.tags && (Array.isArray(destination.tags) ? destination.tags : []).length > 0 && (
                   <div className="destination-tags">
-                    {destination.tags.map((tag, index) => (
+                    {(Array.isArray(destination.tags) ? destination.tags : []).map((tag: string, index: number) => (
                       <span key={index} className="destination-tag">
                         {tag}
                       </span>

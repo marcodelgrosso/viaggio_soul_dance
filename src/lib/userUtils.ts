@@ -15,7 +15,8 @@ export const getUserDisplayName = async (userId: string): Promise<string> => {
     // Se c'è un errore 406 (RLS) o altri errori, gestiscili gracefully
     if (profileError) {
       // Se è un errore 406 o permission denied, prova con la funzione RPC
-      if (profileError.status === 406 || profileError.code === '42501' || 
+      const errorStatus = 'status' in profileError ? (profileError as any).status : undefined;
+      if (errorStatus === 406 || profileError.code === '42501' || 
           profileError.message?.includes('permission denied')) {
         console.warn('Errore RLS nel caricamento profilo, uso RPC:', profileError);
         // Prova con la funzione RPC che bypassa RLS
@@ -93,7 +94,8 @@ export const enrichParticipant = async (participant: any) => {
     
     // Se c'è un errore RLS, prova con la funzione RPC
     let profileData = profile;
-    if (profileError && (profileError.status === 406 || profileError.code === '42501')) {
+    const errorStatus = profileError && 'status' in profileError ? (profileError as any).status : undefined;
+    if (profileError && (errorStatus === 406 || profileError.code === '42501')) {
       try {
         const { data: profileRpc } = await supabase.rpc(
           'get_user_profile',

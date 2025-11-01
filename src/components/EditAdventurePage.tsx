@@ -283,7 +283,7 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
         {currentPage.type === 'add-participant' && (
           <AddParticipantPage
             adventureId={adventure.id}
-            currentParticipants={adventure.participants}
+            currentParticipants={adventure.participants || []}
             onBack={navigateBack}
             onSuccess={handleSuccessAndBack}
           />
