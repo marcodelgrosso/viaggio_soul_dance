@@ -54,6 +54,7 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure })
     if (!user) return;
 
     try {
+      setLoadingNotifications(true);
       const { data, error } = await supabase
         .from('user_notifications')
         .select('*')
@@ -70,6 +71,8 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure })
       setUnreadCount((data || []).filter(n => !n.read).length);
     } catch (err) {
       console.error('Errore nel caricamento delle notifiche:', err);
+    } finally {
+      setLoadingNotifications(false);
     }
   };
 
