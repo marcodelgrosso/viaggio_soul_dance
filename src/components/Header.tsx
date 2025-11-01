@@ -4,7 +4,7 @@ import LogoutModal from './LogoutModal';
 import '../styles/components/Header.scss';
 
 const Header: React.FC = () => {
-  const { email, isAdmin, isSuperAdmin, role, logout, previewMode, togglePreviewMode, isSuperAdmin: actualIsSuperAdmin, selectRole, selectedRole } = useAuth();
+  const { email, isAdmin, logout, isSuperAdmin: actualIsSuperAdmin, selectRole, selectedRole } = useAuth();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

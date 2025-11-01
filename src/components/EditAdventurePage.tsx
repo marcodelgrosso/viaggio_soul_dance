@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { AdventureWithDestinations } from '../types/adventures';
+import { AdventureWithDestinations, AdventureDestinationWithPlaces } from '../types/adventures';
 import AdventureInformationSection from './EditAdventure/AdventureInformationSection';
 import AdventureDestinationsSection from './EditAdventure/AdventureDestinationsSection';
 import AdventureParticipantsSection from './EditAdventure/AdventureParticipantsSection';
+import AddDestinationPage from './EditAdventure/AddDestinationPage';
+import EditDestinationPage from './EditAdventure/EditDestinationPage';
+import AddParticipantPage from './EditAdventure/AddParticipantPage';
 import '../styles/components/EditAdventurePage.scss';
 
 interface EditAdventurePageProps {
@@ -14,18 +17,74 @@ interface EditAdventurePageProps {
 
 type Section = 'information' | 'destinations' | 'participants';
 
+type PageType = 
+  | { type: 'section'; section: Section }
+  | { type: 'add-destination' }
+  | { type: 'edit-destination'; destination: AdventureDestinationWithPlaces }
+  | { type: 'add-participant' };
+
 const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBack }) => {
   const { user, actualIsSuperAdmin } = useAuth();
   const [adventure, setAdventure] = useState<AdventureWithDestinations | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState<Section>('information');
   const [canEdit, setCanEdit] = useState(false);
+  
+  // Stack di navigazione
+  const [pageStack, setPageStack] = useState<PageType[]>([
+    { type: 'section', section: 'information' }
+  ]);
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  
+  // Refs per evitare re-render non necessari
+  const isMountedRef = useRef(true);
+  const hasLoadedRef = useRef(false);
+  const lastAdventureIdRef = useRef<string | null>(null);
+  const lastUserIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
-    loadAdventureData();
-  }, [adventureId, user]);
+  const currentPage = pageStack[currentPageIndex];
 
-  const loadAdventureData = async () => {
+  // Navigazione
+  const navigateTo = (page: PageType) => {
+    // Rimuovi le pagine successive all'indice corrente se ce ne sono
+    const newStack = pageStack.slice(0, currentPageIndex + 1);
+    newStack.push(page);
+    setPageStack(newStack);
+    setCurrentPageIndex(newStack.length - 1);
+  };
+
+  const navigateBack = () => {
+    if (currentPageIndex > 0) {
+      setCurrentPageIndex(currentPageIndex - 1);
+    }
+  };
+
+  const navigateForward = () => {
+    if (currentPageIndex < pageStack.length - 1) {
+      setCurrentPageIndex(currentPageIndex + 1);
+    }
+  };
+
+  const canGoBack = currentPageIndex > 0;
+  const canGoForward = currentPageIndex < pageStack.length - 1;
+
+  const loadAdventureData = useCallback(async () => {
+    // Evita di caricare quando la tab non è visibile o se il componente è stato smontato
+    if (document.visibilityState === 'hidden' || !isMountedRef.current) {
+      return;
+    }
+    
+    const currentUserId = user?.id || null;
+    
+    // Evita di ricaricare se già caricato e i parametri non sono cambiati
+    if (hasLoadedRef.current && 
+        lastAdventureIdRef.current === adventureId && 
+        lastUserIdRef.current === currentUserId) {
+      return;
+    }
+    
+    lastAdventureIdRef.current = adventureId;
+    lastUserIdRef.current = currentUserId;
+    
     try {
       setLoading(true);
 
@@ -55,21 +114,20 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
         setCanEdit(canManage);
 
         if (!canManage) {
-          // Se non può modificare, torna indietro
           alert('Non hai i permessi per modificare questa avventura');
           onBack();
           return;
         }
       }
 
-      // Carica le destinazioni (solo per la sezione destinations)
+      // Carica le destinazioni
       const { data: destinationsData } = await supabase
         .from('adventure_destinations')
         .select('*')
         .eq('adventure_id', adventureId)
         .order('order_index', { ascending: true });
 
-      // Carica i partecipanti (solo per la sezione participants)
+      // Carica i partecipanti
       const { data: participantsData } = await supabase
         .from('adventure_participants')
         .select('*')
@@ -109,21 +167,60 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
         })
       );
 
-      setAdventure({
-        ...adventureData,
-        destinations: destinationsWithPlaces,
-        creators: creatorsData || [],
-        participants: participantsWithEmails,
-      });
+      if (isMountedRef.current) {
+        setAdventure({
+          ...adventureData,
+          destinations: destinationsWithPlaces,
+          creators: creatorsData || [],
+          participants: participantsWithEmails,
+        });
+        hasLoadedRef.current = true;
+      }
     } catch (error) {
       console.error('Errore nel caricamento dell\'avventura:', error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
+  }, [adventureId, user, actualIsSuperAdmin]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    // Carica i dati solo se la tab è visibile
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && !hasLoadedRef.current) {
+        loadAdventureData();
+      }
+    };
+
+    // Carica inizialmente se la tab è visibile
+    if (document.visibilityState === 'visible') {
+      loadAdventureData();
+    }
+
+    // Aggiungi listener per i cambi di visibilità
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isMountedRef.current = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [adventureId, user, loadAdventureData]);
+
+  const handleRefresh = useCallback(() => {
+    hasLoadedRef.current = false;
+    loadAdventureData();
+  }, [loadAdventureData]);
+
+  const handleSectionChange = (section: Section) => {
+    navigateTo({ type: 'section', section });
   };
 
-  const handleRefresh = () => {
-    loadAdventureData();
+  const handleSuccessAndBack = () => {
+    handleRefresh();
+    navigateBack();
   };
 
   if (loading) {
@@ -147,6 +244,67 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
     );
   }
 
+  // Determina se siamo in una pagina fullscreen o in una sezione
+  const isFullscreenPage = currentPage.type !== 'section';
+
+  // Se siamo in una pagina fullscreen, mostra solo quella pagina
+  if (isFullscreenPage) {
+    return (
+      <div className="edit-adventure-page edit-adventure-page-fullscreen">
+        <div className="edit-adventure-navigation-bar">
+          <button 
+            onClick={navigateBack} 
+            className="nav-btn"
+            disabled={!canGoBack}
+            title="Indietro"
+          >
+            <i className="fas fa-arrow-left"></i>
+          </button>
+          <button 
+            onClick={navigateForward} 
+            className="nav-btn"
+            disabled={!canGoForward}
+            title="Avanti"
+          >
+            <i className="fas fa-arrow-right"></i>
+          </button>
+          <button onClick={onBack} className="nav-btn close-btn" title="Chiudi modifica">
+            <i className="fas fa-times"></i>
+          </button>
+        </div>
+
+        {currentPage.type === 'add-destination' && (
+          <AddDestinationPage
+            adventureId={adventure.id}
+            existingDestinationsCount={adventure.destinations.length}
+            onBack={navigateBack}
+            onSuccess={handleSuccessAndBack}
+          />
+        )}
+
+        {currentPage.type === 'edit-destination' && (
+          <EditDestinationPage
+            destination={currentPage.destination}
+            onBack={navigateBack}
+            onSuccess={handleSuccessAndBack}
+          />
+        )}
+
+        {currentPage.type === 'add-participant' && (
+          <AddParticipantPage
+            adventureId={adventure.id}
+            currentParticipants={adventure.participants}
+            onBack={navigateBack}
+            onSuccess={handleSuccessAndBack}
+          />
+        )}
+      </div>
+    );
+  }
+
+  // Altrimenti mostra il layout normale con sidebar
+  const activeSection = currentPage.section;
+
   return (
     <div className="edit-adventure-page">
       <div className="edit-adventure-header">
@@ -164,21 +322,21 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
           <nav className="sidebar-nav">
             <button
               className={`nav-item ${activeSection === 'information' ? 'active' : ''}`}
-              onClick={() => setActiveSection('information')}
+              onClick={() => handleSectionChange('information')}
             >
               <i className="fas fa-info-circle"></i>
               <span>Informazioni</span>
             </button>
             <button
               className={`nav-item ${activeSection === 'destinations' ? 'active' : ''}`}
-              onClick={() => setActiveSection('destinations')}
+              onClick={() => handleSectionChange('destinations')}
             >
               <i className="fas fa-map"></i>
               <span>Destinazioni</span>
             </button>
             <button
               className={`nav-item ${activeSection === 'participants' ? 'active' : ''}`}
-              onClick={() => setActiveSection('participants')}
+              onClick={() => handleSectionChange('participants')}
             >
               <i className="fas fa-users"></i>
               <span>Partecipanti</span>
@@ -197,12 +355,15 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
             <AdventureDestinationsSection
               adventure={adventure}
               onSuccess={handleRefresh}
+              onOpenAddModal={() => navigateTo({ type: 'add-destination' })}
+              onOpenEditModal={(destination) => navigateTo({ type: 'edit-destination', destination })}
             />
           )}
           {activeSection === 'participants' && (
             <AdventureParticipantsSection
               adventure={adventure}
               onSuccess={handleRefresh}
+              onOpenAddModal={() => navigateTo({ type: 'add-participant' })}
             />
           )}
         </main>
@@ -212,4 +373,3 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
 };
 
 export default EditAdventurePage;
-

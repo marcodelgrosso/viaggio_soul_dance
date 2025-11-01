@@ -15,7 +15,6 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure }
   const [adventures, setAdventures] = useState<AdventureWithDestinations[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedAdventure, setSelectedAdventure] = useState<AdventureWithDestinations | null>(null);
   const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
   const [adventureForParticipants, setAdventureForParticipants] = useState<string | null>(null);
 

@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { AdventureWithDestinations, AdventureDestinationWithPlaces } from '../../types/adventures';
-import EditDestinationModal from '../EditDestinationModal';
-import AddDestinationModal from '../AddDestinationModal';
 import '../../styles/components/EditAdventureSection.scss';
 
 interface AdventureDestinationsSectionProps {
   adventure: AdventureWithDestinations;
   onSuccess: () => void;
+  onOpenAddModal: () => void;
+  onOpenEditModal: (destination: AdventureDestinationWithPlaces) => void;
 }
 
 const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> = ({
   adventure,
   onSuccess,
+  onOpenAddModal,
+  onOpenEditModal,
 }) => {
-  const [showAddDestinationModal, setShowAddDestinationModal] = useState(false);
-  const [showEditDestinationModal, setShowEditDestinationModal] = useState(false);
-  const [destinationToEdit, setDestinationToEdit] = useState<AdventureDestinationWithPlaces | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleDeleteDestination = async (destinationId: string, destinationName: string) => {
@@ -45,8 +44,7 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
   };
 
   const handleEditDestination = (destination: AdventureDestinationWithPlaces) => {
-    setDestinationToEdit(destination);
-    setShowEditDestinationModal(true);
+    onOpenEditModal(destination);
   };
 
   return (
@@ -62,7 +60,7 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
           </div>
           <button
             className="btn btn-secondary add-item-btn"
-            onClick={() => setShowAddDestinationModal(true)}
+            onClick={onOpenAddModal}
           >
             <i className="fas fa-plus"></i>
             Aggiungi Destinazione
@@ -140,24 +138,6 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
           </div>
         )}
       </div>
-
-      <AddDestinationModal
-        isOpen={showAddDestinationModal}
-        adventureId={adventure.id}
-        existingDestinationsCount={adventure.destinations.length}
-        onClose={() => setShowAddDestinationModal(false)}
-        onSuccess={onSuccess}
-      />
-
-      <EditDestinationModal
-        isOpen={showEditDestinationModal}
-        destination={destinationToEdit}
-        onClose={() => {
-          setShowEditDestinationModal(false);
-          setDestinationToEdit(null);
-        }}
-        onSuccess={onSuccess}
-      />
     </div>
   );
 };

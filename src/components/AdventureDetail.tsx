@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { AdventureWithDestinations, AdventureParticipant, AdventureDestinationWithPlaces, AdventureDestinationVote } from '../types/adventures';
+import { AdventureWithDestinations, AdventureParticipant } from '../types/adventures';
 import AddParticipantsModal from './AddParticipantsModal';
 import '../styles/components/AdventureDetail.scss';
 

@@ -131,6 +131,70 @@
     }
   }
 
+  &.edit-adventure-page-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #f8fafc;
+    z-index: 1000;
+    padding: 0;
+    max-width: 100%;
+    overflow-y: auto;
+
+    .edit-adventure-navigation-bar {
+      position: sticky;
+      top: 0;
+      background: white;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      .nav-btn {
+        padding: 0.5rem 1rem;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        min-width: 40px;
+        height: 40px;
+
+        &:hover:not(:disabled) {
+          background: #e2e8f0;
+          color: #334155;
+        }
+
+        &:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
+        &.close-btn {
+          margin-left: auto;
+          background: #fee;
+          color: #dc2626;
+          border-color: #fecaca;
+
+          &:hover:not(:disabled) {
+            background: #fee2e2;
+            color: #b91c1c;
+          }
+        }
+      }
+    }
+  }
+
   .edit-adventure-loading,
   .edit-adventure-error {
     display: flex;

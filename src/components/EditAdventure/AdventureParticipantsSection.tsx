@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { AdventureWithDestinations, AdventureParticipant } from '../../types/adventures';
-import AddParticipantsModal from '../AddParticipantsModal';
+import { AdventureWithDestinations } from '../../types/adventures';
 import '../../styles/components/EditAdventureSection.scss';
 
 interface AdventureParticipantsSectionProps {
   adventure: AdventureWithDestinations;
   onSuccess: () => void;
+  onOpenAddModal: () => void;
 }
 
 const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> = ({
   adventure,
   onSuccess,
+  onOpenAddModal,
 }) => {
-  const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRemoveParticipant = async (participantId: string, participantEmail: string) => {
@@ -54,7 +54,7 @@ const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> 
           </div>
           <button
             className="btn btn-secondary add-item-btn"
-            onClick={() => setShowAddParticipantModal(true)}
+            onClick={onOpenAddModal}
           >
             <i className="fas fa-user-plus"></i>
             Aggiungi Partecipante
@@ -96,14 +96,6 @@ const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> 
           </div>
         )}
       </div>
-
-      <AddParticipantsModal
-        isOpen={showAddParticipantModal}
-        adventureId={adventure.id}
-        currentParticipants={adventure.participants}
-        onClose={() => setShowAddParticipantModal(false)}
-        onSuccess={onSuccess}
-      />
     </div>
   );
 };
