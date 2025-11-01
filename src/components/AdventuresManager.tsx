@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Adventure, AdventurePlace, AdventureWithPlaces } from '../types/adventures';
+import { Adventure, AdventureWithDestinations } from '../types/adventures';
 import CreateAdventureModal from './CreateAdventureModal';
+import AddParticipantsModal from './AddParticipantsModal';
 import '../styles/components/AdventuresManager.scss';
 
-const AdventuresManager: React.FC = () => {
+interface AdventuresManagerProps {
+  onViewAdventure?: (adventureId: string) => void;
+}
+
+const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure }) => {
   const { user, hasPermission, isSuperAdmin, actualIsSuperAdmin, permissions } = useAuth();
-  const [adventures, setAdventures] = useState<AdventureWithPlaces[]>([]);
+  const [adventures, setAdventures] = useState<AdventureWithDestinations[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedAdventure, setSelectedAdventure] = useState<AdventureWithPlaces | null>(null);
+  const [selectedAdventure, setSelectedAdventure] = useState<AdventureWithDestinations | null>(null);
+  const [showAddParticipantModal, setShowAddParticipantModal] = useState(false);
+  const [adventureForParticipants, setAdventureForParticipants] = useState<string | null>(null);
 
   useEffect(() => {
     loadAdventures();
@@ -31,24 +38,30 @@ const AdventuresManager: React.FC = () => {
         throw adventuresError;
       }
 
-      // Per ogni avventura, carica i luoghi
-      const adventuresWithPlaces = await Promise.all(
+      // Per ogni avventura, carica le destinazioni e i partecipanti
+      const adventuresWithDestinations = await Promise.all(
         (adventuresData || []).map(async (adventure: Adventure) => {
-          const { data: placesData } = await supabase
-            .from('adventure_places')
+          const { data: destinationsData } = await supabase
+            .from('adventure_destinations')
             .select('*')
             .eq('adventure_id', adventure.id)
             .order('order_index', { ascending: true });
 
+          const { data: participantsData } = await supabase
+            .from('adventure_participants')
+            .select('*')
+            .eq('adventure_id', adventure.id);
+
           return {
             ...adventure,
-            places: placesData || [],
+            destinations: destinationsData || [],
             creators: [], // Caricato separatamente se necessario
+            participants: participantsData || [],
           };
         })
       );
 
-      setAdventures(adventuresWithPlaces);
+      setAdventures(adventuresWithDestinations);
     } catch (error) {
       console.error('Errore nel caricamento delle avventure:', error);
     } finally {
@@ -120,18 +133,18 @@ const AdventuresManager: React.FC = () => {
                 <p className="adventure-description">{adventure.description}</p>
               )}
 
-              <div className="adventure-places">
+              <div className="adventure-destinations">
                 <h4>
-                  <i className="fas fa-map-marker-alt"></i>
-                  Luoghi ({adventure.places.length})
+                  <i className="fas fa-map"></i>
+                  Destinazioni Proposte ({adventure.destinations.length})
                 </h4>
                 <ul>
-                  {adventure.places.map((place, index) => (
-                    <li key={place.id}>
-                      <span className="place-number">{index + 1}.</span>
+                  {adventure.destinations.map((destination, index) => (
+                    <li key={destination.id}>
+                      <span className="destination-number">{index + 1}.</span>
                       <div>
-                        <strong>{place.name}</strong>
-                        {place.description && <span className="place-desc">{place.description}</span>}
+                        <strong>{destination.name}</strong>
+                        {destination.description && <span className="destination-desc">{destination.description}</span>}
                       </div>
                     </li>
                   ))}
@@ -143,10 +156,32 @@ const AdventuresManager: React.FC = () => {
                   <i className="fas fa-calendar"></i>
                   {new Date(adventure.created_at).toLocaleDateString('it-IT')}
                 </span>
-                <button className="view-adventure-btn">
-                  <i className="fas fa-eye"></i>
-                  Visualizza
-                </button>
+                <div className="adventure-actions">
+                  {(adventure.created_by === user?.id || actualIsSuperAdmin) && (
+                    <button
+                      className="add-participant-icon-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAdventureForParticipants(adventure.id);
+                        setShowAddParticipantModal(true);
+                      }}
+                      title="Aggiungi partecipante"
+                    >
+                      <i className="fas fa-user-plus"></i>
+                    </button>
+                  )}
+                  <button
+                    className="view-adventure-btn"
+                    onClick={() => {
+                      if (onViewAdventure) {
+                        onViewAdventure(adventure.id);
+                      }
+                    }}
+                  >
+                    <i className="fas fa-eye"></i>
+                    Visualizza
+                  </button>
+                </div>
               </div>
             </div>
           ))}
@@ -158,6 +193,19 @@ const AdventuresManager: React.FC = () => {
         onClose={() => setShowCreateModal(false)}
         onSuccess={loadAdventures}
       />
+
+      {adventureForParticipants && (
+        <AddParticipantsModal
+          isOpen={showAddParticipantModal}
+          adventureId={adventureForParticipants}
+          currentParticipants={adventures.find(a => a.id === adventureForParticipants)?.participants || []}
+          onClose={() => {
+            setShowAddParticipantModal(false);
+            setAdventureForParticipants(null);
+          }}
+          onSuccess={loadAdventures}
+        />
+      )}
     </div>
   );
 };

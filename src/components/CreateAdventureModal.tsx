@@ -9,35 +9,66 @@ interface CreateAdventureModalProps {
   onSuccess: () => void;
 }
 
-interface Place {
+interface DestinationPlace {
   name: string;
   description: string;
+}
+
+interface Destination {
+  name: string;
+  description: string;
+  places: DestinationPlace[];
 }
 
 const CreateAdventureModal: React.FC<CreateAdventureModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { user } = useAuth();
   const [adventureName, setAdventureName] = useState('');
   const [adventureDescription, setAdventureDescription] = useState('');
-  const [places, setPlaces] = useState<Place[]>([{ name: '', description: '' }]);
+  const [destinations, setDestinations] = useState<Destination[]>([
+    { name: '', description: '', places: [{ name: '', description: '' }] }
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
 
-  const handleAddPlace = () => {
-    setPlaces([...places, { name: '', description: '' }]);
+  const handleAddDestination = () => {
+    setDestinations([...destinations, { name: '', description: '', places: [{ name: '', description: '' }] }]);
   };
 
-  const handleRemovePlace = (index: number) => {
-    if (places.length > 1) {
-      setPlaces(places.filter((_, i) => i !== index));
+  const handleRemoveDestination = (index: number) => {
+    if (destinations.length > 1) {
+      setDestinations(destinations.filter((_, i) => i !== index));
     }
   };
 
-  const handlePlaceChange = (index: number, field: 'name' | 'description', value: string) => {
-    const updatedPlaces = [...places];
-    updatedPlaces[index] = { ...updatedPlaces[index], [field]: value };
-    setPlaces(updatedPlaces);
+  const handleDestinationChange = (index: number, field: 'name' | 'description', value: string) => {
+    const updated = [...destinations];
+    updated[index] = { ...updated[index], [field]: value };
+    setDestinations(updated);
+  };
+
+  const handleAddPlace = (destinationIndex: number) => {
+    const updated = [...destinations];
+    updated[destinationIndex].places.push({ name: '', description: '' });
+    setDestinations(updated);
+  };
+
+  const handleRemovePlace = (destinationIndex: number, placeIndex: number) => {
+    const updated = [...destinations];
+    if (updated[destinationIndex].places.length > 1) {
+      updated[destinationIndex].places = updated[destinationIndex].places.filter((_, i) => i !== placeIndex);
+      setDestinations(updated);
+    }
+  };
+
+  const handlePlaceChange = (destinationIndex: number, placeIndex: number, field: 'name' | 'description', value: string) => {
+    const updated = [...destinations];
+    updated[destinationIndex].places[placeIndex] = {
+      ...updated[destinationIndex].places[placeIndex],
+      [field]: value
+    };
+    setDestinations(updated);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,12 +80,20 @@ const CreateAdventureModal: React.FC<CreateAdventureModalProps> = ({ isOpen, onC
       return;
     }
 
-    // Rimuovi luoghi vuoti
-    const validPlaces = places.filter(p => p.name.trim());
-
-    if (validPlaces.length === 0) {
-      setError('Aggiungi almeno un luogo da visitare');
+    // Valida destinazioni
+    const validDestinations = destinations.filter(d => d.name.trim());
+    if (validDestinations.length === 0) {
+      setError('Aggiungi almeno una destinazione proposta');
       return;
+    }
+
+    // Valida che ogni destinazione abbia almeno un luogo
+    for (const dest of validDestinations) {
+      const validPlaces = dest.places.filter(p => p.name.trim());
+      if (validPlaces.length === 0) {
+        setError(`La destinazione "${dest.name || 'senza nome'}" deve avere almeno un luogo da visitare`);
+        return;
+      }
     }
 
     if (!user) {
@@ -81,41 +120,62 @@ const CreateAdventureModal: React.FC<CreateAdventureModalProps> = ({ isOpen, onC
         throw adventureError;
       }
 
-      // Crea i luoghi
-      if (validPlaces.length > 0 && adventure) {
-        const placesToInsert = validPlaces.map((place, index) => ({
-          adventure_id: adventure.id,
-          name: place.name.trim(),
-          description: place.description.trim() || null,
-          order_index: index,
-        }));
+      // Crea le destinazioni e i loro luoghi
+      for (let destIndex = 0; destIndex < validDestinations.length; destIndex++) {
+        const dest = validDestinations[destIndex];
+        const validPlaces = dest.places.filter(p => p.name.trim());
 
-        const { error: placesError } = await supabase
-          .from('adventure_places')
-          .insert(placesToInsert);
-
-        if (placesError) {
-          throw placesError;
-        }
-
-        // Aggiungi il creator alla tabella adventure_creators
-        const { error: creatorError } = await supabase
-          .from('adventure_creators')
+        // Crea la destinazione
+        const { data: destination, error: destError } = await supabase
+          .from('adventure_destinations')
           .insert({
             adventure_id: adventure.id,
-            user_id: user.id,
-          });
+            name: dest.name.trim(),
+            description: dest.description.trim() || null,
+            order_index: destIndex,
+          })
+          .select()
+          .single();
 
-        if (creatorError) {
-          console.warn('Errore nell\'aggiunta del creator:', creatorError);
-          // Non blocchiamo se questo fallisce, l'avventura è già creata
+        if (destError) {
+          throw destError;
         }
+
+        // Crea i luoghi della destinazione
+        if (destination && validPlaces.length > 0) {
+          const placesToInsert = validPlaces.map((place, placeIndex) => ({
+            destination_id: destination.id,
+            name: place.name.trim(),
+            description: place.description.trim() || null,
+            order_index: placeIndex,
+          }));
+
+          const { error: placesError } = await supabase
+            .from('adventure_destination_places')
+            .insert(placesToInsert);
+
+          if (placesError) {
+            throw placesError;
+          }
+        }
+      }
+
+      // Aggiungi il creator alla tabella adventure_creators
+      const { error: creatorError } = await supabase
+        .from('adventure_creators')
+        .insert({
+          adventure_id: adventure.id,
+          user_id: user.id,
+        });
+
+      if (creatorError) {
+        console.warn('Errore nell\'aggiunta del creator:', creatorError);
       }
 
       // Reset form
       setAdventureName('');
       setAdventureDescription('');
-      setPlaces([{ name: '', description: '' }]);
+      setDestinations([{ name: '', description: '', places: [{ name: '', description: '' }] }]);
       setError('');
       onSuccess();
       onClose();
@@ -129,7 +189,7 @@ const CreateAdventureModal: React.FC<CreateAdventureModalProps> = ({ isOpen, onC
 
   return (
     <div className="modal open" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content create-adventure-modal" onClick={(e) => e.stopPropagation()}>
         <span className="close" onClick={onClose}>&times;</span>
         
         <h2>
@@ -169,50 +229,102 @@ const CreateAdventureModal: React.FC<CreateAdventureModalProps> = ({ isOpen, onC
 
           <div className="form-group">
             <label>
-              <i className="fas fa-map-marker-alt"></i> Luoghi da Visitare *
+              <i className="fas fa-map"></i> Destinazioni Proposte *
             </label>
-            <div className="places-list">
-              {places.map((place, index) => (
-                <div key={index} className="place-item">
-                  <div className="place-header">
-                    <span className="place-number">Luogo {index + 1}</span>
-                    {places.length > 1 && (
+            <div className="destinations-list">
+              {destinations.map((destination, destIndex) => (
+                <div key={destIndex} className="destination-item">
+                  <div className="destination-header">
+                    <span className="destination-number">Destinazione {destIndex + 1}</span>
+                    {destinations.length > 1 && (
                       <button
                         type="button"
-                        className="remove-place-btn"
-                        onClick={() => handleRemovePlace(index)}
+                        className="remove-destination-btn"
+                        onClick={() => handleRemoveDestination(destIndex)}
                         disabled={loading}
                       >
                         <i className="fas fa-times"></i>
                       </button>
                     )}
                   </div>
+                  
                   <input
                     type="text"
-                    placeholder="Nome del luogo (es: Tokyo, Monte Fuji...)"
-                    value={place.name}
-                    onChange={(e) => handlePlaceChange(index, 'name', e.target.value)}
-                    required={index === 0}
+                    placeholder="Nome destinazione (es: Tokyo, Parigi...)"
+                    value={destination.name}
+                    onChange={(e) => handleDestinationChange(destIndex, 'name', e.target.value)}
+                    required={destIndex === 0}
                     disabled={loading}
+                    className="destination-name-input"
                   />
                   <textarea
-                    placeholder="Descrizione (opzionale)"
-                    value={place.description}
-                    onChange={(e) => handlePlaceChange(index, 'description', e.target.value)}
+                    placeholder="Descrizione destinazione (opzionale)"
+                    value={destination.description}
+                    onChange={(e) => handleDestinationChange(destIndex, 'description', e.target.value)}
                     rows={2}
                     disabled={loading}
+                    className="destination-description-input"
                   />
+
+                  <div className="places-in-destination">
+                    <label className="places-label">
+                      <i className="fas fa-map-marker-alt"></i> Luoghi da Visitare in questa destinazione *
+                    </label>
+                    <div className="places-list">
+                      {destination.places.map((place, placeIndex) => (
+                        <div key={placeIndex} className="place-item">
+                          <div className="place-header">
+                            <span className="place-number">Luogo {placeIndex + 1}</span>
+                            {destination.places.length > 1 && (
+                              <button
+                                type="button"
+                                className="remove-place-btn"
+                                onClick={() => handleRemovePlace(destIndex, placeIndex)}
+                                disabled={loading}
+                              >
+                                <i className="fas fa-times"></i>
+                              </button>
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Nome del luogo (es: Torre Eiffel, Museo Louvre...)"
+                            value={place.name}
+                            onChange={(e) => handlePlaceChange(destIndex, placeIndex, 'name', e.target.value)}
+                            required={placeIndex === 0 && destIndex === 0}
+                            disabled={loading}
+                          />
+                          <textarea
+                            placeholder="Descrizione (opzionale)"
+                            value={place.description}
+                            onChange={(e) => handlePlaceChange(destIndex, placeIndex, 'description', e.target.value)}
+                            rows={2}
+                            disabled={loading}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="add-place-btn"
+                      onClick={() => handleAddPlace(destIndex)}
+                      disabled={loading}
+                    >
+                      <i className="fas fa-plus"></i>
+                      Aggiungi Luogo
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
             <button
               type="button"
-              className="add-place-btn"
-              onClick={handleAddPlace}
+              className="add-destination-btn"
+              onClick={handleAddDestination}
               disabled={loading}
             >
               <i className="fas fa-plus"></i>
-              Aggiungi Luogo
+              Aggiungi Destinazione
             </button>
           </div>
 
@@ -243,4 +355,3 @@ const CreateAdventureModal: React.FC<CreateAdventureModalProps> = ({ isOpen, onC
 };
 
 export default CreateAdventureModal;
-

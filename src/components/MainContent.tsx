@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Header from './Header';
 import Destinations from './Destinations';
 import Footer from './Footer';
 import AdminDashboard from './AdminDashboard';
 import RoleManagement from './RoleManagement';
 import AdventuresManager from './AdventuresManager';
+import AdventureDetail from './AdventureDetail';
+import EditAdventurePage from './EditAdventurePage';
 import { useAuth } from '../context/AuthContext';
 
 const MainContent: React.FC = () => {
   const { user, isAdmin, isSuperAdmin, hasPermission, loading, role, selectedRole, actualIsSuperAdmin, permissions } = useAuth();
+  const [selectedAdventureId, setSelectedAdventureId] = useState<string | null>(null);
+  const [editAdventureId, setEditAdventureId] = useState<string | null>(null);
 
   // Debug
   console.log('MainContent render:', { 
@@ -39,7 +43,22 @@ const MainContent: React.FC = () => {
           )}
           {(hasPermission('is_creator') || actualIsSuperAdmin) && (
             <div style={{ marginBottom: '2rem' }}>
-              <AdventuresManager />
+              {editAdventureId ? (
+                <EditAdventurePage
+                  adventureId={editAdventureId}
+                  onBack={() => setEditAdventureId(null)}
+                />
+              ) : selectedAdventureId ? (
+                <AdventureDetail
+                  adventureId={selectedAdventureId}
+                  onBack={() => setSelectedAdventureId(null)}
+                  onEdit={(adventureId) => setEditAdventureId(adventureId)}
+                />
+              ) : (
+                <AdventuresManager
+                  onViewAdventure={(adventureId) => setSelectedAdventureId(adventureId)}
+                />
+              )}
             </div>
           )}
           {isAdmin && <AdminDashboard />}

@@ -166,7 +166,7 @@
   line-height: 1.6;
 }
 
-.adventure-places {
+.adventure-destinations {
   margin: 1.5rem 0;
   padding: 1rem;
   background: $light-bg;
@@ -202,7 +202,7 @@
       border-bottom: none;
     }
 
-    .place-number {
+    .destination-number {
       color: $primary-color;
       font-weight: 700;
       min-width: 25px;
@@ -214,7 +214,7 @@
       margin-bottom: 0.2rem;
     }
 
-    .place-desc {
+    .destination-desc {
       color: $text-light;
       font-size: 0.85rem;
       display: block;
@@ -229,6 +229,37 @@
   padding-top: 1rem;
   border-top: 1px solid $light-bg;
   margin-top: 1rem;
+}
+
+.adventure-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-participant-icon-btn {
+  background: #10b981;
+  color: $white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: $transition;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+
+  &:hover {
+    background: #059669;
+    transform: translateY(-2px);
+    box-shadow: $shadow-light;
+  }
+
+  i {
+    font-size: 0.9rem;
+  }
 }
 
 .adventure-date {
