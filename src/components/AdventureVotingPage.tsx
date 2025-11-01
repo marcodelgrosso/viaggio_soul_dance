@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { enrichParticipant, getUserDisplayName } from '../lib/userUtils';
 import { AdventureWithDestinations, AdventureDestinationWithPlaces } from '../types/adventures';
 import '../styles/components/AdventureVotingPage.scss';
 
@@ -50,22 +51,9 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
         .select('*')
         .eq('adventure_id', adventureId);
 
-      // Ottieni email dei partecipanti
+      // Arricchisci i partecipanti con email e nome completo
       const participantsWithEmails = await Promise.all(
-        (participantsData || []).map(async (participant) => {
-          try {
-            const { data: userEmail } = await supabase.rpc(
-              'get_user_email_by_id',
-              { user_uuid: participant.user_id }
-            );
-            return {
-              ...participant,
-              user_email: userEmail || 'Email non disponibile',
-            };
-          } catch (err) {
-            return { ...participant, user_email: 'Email non disponibile' };
-          }
-        })
+        (participantsData || []).map(enrichParticipant)
       );
 
       // Per ogni destinazione, carica i luoghi e i voti
@@ -85,21 +73,15 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
             .eq('destination_id', destination.id)
             .order('created_at', { ascending: false });
 
-          // Ottieni email dei votanti
+          // Arricchisci i voti con nome completo
           const votesWithEmails = await Promise.all(
             (votesData || []).map(async (vote) => {
-              try {
-                const { data: userEmail } = await supabase.rpc(
-                  'get_user_email_by_id',
-                  { user_uuid: vote.user_id }
-                );
-                return {
-                  ...vote,
-                  user_email: userEmail || 'Email non disponibile',
-                };
-              } catch (err) {
-                return { ...vote, user_email: 'Email non disponibile' };
-              }
+              const displayName = await getUserDisplayName(vote.user_id);
+              return {
+                ...vote,
+                user_email: displayName.includes('@') ? displayName : undefined, // Mantieni email solo se è email
+                display_name: displayName,
+              };
             })
           );
 
@@ -433,7 +415,7 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
                               <div className="vote-item-header">
                                 <div className="vote-user-info">
                                   <i className="fas fa-user"></i>
-                                  <span className="vote-user-email">{vote.user_email || 'Email non disponibile'}</span>
+                                  <span className="vote-user-email">{vote.display_name || vote.user_email || 'Email non disponibile'}</span>
                                 </div>
                                 <div
                                   className="vote-type-badge"
@@ -507,7 +489,7 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
                             <i className="fas fa-user"></i>
                           </div>
                           <div>
-                            <h3>{participant.user_email || 'Email non disponibile'}</h3>
+                            <h3>{participant.display_name || participant.user_email || 'Email non disponibile'}</h3>
                             <p className="participant-meta">
                               Partecipante da {new Date(participant.created_at).toLocaleDateString('it-IT')}
                             </p>

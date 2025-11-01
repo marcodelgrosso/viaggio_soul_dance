@@ -47,6 +47,7 @@ export interface AdventureDestinationVote {
   created_at: string;
   updated_at: string;
   user_email?: string; // Aggiunto per visualizzazione
+  display_name?: string; // Nome completo (Nome Cognome) o email come fallback
 }
 
 export interface AdventureCreator {
@@ -63,6 +64,9 @@ export interface AdventureParticipant {
   added_by: string;
   created_at: string;
   user_email?: string; // Aggiunto per visualizzazione
+  display_name?: string; // Nome completo (Nome Cognome) o email come fallback
+  first_name?: string | null;
+  last_name?: string | null;
 }
 
 export interface AdventureDestinationWithPlaces extends AdventureDestination {

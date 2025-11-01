@@ -8,6 +8,7 @@ import AdventuresManager from './AdventuresManager';
 import AdventureDetail from './AdventureDetail';
 import EditAdventurePage from './EditAdventurePage';
 import AdventureVotingPage from './AdventureVotingPage';
+import UserProfilePage from './UserProfilePage';
 import { useAuth } from '../context/AuthContext';
 
 const MainContent: React.FC = () => {
@@ -15,6 +16,7 @@ const MainContent: React.FC = () => {
   const [selectedAdventureId, setSelectedAdventureId] = useState<string | null>(null);
   const [editAdventureId, setEditAdventureId] = useState<string | null>(null);
   const [votingAdventureId, setVotingAdventureId] = useState<string | null>(null);
+  const [showUserProfile, setShowUserProfile] = useState(false);
 
   // Debug
   console.log('MainContent render:', { 
@@ -30,12 +32,20 @@ const MainContent: React.FC = () => {
 
   return (
     <div className="main-content">
-      <Header />
+      <Header 
+        onShowProfile={() => setShowUserProfile(true)}
+        onNavigateToAdventure={(adventureId) => {
+          setShowUserProfile(false);
+          setSelectedAdventureId(adventureId);
+        }}
+      />
       {loading ? (
         <div style={{ padding: '2rem', textAlign: 'center' }}>
           <i className="fas fa-spinner fa-spin" style={{ fontSize: '2rem', color: '#667eea', marginBottom: '1rem' }}></i>
           <p>Caricamento ruoli e permessi...</p>
         </div>
+      ) : showUserProfile ? (
+        <UserProfilePage onBack={() => setShowUserProfile(false)} />
       ) : (
         <>
           {isSuperAdmin && (

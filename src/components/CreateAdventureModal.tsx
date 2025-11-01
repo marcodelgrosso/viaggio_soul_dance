@@ -172,6 +172,18 @@ const CreateAdventureModal: React.FC<CreateAdventureModalProps> = ({ isOpen, onC
         console.warn('Errore nell\'aggiunta del creator:', creatorError);
       }
 
+      // Aggiungi il creator come partecipante di default
+      const { error: participantError } = await supabase
+        .from('adventure_participants')
+        .insert({
+          adventure_id: adventure.id,
+          user_id: user.id,
+        });
+
+      if (participantError) {
+        console.warn('Errore nell\'aggiunta del creator come partecipante:', participantError);
+      }
+
       // Reset form
       setAdventureName('');
       setAdventureDescription('');

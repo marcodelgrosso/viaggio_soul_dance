@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { enrichParticipant } from '../lib/userUtils';
 import { AdventureWithDestinations, AdventureDestinationWithPlaces } from '../types/adventures';
 import AdventureInformationSection from './EditAdventure/AdventureInformationSection';
 import AdventureDestinationsSection from './EditAdventure/AdventureDestinationsSection';
@@ -151,22 +152,9 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
         })
       );
 
-      // Ottieni email dei partecipanti
+      // Arricchisci i partecipanti con email e nome completo
       const participantsWithEmails = await Promise.all(
-        (participantsData || []).map(async (participant) => {
-          try {
-            const { data: userEmail } = await supabase.rpc(
-              'get_user_email_by_id',
-              { user_uuid: participant.user_id }
-            );
-            return {
-              ...participant,
-              user_email: userEmail || 'Email non disponibile',
-            };
-          } catch (err) {
-            return { ...participant, user_email: 'Email non disponibile' };
-          }
-        })
+        (participantsData || []).map(enrichParticipant)
       );
 
       if (isMountedRef.current) {

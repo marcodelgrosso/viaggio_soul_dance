@@ -80,6 +80,7 @@
       }
 
       input[type="text"],
+      input[type="url"],
       textarea {
         width: 100%;
         padding: 0.875rem 1rem;
@@ -104,6 +105,45 @@
 
         &::placeholder {
           color: #94a3b8;
+        }
+      }
+
+      // Stile speciale per input URL immagine
+      input[type="url"] {
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        padding-left: 3rem;
+        position: relative;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+        font-size: 0.9rem;
+        
+        // Icona link a sinistra
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23667eea'%3E%3Cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: 0.875rem center;
+        background-size: 1.25rem;
+
+        &:focus {
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+          background-color: #fefefe;
+        }
+
+        &:hover:not(:disabled):not(:focus) {
+          border-color: #cbd5e1;
+          background-color: #fafbfc;
+        }
+
+        // Validazione visiva per URL validi
+        &:valid:not(:placeholder-shown) {
+          border-color: #10b981;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'%3E%3Cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z'/%3E%3C/svg%3E");
+        }
+
+        // Validazione visiva per URL non validi
+        &:invalid:not(:placeholder-shown):not(:focus) {
+          border-color: #f59e0b;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f59e0b'%3E%3Cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z'/%3E%3C/svg%3E");
         }
       }
 
@@ -490,6 +530,20 @@
             margin: 0 0 0.25rem 0;
             color: #1a202c;
             font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            .creator-badge {
+              display: inline-flex;
+              align-items: center;
+              color: #f59e0b;
+              font-size: 0.85rem;
+              
+              i {
+                color: #f59e0b;
+              }
+            }
           }
 
           .participant-date {
@@ -672,6 +726,252 @@
 
     .edit-form {
       max-width: 100%;
+
+      .form-group {
+        margin-bottom: 1.5rem;
+
+        label {
+          display: block;
+          margin-bottom: 0.5rem;
+          font-weight: 600;
+          color: #334155;
+          font-size: 0.95rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+
+          i {
+            color: #10b981;
+            font-size: 1rem;
+          }
+        }
+
+        input[type="text"],
+        input[type="url"],
+        textarea {
+          width: 100%;
+          padding: 0.875rem 1rem;
+          border: 2px solid #e2e8f0;
+          border-radius: 8px;
+          font-size: 1rem;
+          font-family: inherit;
+          transition: all 0.2s ease;
+          box-sizing: border-box;
+
+          &:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f8fafc;
+          }
+
+          &::placeholder {
+            color: #94a3b8;
+          }
+        }
+
+        // Wrapper per input URL con pulsante incolla
+        .url-input-wrapper {
+          position: relative;
+          display: flex;
+          align-items: stretch;
+
+          // Stile speciale per input URL immagine
+          input[type="url"] {
+            flex: 1;
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            padding-left: 3rem !important;
+            padding-right: 3rem !important;
+            position: relative;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace !important;
+            font-size: 0.9rem;
+            
+            // Icona link a sinistra
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23667eea'%3E%3Cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z'/%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: 0.875rem center !important;
+            background-size: 1.25rem !important;
+
+            &:focus {
+              border-color: #667eea !important;
+              box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15) !important;
+              background-color: #fefefe !important;
+            }
+
+            &:hover:not(:disabled):not(:focus) {
+              border-color: #cbd5e1;
+              background-color: #fafbfc;
+            }
+
+            // Validazione visiva per URL validi
+            &:valid:not(:placeholder-shown) {
+              border-color: #10b981 !important;
+              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310b981'%3E%3Cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z'/%3E%3C/svg%3E") !important;
+            }
+
+            // Validazione visiva per URL non validi
+            &:invalid:not(:placeholder-shown):not(:focus) {
+              border-color: #f59e0b !important;
+              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23f59e0b'%3E%3Cpath d='M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z'/%3E%3C/svg%3E") !important;
+            }
+          }
+
+          // Pulsante incolla URL
+          .paste-url-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+
+            &:hover:not(:disabled) {
+              background: linear-gradient(135deg, #5568d3 0%, #6b3fa0 100%);
+              transform: translateY(-50%) scale(1.05);
+              box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+            }
+
+            &:active:not(:disabled) {
+              transform: translateY(-50%) scale(0.95);
+            }
+
+            &:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+            }
+
+            i {
+              font-size: 0.875rem;
+            }
+          }
+        }
+
+        textarea {
+          resize: vertical;
+          min-height: 120px;
+        }
+
+        // Label con pulsante AI accanto
+        .form-label-with-ai {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+          gap: 1rem;
+
+          label {
+            margin-bottom: 0;
+          }
+
+          // Pulsante Genera con AI
+          .generate-ai-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            flex-shrink: 0;
+            
+            // Gradiente multicolore animato
+            background: linear-gradient(
+              135deg,
+              #667eea 0%,
+              #764ba2 25%,
+              #f093fb 50%,
+              #4facfe 75%,
+              #667eea 100%
+            );
+            background-size: 300% 300%;
+            animation: gradientShift 3s ease infinite;
+            color: white;
+
+            // Shimmer effect
+            &::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: -100%;
+              width: 100%;
+              height: 100%;
+              background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+              );
+              transition: left 0.5s ease;
+            }
+
+            &:hover:not(:disabled) {
+              transform: translateY(-1px);
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+              animation-duration: 1s; // Accelera l'animazione al hover
+
+              &::before {
+                left: 100%;
+              }
+            }
+
+            &:active:not(:disabled) {
+              transform: translateY(0);
+              box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+            }
+
+            &:disabled {
+              opacity: 0.5;
+              cursor: not-allowed;
+              animation: none;
+            }
+
+            i {
+              font-size: 0.875rem;
+            }
+
+            span {
+              position: relative;
+              z-index: 1;
+              white-space: nowrap;
+            }
+          }
+        }
+
+        // Animazione gradiente multicolore per pulsante AI
+        @keyframes gradientShift {
+          0% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+          100% {
+            background-position: 0% 50%;
+          }
+        }
+      }
 
       .form-actions {
         display: flex;
@@ -883,17 +1183,46 @@
     // Image preview
     .image-preview {
       margin-top: 1rem;
-      border-radius: 8px;
+      border-radius: 12px;
       overflow: hidden;
       border: 2px solid #e2e8f0;
-      max-width: 300px;
+      max-width: 400px;
+      background: #f8fafc;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s ease;
+      position: relative;
+
+      &:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+      }
+
+      &::before {
+        content: 'Anteprima';
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        background: rgba(102, 126, 234, 0.9);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        z-index: 1;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
 
       img {
         width: 100%;
         height: auto;
         display: block;
-        max-height: 200px;
+        max-height: 250px;
         object-fit: cover;
+        transition: transform 0.3s ease;
+      }
+
+      &:hover img {
+        transform: scale(1.02);
       }
     }
 

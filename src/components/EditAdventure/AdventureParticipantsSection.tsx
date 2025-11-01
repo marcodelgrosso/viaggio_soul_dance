@@ -16,8 +16,8 @@ const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> 
 }) => {
   const [loading, setLoading] = useState(false);
 
-  const handleRemoveParticipant = async (participantId: string, participantEmail: string) => {
-    if (!window.confirm(`Sei sicuro di voler rimuovere ${participantEmail} dai partecipanti?`)) {
+  const handleRemoveParticipant = async (participantId: string, participantName: string) => {
+    if (!window.confirm(`Sei sicuro di voler rimuovere ${participantName} dai partecipanti?`)) {
       return;
     }
 
@@ -65,29 +65,44 @@ const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> 
       <div className="participants-list-editable">
         {adventure.participants.length > 0 ? (
           <div className="participants-grid">
-            {adventure.participants.map((participant) => (
-              <div key={participant.id} className="participant-card">
-                <div className="participant-info">
-                  <div className="participant-avatar">
-                    <i className="fas fa-user"></i>
+            {adventure.participants.map((participant) => {
+              // Verifica se il partecipante è anche un creator
+              const isCreator = adventure.creators.some(creator => creator.user_id === participant.user_id) || 
+                               adventure.created_by === participant.user_id;
+              
+              return (
+                <div key={participant.id} className="participant-card">
+                  <div className="participant-info">
+                    <div className="participant-avatar">
+                      <i className="fas fa-user"></i>
+                    </div>
+                    <div className="participant-details">
+                      <h4>
+                        {participant.display_name || participant.user_email || 'Email non disponibile'}
+                        {isCreator && (
+                          <span className="creator-badge" title="Creator dell'avventura">
+                            <i className="fas fa-crown"></i>
+                          </span>
+                        )}
+                      </h4>
+                      <p className="participant-date">
+                        Aggiunto il {new Date(participant.created_at).toLocaleDateString('it-IT')}
+                      </p>
+                    </div>
                   </div>
-                  <div className="participant-details">
-                    <h4>{participant.user_email || 'Email non disponibile'}</h4>
-                    <p className="participant-date">
-                      Aggiunto il {new Date(participant.created_at).toLocaleDateString('it-IT')}
-                    </p>
-                  </div>
+                  {!isCreator && (
+                    <button
+                      className="btn-icon btn-delete"
+                      onClick={() => handleRemoveParticipant(participant.id, participant.display_name || participant.user_email || 'Email non disponibile')}
+                      disabled={loading}
+                      title="Rimuovi partecipante"
+                    >
+                      <i className="fas fa-times"></i>
+                    </button>
+                  )}
                 </div>
-                <button
-                  className="btn-icon btn-delete"
-                  onClick={() => handleRemoveParticipant(participant.id, participant.user_email || '')}
-                  disabled={loading}
-                  title="Rimuovi partecipante"
-                >
-                  <i className="fas fa-times"></i>
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="empty-state">

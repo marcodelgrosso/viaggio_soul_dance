@@ -203,9 +203,24 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="destinationDescription">
-              <i className="fas fa-align-left"></i> Descrizione (opzionale)
-            </label>
+            <div className="form-label-with-ai">
+              <label htmlFor="destinationDescription">
+                <i className="fas fa-align-left"></i> Descrizione (opzionale)
+              </label>
+              <button
+                type="button"
+                className="generate-ai-btn"
+                onClick={async () => {
+                  // TODO: Implementare integrazione AI
+                  alert('Funzionalità AI in arrivo! Genererà automaticamente una descrizione per la destinazione.');
+                }}
+                disabled={loading || !name.trim()}
+                title="Genera descrizione con AI"
+              >
+                <i className="fas fa-magic"></i>
+                <span>Genera con AI</span>
+              </button>
+            </div>
             <textarea
               id="destinationDescription"
               value={description}
@@ -220,16 +235,39 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
             <label htmlFor="destinationImage">
               <i className="fas fa-image"></i> Immagine (URL) (opzionale)
             </label>
-            <input
-              type="url"
-              id="destinationImage"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://example.com/immagine.jpg"
-              disabled={loading}
-            />
+            <div className="url-input-wrapper">
+              <input
+                type="url"
+                id="destinationImage"
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="https://example.com/immagine.jpg"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="paste-url-btn"
+                onClick={async () => {
+                  try {
+                    const text = await navigator.clipboard.readText();
+                    if (text && (text.startsWith('http://') || text.startsWith('https://'))) {
+                      setImageUrl(text);
+                    } else {
+                      alert('Il contenuto della clipboard non sembra essere un URL valido');
+                    }
+                  } catch (err) {
+                    console.error('Errore nella lettura della clipboard:', err);
+                    alert('Impossibile accedere alla clipboard. Assicurati di avere i permessi necessari.');
+                  }
+                }}
+                disabled={loading}
+                title="Incolla URL copiato"
+              >
+                <i className="fas fa-paste"></i>
+              </button>
+            </div>
             <p className="form-hint">
-              Inserisci l'URL di un'immagine rappresentativa della destinazione.
+              Inserisci l'URL di un'immagine rappresentativa della destinazione oppure clicca sull'icona per incollare un URL copiato.
             </p>
             {imageUrl && (
               <div className="image-preview">
@@ -241,9 +279,24 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="destinationTags">
-              <i className="fas fa-tags"></i> Tag (opzionale)
-            </label>
+            <div className="form-label-with-ai">
+              <label htmlFor="destinationTags">
+                <i className="fas fa-tags"></i> Tag (opzionale)
+              </label>
+              <button
+                type="button"
+                className="generate-ai-btn"
+                onClick={async () => {
+                  // TODO: Implementare integrazione AI
+                  alert('Funzionalità AI in arrivo! Genererà automaticamente dei tag pertinenti per la destinazione.');
+                }}
+                disabled={loading || !name.trim()}
+                title="Genera tag con AI"
+              >
+                <i className="fas fa-magic"></i>
+                <span>Genera con AI</span>
+              </button>
+            </div>
             <div className="tags-input-container">
               <input
                 type="text"
@@ -286,9 +339,24 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
           </div>
 
           <div className="form-group">
-            <label>
-              <i className="fas fa-map-marker-alt"></i> Luoghi da Visitare *
-            </label>
+            <div className="form-label-with-ai">
+              <label>
+                <i className="fas fa-map-marker-alt"></i> Luoghi da Visitare *
+              </label>
+              <button
+                type="button"
+                className="generate-ai-btn"
+                onClick={async () => {
+                  // TODO: Implementare integrazione AI
+                  alert('Funzionalità AI in arrivo! Genererà automaticamente dei luoghi interessanti da visitare per la destinazione.');
+                }}
+                disabled={loading || !name.trim()}
+                title="Genera luoghi con AI"
+              >
+                <i className="fas fa-magic"></i>
+                <span>Genera con AI</span>
+              </button>
+            </div>
             <div className="places-list">
               {places.map((place, index) => (
                 <div key={index} className="place-item">

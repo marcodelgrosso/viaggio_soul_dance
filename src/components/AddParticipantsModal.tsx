@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { AdventureParticipant } from '../types/adventures';
+import { getUserDisplayName } from '../lib/userUtils';
 import '../styles/components/Modal.scss';
 
 interface AddParticipantsModalProps {
@@ -113,13 +114,28 @@ const AddParticipantsModal: React.FC<AddParticipantsModalProps> = ({
         throw new Error('Email non trovata. Verifica che l\'email sia corretta.');
       }
 
-      // Aggiungi il partecipante
+      // Recupera i dati dell'avventura per la notifica
+      const { data: adventureData, error: adventureError } = await supabase
+        .from('adventures')
+        .select('name')
+        .eq('id', adventureId)
+        .single();
+
+      if (adventureError || !adventureData) {
+        throw new Error('Errore nel recupero dei dati dell\'avventura');
+      }
+
+      // Recupera il nome del creator per la notifica
+      const creatorDisplayName = await getUserDisplayName(user.id);
+
+      // Aggiungi il partecipante con status "pending"
       const { error: insertError } = await supabase
         .from('adventure_participants')
         .insert({
           adventure_id: adventureId,
           user_id: userId,
           added_by: user.id,
+          invitation_status: 'pending',
         });
 
       if (insertError) {
@@ -129,14 +145,40 @@ const AddParticipantsModal: React.FC<AddParticipantsModalProps> = ({
         throw insertError;
       }
 
-      setSuccess('Partecipante aggiunto con successo!');
+      // Crea la notifica di invito usando la funzione RPC
+      const notificationMessage = `${creatorDisplayName} ti ha invitato a partecipare all'avventura "${adventureData.name}".`;
+      
+      const { data: notificationId, error: notificationError } = await supabase.rpc(
+        'create_user_notification',
+        {
+          p_user_id: userId,
+          p_type: 'adventure_invitation',
+          p_title: 'Invito all\'avventura',
+          p_message: notificationMessage,
+          p_link: `/adventure/${adventureId}`,
+          p_metadata: {
+            adventure_id: adventureId,
+            participant_id: userId,
+            inviter_id: user.id,
+          },
+        }
+      );
+
+      if (notificationError) {
+        console.error('Errore nella creazione della notifica:', notificationError);
+        // Non blocchiamo il flusso se la notifica non viene creata
+      } else {
+        console.log('Notifica creata con successo:', notificationId);
+      }
+
+      setSuccess('Invito inviato con successo! L\'utente riceverà una notifica per accettare o rifiutare l\'invito.');
       setEmail('');
       
       // Attendi un momento prima di chiudere e ricaricare
       setTimeout(() => {
         onSuccess();
         onClose();
-      }, 1000);
+      }, 1500);
     } catch (err: any) {
       console.error('Errore nell\'aggiunta del partecipante:', err);
       setError(err.message || 'Errore nell\'aggiunta del partecipante');

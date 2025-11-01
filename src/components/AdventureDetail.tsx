@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { enrichParticipant, getUserDisplayName } from '../lib/userUtils';
 import { AdventureWithDestinations, AdventureParticipant } from '../types/adventures';
 import AddParticipantsModal from './AddParticipantsModal';
 import '../styles/components/AdventureDetail.scss';
@@ -67,21 +68,15 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             .select('*')
             .eq('destination_id', destination.id);
 
-          // Ottieni email dei votanti
+          // Arricchisci i voti con nome completo
           const votesWithEmails = await Promise.all(
             (votesData || []).map(async (vote) => {
-              try {
-                const { data: userEmail } = await supabase.rpc(
-                  'get_user_email_by_id',
-                  { user_uuid: vote.user_id }
-                );
-                return {
-                  ...vote,
-                  user_email: userEmail || 'Email non disponibile',
-                };
-              } catch (err) {
-                return { ...vote, user_email: 'Email non disponibile' };
-              }
+              const displayName = await getUserDisplayName(vote.user_id);
+              return {
+                ...vote,
+                user_email: displayName.includes('@') ? displayName : undefined, // Mantieni email solo se è email
+                display_name: displayName,
+              };
             })
           );
 
@@ -114,22 +109,9 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
         console.error('Errore nel caricamento dei partecipanti:', participantsError);
       }
 
-      // Ottieni le email degli utenti partecipanti
+      // Arricchisci i partecipanti con email e nome completo
       const participantsWithEmails = await Promise.all(
-        (participantsData || []).map(async (participant) => {
-          try {
-            const { data: userEmail } = await supabase.rpc(
-              'get_user_email_by_id',
-              { user_uuid: participant.user_id }
-            );
-            return {
-              ...participant,
-              user_email: userEmail || 'Email non disponibile',
-            };
-          } catch (err) {
-            return { ...participant, user_email: 'Email non disponibile' };
-          }
-        })
+        (participantsData || []).map(enrichParticipant)
       );
 
       // Carica i creator dell'avventura
@@ -455,26 +437,39 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
           <div className="participants-list">
             {participants.length > 0 ? (
               <ul className="participants-ul">
-                {participants.map((participant) => (
-                  <li key={participant.id} className="participant-item">
-                    <div className="participant-info">
-                      <i className="fas fa-user"></i>
-                      <span>{participant.user_email || 'Email non disponibile'}</span>
-                      <span className="participant-added-date">
-                        Aggiunto il {new Date(participant.created_at).toLocaleDateString('it-IT')}
-                      </span>
-                    </div>
-                    {canManageParticipants && participant.user_id !== user?.id && (
-                      <button
-                        className="remove-participant-btn"
-                        onClick={() => handleRemoveParticipant(participant.id)}
-                        title="Rimuovi partecipante"
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    )}
-                  </li>
-                ))}
+                {participants.map((participant) => {
+                  // Verifica se il partecipante è anche un creator
+                  const isCreator = adventure?.creators?.some(creator => creator.user_id === participant.user_id) || 
+                                   adventure?.created_by === participant.user_id;
+                  
+                  return (
+                    <li key={participant.id} className="participant-item">
+                      <div className="participant-info">
+                        <i className="fas fa-user"></i>
+                        <span>
+                          {participant.display_name || participant.user_email || 'Email non disponibile'}
+                          {isCreator && (
+                            <span className="creator-badge" title="Creator dell'avventura">
+                              <i className="fas fa-crown"></i>
+                            </span>
+                          )}
+                        </span>
+                        <span className="participant-added-date">
+                          Aggiunto il {new Date(participant.created_at).toLocaleDateString('it-IT')}
+                        </span>
+                      </div>
+                      {canManageParticipants && !isCreator && participant.user_id !== user?.id && (
+                        <button
+                          className="remove-participant-btn"
+                          onClick={() => handleRemoveParticipant(participant.id)}
+                          title="Rimuovi partecipante"
+                        >
+                          <i className="fas fa-times"></i>
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="no-items">Nessun partecipante aggiunto ancora.</p>
