@@ -7,6 +7,7 @@ import '../styles/components/Header.scss';
 interface HeaderProps {
   onShowProfile?: () => void;
   onNavigateToAdventure?: (adventureId: string) => void;
+  onNavigateToHome?: () => void;
 }
 
 interface Notification {
@@ -25,7 +26,7 @@ interface Notification {
   created_at: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure }) => {
+const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure, onNavigateToHome }) => {
   const { email, isAdmin, logout, isSuperAdmin: actualIsSuperAdmin, selectRole, selectedRole, user } = useAuth();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
@@ -131,17 +132,27 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure })
 
     try {
       // Aggiorna lo status del partecipante a "accepted"
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from('adventure_participants')
         .update({ invitation_status: 'accepted' })
         .eq('adventure_id', notification.metadata.adventure_id)
-        .eq('user_id', user.id);
+        .eq('user_id', user.id)
+        .select();
 
       if (updateError) {
         console.error('Errore nell\'accettazione dell\'invito:', updateError);
         alert('Errore nell\'accettazione dell\'invito. Riprova.');
         return;
       }
+
+      // Verifica che l'aggiornamento sia andato a buon fine
+      if (!updateData || updateData.length === 0) {
+        console.warn('Nessun record aggiornato. Verifica che il partecipante esista.');
+        alert('Invito non trovato. Potrebbe essere già stato gestito.');
+        return;
+      }
+
+      console.log('Invito accettato con successo:', updateData);
 
       // Segna la notifica come action_taken e letta
       const { error: notificationError } = await supabase
@@ -166,13 +177,19 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure })
       // Chiudi il dropdown delle notifiche
       setShowNotificationsDropdown(false);
 
+      // Ricarica le notifiche per aggiornare lo stato
+      loadNotifications();
+
       // Naviga all'avventura
       if (notification.metadata?.adventure_id && onNavigateToAdventure) {
         onNavigateToAdventure(notification.metadata.adventure_id);
       }
 
-      // Ricarica le notifiche per aggiornare lo stato
-      loadNotifications();
+      // Forza il reload della pagina per aggiornare le avventure nella home e profilo
+      // Alternativa: potremmo emettere un evento custom che gli altri componenti ascoltano
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('adventureStatusChanged'));
+      }, 500);
     } catch (err) {
       console.error('Errore nell\'accettazione dell\'invito:', err);
       alert('Errore nell\'accettazione dell\'invito. Riprova.');
@@ -285,14 +302,30 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure })
       {/* Main Header */}
       <header className="header">
         <nav className="navbar">
-          <div className="nav-brand">
-            <i className="fas fa-plane"></i>
-            <span>Viaggio Soul Dance</span>
-          </div>
-          <div className="nav-links">
-            <a href="#destinations">Destinazioni</a>
-            <a href="#about">Chi Siamo</a>
-            <a href="#contact">Contatti</a>
+          <div 
+            className="nav-brand"
+            onClick={(e) => {
+              e.currentTarget.blur();
+              onNavigateToHome?.();
+            }}
+            style={{ cursor: 'pointer' }}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onNavigateToHome?.();
+              }
+            }}
+          >
+            <div className="logo">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="16" cy="16" r="14" fill="#667eea" opacity="0.2"/>
+                <path d="M16 8L20 16L16 20L12 16L16 8Z" fill="#667eea"/>
+                <circle cx="16" cy="16" r="3" fill="#764ba2"/>
+              </svg>
+            </div>
+            <span>Meggie</span>
           </div>
           {email && (
             <div className="nav-actions">

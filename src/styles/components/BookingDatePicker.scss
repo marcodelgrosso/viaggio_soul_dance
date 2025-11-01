@@ -1,0 +1,341 @@
+.booking-date-picker {
+  position: relative;
+  width: 100%;
+
+  .date-inputs {
+    display: flex;
+    gap: 0;
+    border: 2px solid #bdbdbd;
+    border-radius: 2px;
+    overflow: hidden;
+    background: white;
+    transition: all 0.3s ease;
+    position: relative;
+
+    &:hover {
+      border-color: #7b7b7b;
+    }
+
+    &.active,
+    .date-input.active {
+      border-color: #003580;
+    }
+  }
+
+  .date-input {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s ease;
+    border-right: 1px solid #e2e8f0;
+    min-height: 56px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    &:hover {
+      background: #f5f5f5;
+    }
+
+    &.active {
+      background: #ebf3ff;
+      border-color: #003580;
+    }
+
+    .date-input-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b6b6b;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+
+      i {
+        font-size: 0.7rem;
+        color: #6b6b6b;
+      }
+    }
+
+    .date-input-value {
+      font-size: 0.9375rem;
+      font-weight: 400;
+      color: #262626;
+      min-height: 1.5rem;
+      display: flex;
+      align-items: center;
+      line-height: 1.4;
+
+      &.placeholder {
+        color: #bdbdbd;
+      }
+    }
+
+    &.has-value {
+      .date-input-value {
+        color: #262626;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .clear-dates-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: #718096;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+
+    &:hover {
+      background: #f7fafc;
+      color: #e53e3e;
+    }
+
+    i {
+      font-size: 0.9rem;
+    }
+  }
+
+  .calendar-popup {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    background: white;
+    border: 1px solid #d0d0d0;
+    border-radius: 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    padding: 1rem;
+    z-index: 1000;
+    min-width: 370px;
+    animation: slideDown 0.2s ease-out;
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 768px) {
+      left: 0;
+      right: 0;
+      min-width: auto;
+      width: 100%;
+    }
+  }
+
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+
+    .month-year {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #003580;
+      flex: 1;
+      text-align: center;
+      text-transform: capitalize;
+    }
+
+    .nav-button {
+      background: transparent;
+      border: none;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #003580;
+      border-radius: 2px;
+
+      &:hover:not(:disabled) {
+        background: #f5f5f5;
+        color: #003580;
+      }
+
+      &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+
+      i {
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+    }
+  }
+
+  .calendar-grid {
+    width: 100%;
+  }
+
+  .calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+
+    .weekday {
+      text-align: center;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: #003580;
+      padding: 0.5rem 0;
+    }
+  }
+
+  .calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.25rem;
+  }
+
+  .calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 2px;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: #262626;
+    position: relative;
+    transition: all 0.15s ease;
+    background: white;
+
+    &:hover:not(.disabled):not(.start-date):not(.end-date) {
+      background: #f5f5f5;
+      color: #262626;
+    }
+
+    &.disabled {
+      color: #d0d0d0;
+      cursor: not-allowed;
+      background: #f9f9f9;
+    }
+
+    &.empty {
+      cursor: default;
+      background: transparent;
+    }
+
+    &.in-range {
+      background: #ebf3ff;
+      color: #262626;
+      border-radius: 0;
+
+      &.start-date {
+        border-top-left-radius: 2px;
+        border-bottom-left-radius: 2px;
+      }
+
+      &.end-date {
+        border-top-right-radius: 2px;
+        border-bottom-right-radius: 2px;
+      }
+
+      &:not(.start-date):not(.end-date) {
+        border-radius: 0;
+      }
+    }
+
+    &.start-date {
+      background: #003580;
+      color: white;
+      font-weight: 700;
+      border-radius: 2px;
+
+      &.in-range {
+        border-radius: 2px 0 0 2px;
+      }
+    }
+
+    &.end-date {
+      background: #003580;
+      color: white;
+      font-weight: 700;
+      border-radius: 2px;
+
+      &.in-range {
+        border-radius: 0 2px 2px 0;
+      }
+    }
+
+    // Se start e end sono la stessa data
+    &.start-date.end-date {
+      border-radius: 2px;
+    }
+  }
+
+  .calendar-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e2e8f0;
+    text-align: center;
+
+    .selected-dates-info {
+      font-size: 0.9rem;
+      color: #4a5568;
+
+      strong {
+        color: #667eea;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .booking-date-picker {
+    .date-inputs {
+      flex-direction: column;
+
+      .date-input {
+        border-right: none;
+        border-bottom: 1px solid #e2e8f0;
+
+        &:last-child {
+          border-bottom: none;
+        }
+      }
+    }
+
+    .calendar-popup {
+      position: fixed;
+      left: 1rem;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+  }
+}
+

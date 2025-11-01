@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { Adventure } from '../types/adventures';
 import '../styles/components/UserProfilePage.scss';
 
 interface UserProfilePageProps {
   onBack: () => void;
+  onViewAdventure?: (adventureId: string) => void;
 }
 
 interface UserProfile {
@@ -16,7 +18,13 @@ interface UserProfile {
   updated_at: string;
 }
 
-const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack }) => {
+interface UserAdventure {
+  adventure: Adventure;
+  invitation_status: 'pending' | 'accepted' | 'declined' | null;
+  participant_id: string;
+}
+
+const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack, onViewAdventure }) => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [firstName, setFirstName] = useState('');
@@ -25,10 +33,24 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [userAdventures, setUserAdventures] = useState<UserAdventure[]>([]);
+  const [loadingAdventures, setLoadingAdventures] = useState(true);
 
   useEffect(() => {
     if (user) {
       loadProfile();
+      loadUserAdventures();
+      
+      // Ascolta gli eventi di cambiamento dello status dell'invito
+      const handleStatusChange = () => {
+        loadUserAdventures();
+      };
+      
+      window.addEventListener('adventureStatusChanged', handleStatusChange);
+      
+      return () => {
+        window.removeEventListener('adventureStatusChanged', handleStatusChange);
+      };
     }
   }, [user]);
 
@@ -65,6 +87,81 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack }) => {
       setError('Errore nel caricamento del profilo. Riprova più tardi.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUserAdventures = async () => {
+    if (!user) return;
+
+    try {
+      setLoadingAdventures(true);
+
+      console.log('Caricamento avventure per user_id:', user.id);
+
+      // Carica le partecipazioni dell'utente
+      // Prova prima una query semplice per vedere tutte le partecipazioni
+      const { data: allParticipants, error: allError } = await supabase
+        .from('adventure_participants')
+        .select('id, adventure_id, invitation_status, user_id')
+        .eq('user_id', user.id);
+
+      console.log('Tutte le partecipazioni:', allParticipants);
+      if (allError) {
+        console.error('Errore nel caricamento di tutte le partecipazioni:', allError);
+      }
+
+      // Filtra manualmente per includere accepted, pending e null
+      const participantsData = (allParticipants || []).filter(p => 
+        !p.invitation_status || 
+        p.invitation_status === 'accepted' || 
+        p.invitation_status === 'pending'
+      );
+
+      console.log('Partecipazioni filtrate:', participantsData);
+
+      if (!participantsData || participantsData.length === 0) {
+        console.log('Nessuna partecipazione trovata per questo utente');
+        setUserAdventures([]);
+        return;
+      }
+
+      // Carica i dettagli delle avventure
+      const adventureIds = participantsData.map(p => p.adventure_id);
+      console.log('Adventure IDs da caricare:', adventureIds);
+
+      const { data: adventuresData, error: adventuresError } = await supabase
+        .from('adventures')
+        .select('*')
+        .in('id', adventureIds)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+      if (adventuresError) {
+        console.error('Errore nel caricamento delle avventure:', adventuresError);
+        throw adventuresError;
+      }
+
+      console.log('Avventure caricate:', adventuresData);
+
+      // Combina i dati
+      // Se invitation_status è NULL, lo trattiamo come 'accepted' per retrocompatibilità
+      const adventures: UserAdventure[] = (adventuresData || []).map(adventure => {
+        const participant = participantsData.find(p => p.adventure_id === adventure.id);
+        const status = participant?.invitation_status;
+        return {
+          adventure,
+          invitation_status: status === null || status === undefined ? 'accepted' : status,
+          participant_id: participant?.id || '',
+        };
+      });
+
+      console.log('Avventure finali:', adventures);
+      setUserAdventures(adventures);
+    } catch (err: any) {
+      console.error('Errore nel caricamento delle avventure:', err);
+      setError('Errore nel caricamento delle avventure. Controlla la console per i dettagli.');
+    } finally {
+      setLoadingAdventures(false);
     }
   };
 
@@ -221,6 +318,88 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack }) => {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* User Adventures Section */}
+        <div className="profile-card">
+          <div className="profile-card-header">
+            <div className="profile-header-info">
+              <h2>
+                <i className="fas fa-plane"></i> Le Mie Avventure
+              </h2>
+              <p>Avventure a cui partecipi</p>
+            </div>
+          </div>
+
+          {loadingAdventures ? (
+            <div className="adventures-loading">
+              <i className="fas fa-spinner fa-spin"></i>
+              <span>Caricamento avventure...</span>
+            </div>
+          ) : userAdventures.length > 0 ? (
+            <div className="user-adventures-list">
+              {userAdventures.map(({ adventure, invitation_status }) => (
+                <div
+                  key={adventure.id}
+                  className={`adventure-item ${invitation_status === 'pending' ? 'pending' : ''}`}
+                  onClick={() => {
+                    if (onViewAdventure && invitation_status === 'accepted') {
+                      onViewAdventure(adventure.id);
+                    }
+                  }}
+                >
+                  <div className="adventure-info">
+                    <h3>{adventure.name}</h3>
+                    {adventure.description && (
+                      <p className="adventure-description">{adventure.description}</p>
+                    )}
+                    <div className="adventure-meta">
+                      <span className="adventure-date">
+                        <i className="fas fa-calendar"></i>
+                        {new Date(adventure.created_at).toLocaleDateString('it-IT', {
+                          day: '2-digit',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </span>
+                      {invitation_status === 'pending' && (
+                        <span className="invitation-status pending">
+                          <i className="fas fa-clock"></i>
+                          Invito in attesa di accettazione
+                        </span>
+                      )}
+                      {invitation_status === 'accepted' && (
+                        <span className="invitation-status accepted">
+                          <i className="fas fa-check-circle"></i>
+                          Partecipante attivo
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {invitation_status === 'accepted' && onViewAdventure && (
+                    <button
+                      className="view-adventure-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewAdventure(adventure.id);
+                      }}
+                    >
+                      <i className="fas fa-eye"></i>
+                      Visualizza
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-adventures">
+              <i className="fas fa-plane-slash"></i>
+              <p>Non partecipi ancora a nessuna avventura.</p>
+              <p className="no-adventures-hint">
+                Quando qualcuno ti inviterà, l'avventura apparirà qui.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

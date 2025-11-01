@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { enrichParticipant, getUserDisplayName } from '../lib/userUtils';
 import { AdventureWithDestinations, AdventureParticipant } from '../types/adventures';
 import AddParticipantsModal from './AddParticipantsModal';
+import DateProposalModal from './DateProposalModal';
+import BookingDatePicker from './BookingDatePicker';
+import DestinationDetailPage from './DestinationDetailPage';
 import '../styles/components/AdventureDetail.scss';
 
 interface AdventureDetailProps {
@@ -24,6 +27,13 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
   const [showVoteModal, setShowVoteModal] = useState(false);
   const [pendingVote, setPendingVote] = useState<{ destinationId: string; voteType: 'yes' | 'no' | 'proponi' } | null>(null);
   const [voteComment, setVoteComment] = useState('');
+  const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
+  const [isEditingDates, setIsEditingDates] = useState(false);
+  const [departureDate, setDepartureDate] = useState('');
+  const [arrivalDate, setArrivalDate] = useState('');
+  const [showDateProposalModal, setShowDateProposalModal] = useState(false);
+  const [dateProposals, setDateProposals] = useState<any[]>([]);
+  const [isParticipant, setIsParticipant] = useState(false);
 
   useEffect(() => {
     loadAdventureDetails();
@@ -128,6 +138,10 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
       });
       setParticipants(participantsWithEmails);
 
+      // Inizializza le date
+      setDepartureDate(adventureData.departure_date || '');
+      setArrivalDate(adventureData.arrival_date || '');
+
       // Verifica permessi - creator originale, creator aggiunti o superadmin possono modificare
       if (user) {
         const isOriginalCreator = adventureData.created_by === user.id;
@@ -135,12 +149,91 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
         const canManage = isOriginalCreator || isAdventureCreator || actualIsSuperAdmin;
         setCanManageParticipants(canManage);
         setCanEditAdventure(canManage);
+
+        // Verifica se l'utente è partecipante
+        const userParticipant = participantsWithEmails?.find(p => p.user_id === user.id);
+        setIsParticipant(!!userParticipant && (userParticipant.invitation_status === 'accepted' || userParticipant.invitation_status === null));
       }
+
+      // Carica le proposte di date
+      await loadDateProposals();
     } catch (error) {
       console.error('Errore nel caricamento dei dettagli dell\'avventura:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadDateProposals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('adventure_date_proposals')
+        .select('*')
+        .eq('adventure_id', adventureId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Errore nel caricamento delle proposte di date:', error);
+        return;
+      }
+
+      // Arricchisci le proposte con i nomi utente
+      const proposalsWithNames = await Promise.all(
+        (data || []).map(async (proposal) => {
+          const displayName = await getUserDisplayName(proposal.user_id);
+          return {
+            ...proposal,
+            user_display_name: displayName,
+          };
+        })
+      );
+
+      setDateProposals(proposalsWithNames);
+    } catch (error) {
+      console.error('Errore nel caricamento delle proposte di date:', error);
+    }
+  };
+
+  const handleSaveDates = async () => {
+    if (!adventure || !canEditAdventure) return;
+
+    // Validazione
+    if (departureDate && arrivalDate && new Date(departureDate) >= new Date(arrivalDate)) {
+      alert('La data di arrivo deve essere successiva alla data di partenza');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('adventures')
+        .update({
+          departure_date: departureDate || null,
+          arrival_date: arrivalDate || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', adventureId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Aggiorna lo stato locale
+      setAdventure({
+        ...adventure,
+        departure_date: departureDate || null,
+        arrival_date: arrivalDate || null,
+      });
+
+      setIsEditingDates(false);
+    } catch (error: any) {
+      console.error('Errore nel salvataggio delle date:', error);
+      alert('Errore nel salvataggio delle date: ' + (error.message || 'Errore sconosciuto'));
+    }
+  };
+
+  const handleDateProposalSuccess = () => {
+    loadDateProposals();
+    loadAdventureDetails();
   };
 
   const handleVoteClick = (destinationId: string, voteType: 'yes' | 'no' | 'proponi') => {
@@ -233,6 +326,17 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
     }
   };
 
+  // Mostra la pagina dettaglio destinazione se selezionata
+  if (selectedDestinationId) {
+    return (
+      <DestinationDetailPage
+        adventureId={adventureId}
+        destinationId={selectedDestinationId}
+        onBack={() => setSelectedDestinationId(null)}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div className="adventure-detail-loading">
@@ -302,26 +406,155 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             <i className="fas fa-calendar-alt"></i> Date
           </h2>
           <div className="adventure-dates">
-            <div className="date-item">
-              <strong>Creata il:</strong>
-              <span>{new Date(adventure.created_at).toLocaleString('it-IT', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}</span>
-            </div>
-            {adventure.updated_at !== adventure.created_at && (
-              <div className="date-item">
-                <strong>Aggiornata il:</strong>
-                <span>{new Date(adventure.updated_at).toLocaleString('it-IT', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}</span>
+            {canEditAdventure && !isEditingDates ? (
+              <>
+                {adventure.departure_date ? (
+                  <div className="date-item">
+                    <strong>Partenza:</strong>
+                    <span>{new Date(adventure.departure_date).toLocaleDateString('it-IT', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })}</span>
+                  </div>
+                ) : (
+                  <div className="date-item no-date">
+                    <span>Data di partenza non impostata</span>
+                  </div>
+                )}
+                {adventure.arrival_date ? (
+                  <div className="date-item">
+                    <strong>Arrivo:</strong>
+                    <span>{new Date(adventure.arrival_date).toLocaleDateString('it-IT', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })}</span>
+                  </div>
+                ) : (
+                  <div className="date-item no-date">
+                    <span>Data di arrivo non impostata</span>
+                  </div>
+                )}
+                <button
+                  className="edit-dates-btn"
+                  onClick={() => setIsEditingDates(true)}
+                  title="Modifica date"
+                >
+                  <i className="fas fa-edit"></i>
+                  Modifica Date
+                </button>
+              </>
+            ) : canEditAdventure && isEditingDates ? (
+              <div className="dates-editor">
+                <BookingDatePicker
+                  departureDate={departureDate || null}
+                  arrivalDate={arrivalDate || null}
+                  onDatesChange={(dep, arr) => {
+                    setDepartureDate(dep || '');
+                    setArrivalDate(arr || '');
+                  }}
+                  minDate={new Date().toISOString().split('T')[0]}
+                />
+                <div className="dates-actions">
+                  <button
+                    className="btn btn-cancel"
+                    onClick={() => {
+                      setIsEditingDates(false);
+                      setDepartureDate(adventure.departure_date || '');
+                      setArrivalDate(adventure.arrival_date || '');
+                    }}
+                  >
+                    Annulla
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleSaveDates}
+                  >
+                    <i className="fas fa-save"></i>
+                    Salva Date
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {adventure.departure_date ? (
+                  <div className="date-item">
+                    <strong>Partenza:</strong>
+                    <span>{new Date(adventure.departure_date).toLocaleDateString('it-IT', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })}</span>
+                  </div>
+                ) : (
+                  <div className="date-item no-date">
+                    <span>Data di partenza non impostata</span>
+                  </div>
+                )}
+                {adventure.arrival_date ? (
+                  <div className="date-item">
+                    <strong>Arrivo:</strong>
+                    <span>{new Date(adventure.arrival_date).toLocaleDateString('it-IT', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })}</span>
+                  </div>
+                ) : (
+                  <div className="date-item no-date">
+                    <span>Data di arrivo non impostata</span>
+                  </div>
+                )}
+                {isParticipant && (
+                  <button
+                    className="propose-dates-btn"
+                    onClick={() => setShowDateProposalModal(true)}
+                    title="Proponi date alternative"
+                  >
+                    <i className="fas fa-thumbs-up"></i>
+                    Proponi Date Alternative
+                  </button>
+                )}
+              </>
+            )}
+            
+            {dateProposals.length > 0 && (
+              <div className="date-proposals">
+                <h3>Proposte di Date</h3>
+                {dateProposals.map((proposal) => (
+                  <div key={proposal.id} className="date-proposal-item">
+                    <div className="proposal-header">
+                      <span className="proposal-author">
+                        <i className="fas fa-user"></i>
+                        {proposal.user_display_name || 'Utente'}
+                      </span>
+                      <span className="proposal-date">
+                        {new Date(proposal.created_at).toLocaleDateString('it-IT')}
+                      </span>
+                    </div>
+                    <div className="proposal-dates">
+                      <span>
+                        <i className="fas fa-plane-departure"></i>
+                        {proposal.proposed_departure_date 
+                          ? new Date(proposal.proposed_departure_date).toLocaleDateString('it-IT')
+                          : 'Non specificata'}
+                      </span>
+                      <span>
+                        <i className="fas fa-plane-arrival"></i>
+                        {proposal.proposed_arrival_date 
+                          ? new Date(proposal.proposed_arrival_date).toLocaleDateString('it-IT')
+                          : 'Non specificata'}
+                      </span>
+                    </div>
+                    {proposal.comment && (
+                      <div className="proposal-comment">
+                        <i className="fas fa-comment"></i>
+                        {proposal.comment}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -351,24 +584,23 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
                     <div className="destination-tags">
                       {destination.tags.map((tag, index) => (
                         <span key={index} className="destination-tag">
+                          <i className="fas fa-check"></i>
                           {tag}
                         </span>
                       ))}
                     </div>
                   )}
 
-                  <div className="destination-places">
-                    <h4>
-                      <i className="fas fa-map-marker-alt"></i> Luoghi da Visitare ({destination.places.length})
-                    </h4>
-                    <ol className="places-list">
-                      {destination.places.map((place) => (
-                        <li key={place.id} className="place-item">
-                          <strong>{place.name}</strong>
-                          {place.description && <span className="place-desc">{place.description}</span>}
-                        </li>
-                      ))}
-                    </ol>
+                  <div className="destination-actions">
+                    <button
+                      className="view-destination-details-btn"
+                      onClick={() => {
+                        setSelectedDestinationId(destination.id);
+                      }}
+                    >
+                      <i className="fas fa-eye"></i>
+                      Vedi Dettagli Destinazione
+                    </button>
                   </div>
 
                   <div className="destination-voting">
@@ -545,6 +777,17 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             </div>
           </div>
         </div>
+      )}
+
+      {showDateProposalModal && (
+        <DateProposalModal
+          isOpen={showDateProposalModal}
+          adventureId={adventureId}
+          currentDepartureDate={adventure?.departure_date || null}
+          currentArrivalDate={adventure?.arrival_date || null}
+          onClose={() => setShowDateProposalModal(false)}
+          onSuccess={handleDateProposalSuccess}
+        />
       )}
     </div>
   );

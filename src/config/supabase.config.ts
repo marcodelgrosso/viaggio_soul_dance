@@ -40,7 +40,7 @@ export async function submitVoteToSupabase(
 
     // Verifica se esiste già un voto usando user_id
     const { data: existingVotes, error: checkError } = await supabaseClient
-      .from('destination_votes')
+      .from('adventure_destination_votes')
       .select('*')
       .eq('destination_id', voteData.destination)
       .eq('user_id', userId);
@@ -52,7 +52,7 @@ export async function submitVoteToSupabase(
     if (existingVotes && existingVotes.length > 0) {
       // Aggiorna il voto esistente
       const { data, error: updateError } = await supabaseClient
-        .from('destination_votes')
+        .from('adventure_destination_votes')
         .update({
           vote_type: voteData.vote,
           comment: voteData.comment || null,
@@ -70,7 +70,7 @@ export async function submitVoteToSupabase(
     } else {
       // Inserisci un nuovo voto
       const { data, error: insertError } = await supabaseClient
-        .from('destination_votes')
+        .from('adventure_destination_votes')
         .insert({
           destination_id: voteData.destination,
           vote_type: voteData.vote,
@@ -119,7 +119,7 @@ export async function getVoteStatistics() {
 export async function getDestinationVoteCount(destinationId: string): Promise<{ yes: number; no: number; total: number }> {
   try {
     const response = await fetch(
-      `${SUPABASE_CONFIG.url}/rest/v1/destination_votes?destination_id=eq.${destinationId}&select=vote_type`,
+      `${SUPABASE_CONFIG.url}/rest/v1/adventure_destination_votes?destination_id=eq.${destinationId}&select=vote_type`,
       {
         headers: {
           'apikey': SUPABASE_CONFIG.anonKey,

@@ -6,6 +6,8 @@ export interface Adventure {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  departure_date?: string | null;
+  arrival_date?: string | null;
 }
 
 export interface AdventurePlace {
@@ -23,8 +25,7 @@ export interface AdventureDestination {
   name: string;
   description?: string;
   image_url?: string;
-  tags?: string[];
-  order_index: number;
+  tags?: string[] | string; // Può essere array o JSON string
   created_at: string;
   updated_at: string;
 }
@@ -63,6 +64,7 @@ export interface AdventureParticipant {
   user_id: string;
   added_by: string;
   created_at: string;
+  invitation_status?: 'pending' | 'accepted' | 'declined';
   user_email?: string; // Aggiunto per visualizzazione
   display_name?: string; // Nome completo (Nome Cognome) o email come fallback
   first_name?: string | null;
@@ -75,15 +77,37 @@ export interface AdventureDestinationWithPlaces extends AdventureDestination {
   vote_count_yes?: number;
   vote_count_no?: number;
   vote_count_proponi?: number;
-  total_votes?: number;
   user_vote?: AdventureDestinationVote | null;
 }
 
-export interface AdventureWithDestinations extends Adventure {
+export interface AdventureWithDestinations {
+  id: string;
+  name: string;
+  description?: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+  departure_date?: string | null;
+  arrival_date?: string | null;
   destinations: AdventureDestinationWithPlaces[];
-  creators: AdventureCreator[];
-  participants: AdventureParticipant[];
-  // Manteniamo places per retrocompatibilità durante la migrazione
-  places?: AdventurePlace[];
+  participants?: AdventureParticipant[];
+  creators?: AdventureCreator[];
 }
 
+export interface DestinationTransport {
+  id: string;
+  destination_id: string;
+  transport_type: 'flight' | 'train' | 'hotel' | 'bus' | 'car' | 'other';
+  departure_date?: string | null;
+  departure_time?: string | null;
+  arrival_date?: string | null;
+  arrival_time?: string | null;
+  cost?: number | null;
+  cost_type: 'fixed' | 'estimated' | 'variable';
+  info_link?: string | null;
+  notes?: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}

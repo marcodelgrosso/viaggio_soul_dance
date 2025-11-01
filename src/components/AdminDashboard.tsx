@@ -21,7 +21,7 @@ const AdminDashboard: React.FC = () => {
   const loadAdminVotesPreview = async () => {
     try {
       const { data, error } = await supabase
-        .from('destination_votes')
+        .from('adventure_destination_votes')
         .select('*')
         .order('created_at', { ascending: false });
 

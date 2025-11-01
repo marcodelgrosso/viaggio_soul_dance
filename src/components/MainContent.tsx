@@ -18,6 +18,13 @@ const MainContent: React.FC = () => {
   const [votingAdventureId, setVotingAdventureId] = useState<string | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
 
+  const navigateToHome = () => {
+    setSelectedAdventureId(null);
+    setEditAdventureId(null);
+    setVotingAdventureId(null);
+    setShowUserProfile(false);
+  };
+
   // Debug
   console.log('MainContent render:', { 
     isSuperAdmin, 
@@ -38,6 +45,7 @@ const MainContent: React.FC = () => {
           setShowUserProfile(false);
           setSelectedAdventureId(adventureId);
         }}
+        onNavigateToHome={navigateToHome}
       />
       {loading ? (
         <div style={{ padding: '2rem', textAlign: 'center' }}>
@@ -45,7 +53,13 @@ const MainContent: React.FC = () => {
           <p>Caricamento ruoli e permessi...</p>
         </div>
       ) : showUserProfile ? (
-        <UserProfilePage onBack={() => setShowUserProfile(false)} />
+        <UserProfilePage 
+          onBack={() => setShowUserProfile(false)}
+          onViewAdventure={(adventureId) => {
+            setShowUserProfile(false);
+            setSelectedAdventureId(adventureId);
+          }}
+        />
       ) : (
         <>
           {isSuperAdmin && (
@@ -53,7 +67,8 @@ const MainContent: React.FC = () => {
               <RoleManagement />
             </div>
           )}
-          {(hasPermission('is_creator') || actualIsSuperAdmin) && (
+          {/* Mostra AdventuresManager a tutti gli utenti autenticati, non solo a quelli con is_creator */}
+          {user && (
             <div style={{ marginBottom: '2rem' }}>
               {editAdventureId ? (
                 <EditAdventurePage

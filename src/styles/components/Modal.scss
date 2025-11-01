@@ -686,29 +686,58 @@
       color: $primary-color;
       font-size: 1rem;
     }
+
+    .required {
+      color: #e53e3e;
+      margin-left: 0.25rem;
+    }
   }
 
   input[type='text'],
+  input[type='date'],
+  input[type='time'],
+  input[type='number'],
+  input[type='url'],
+  input[type='email'],
+  select,
   textarea {
     width: 100%;
-    padding: 0.8rem;
+    padding: 0.875rem 1rem;
     border: 2px solid #e2e8f0;
-    border-radius: $border-radius;
+    border-radius: 8px;
     font-family: inherit;
     font-size: 1rem;
-    transition: $transition;
+    transition: all 0.3s ease;
     box-sizing: border-box;
+    background: white;
+    color: $text-dark;
+
+    &::placeholder {
+      color: #a0aec0;
+      opacity: 1;
+    }
 
     &:focus {
       outline: none;
       border-color: $primary-color;
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      background: #fafafa;
+    }
+
+    &:hover:not(:disabled):not(:focus) {
+      border-color: #cbd5e0;
     }
 
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+      background: #f7fafc;
     }
+  }
+
+  select {
+    cursor: pointer;
+    background: white;
   }
 
   textarea {
@@ -1135,6 +1164,16 @@
       }
     }
 
+    .form-hint {
+      display: block;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      color: #718096;
+      font-style: normal;
+      line-height: 1.4;
+      padding-left: 0.25rem;
+    }
+
     input[type="email"] {
       width: 100%;
       padding: 0.875rem 1rem;
@@ -1298,5 +1337,206 @@
       color: $white;
     }
   }
+
+  // Stili per form con righe
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
 }
 
+// Stili per il form dei trasporti (fuori dal contesto form-group per maggiore specificità)
+.transport-form {
+  .transport-types-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 0.75rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    .transport-type-btn {
+        padding: 1.5rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        background: #ffffff;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: $text-dark;
+        min-height: 110px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, $primary-color 0%, #764ba2 100%);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        &::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          border-radius: 50%;
+          background: rgba(102, 126, 234, 0.1);
+          transform: translate(-50%, -50%);
+          transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        i {
+          font-size: 2.25rem;
+          color: $text-light;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          z-index: 2;
+        }
+
+        span {
+          position: relative;
+          z-index: 2;
+          transition: color 0.3s ease;
+          text-align: center;
+        }
+
+        &:hover {
+          border-color: $primary-color;
+          background: #f8fafc;
+          transform: translateY(-4px) scale(1.02);
+          box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+
+          &::after {
+            width: 200px;
+            height: 200px;
+          }
+
+          i {
+            color: $primary-color;
+            transform: scale(1.15) rotate(5deg);
+          }
+
+          &::before {
+            opacity: 0.05;
+          }
+        }
+
+        &:active {
+          transform: translateY(-2px) scale(1);
+        }
+
+        &.active {
+          border-color: $primary-color;
+          background: linear-gradient(135deg, $primary-color 0%, #764ba2 100%);
+          color: white;
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+          transform: translateY(-2px) scale(1.02);
+
+          &::before {
+            opacity: 1;
+          }
+
+          &::after {
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+          }
+
+          i {
+            color: white;
+            transform: scale(1.2);
+          }
+
+          span {
+            color: white;
+            font-weight: 700;
+          }
+
+          &:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 10px 28px rgba(102, 126, 234, 0.5);
+
+            i {
+              transform: scale(1.25) rotate(-5deg);
+            }
+          }
+        }
+      }
+    }
+
+    // Assicura che gli input URL abbiano lo stesso stile degli altri input
+    .form-group {
+      input[type='url'] {
+        width: 100% !important;
+        padding: 0.875rem 1rem !important;
+        border: 2px solid #e2e8f0 !important;
+        border-radius: 8px !important;
+        font-family: inherit !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
+        box-sizing: border-box !important;
+        background: white !important;
+        color: $text-dark !important;
+
+        &::placeholder {
+          color: #a0aec0 !important;
+          opacity: 1 !important;
+        }
+
+        &:focus {
+          outline: none !important;
+          border-color: $primary-color !important;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+          background: #fafafa !important;
+        }
+
+        &:hover:not(:disabled):not(:focus) {
+          border-color: #cbd5e0 !important;
+        }
+
+        &:disabled {
+          opacity: 0.6 !important;
+          cursor: not-allowed !important;
+          background: #f7fafc !important;
+        }
+      }
+
+      small.form-hint {
+        display: block !important;
+        margin-top: 0.5rem !important;
+        font-size: 0.875rem !important;
+        color: #718096 !important;
+        font-style: normal !important;
+        line-height: 1.4 !important;
+        padding-left: 0.25rem !important;
+      }
+    }
+  }

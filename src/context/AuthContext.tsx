@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('user_roles')
           .select('role')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle(); // Usa maybeSingle invece di single per evitare errori se non esiste
         
         roleData = result.data;
         roleError = result.error;
@@ -70,18 +70,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         roleError = { code: 'TABLE_NOT_FOUND', message: err.message };
       }
 
-      if (roleError && roleError.code !== 'PGRST116') {
+      // Gestisce errori 406 (Not Acceptable) che possono verificarsi con problemi RLS
+      if (roleError) {
         // PGRST116 = no rows returned, ignoriamo se non esiste ancora un ruolo
-        // Se è un errore di tabella non trovata (42P01), permesso negato (42501), o altro, continua
-        if (roleError.code !== '42501' && roleError.code !== '42P01' && 
-            !roleError.message?.includes('relation') && 
-            !roleError.message?.includes('permission denied') &&
-            !roleError.message?.includes('does not exist')) {
+        // 406 = Not Acceptable (spesso causato da RLS)
+        // 42501 = permission denied
+        // 42P01 = relation does not exist
+        if (roleError.code === 'PGRST116' || 
+            roleError.code === '42501' || 
+            roleError.code === '42P01' ||
+            roleError.message?.includes('relation') || 
+            roleError.message?.includes('permission denied') ||
+            roleError.message?.includes('does not exist') ||
+            roleError.status === 406 ||
+            roleError.statusCode === 406) {
+          // Errori comuni che possiamo ignorare - l'utente avrà ruolo 'user' di default
+          if (roleError.code !== 'PGRST116' && roleError.status !== 406 && roleError.statusCode !== 406) {
+            console.warn('Errore nel caricamento ruolo (ignorato):', roleError.code, roleError.message);
+          }
+        } else {
           console.warn('Errore nel caricamento ruolo:', roleError.code, roleError.message);
         }
       }
 
-      const userRole: UserRole = roleData?.role || 'user';
+      // Se non c'è un ruolo nel database, crealo automaticamente come 'user'
+      let userRole: UserRole = roleData?.role || 'user';
+      
+      // Se non esiste un ruolo per l'utente e non c'è stato un errore grave, crealo
+      if (!roleData && (!roleError || roleError.code === 'PGRST116' || roleError.status === 406 || roleError.statusCode === 406)) {
+        try {
+          const { error: insertError } = await supabase
+            .from('user_roles')
+            .insert({
+              user_id: userId,
+              role: 'user',
+            });
+          
+          if (!insertError) {
+            console.log('Ruolo utente creato automaticamente');
+            userRole = 'user';
+          } else if (insertError.code !== '23505') { // Ignora se già esiste (unique constraint)
+            console.warn('Errore nella creazione automatica del ruolo:', insertError);
+          }
+        } catch (err) {
+          // Ignora errori nella creazione automatica del ruolo
+          console.warn('Impossibile creare ruolo automaticamente:', err);
+        }
+      }
 
       // Se è superadmin, imposta come superadmin
       if (userRole === 'superadmin') {

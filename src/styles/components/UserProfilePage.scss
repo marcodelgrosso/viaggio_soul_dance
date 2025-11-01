@@ -291,6 +291,186 @@
         }
       }
     }
+
+    // Spacing tra le card
+    .profile-card + .profile-card {
+      margin-top: 2rem;
+    }
+
+    // Adventures section styles
+    .adventures-loading {
+      padding: 3rem 2rem;
+      text-align: center;
+      color: $text-light;
+
+      i {
+        font-size: 2rem;
+        color: $primary-color;
+        margin-bottom: 1rem;
+        display: block;
+      }
+
+      span {
+        display: block;
+        margin-top: 0.5rem;
+      }
+    }
+
+    .user-adventures-list {
+      padding: 2rem;
+
+      @media (max-width: 768px) {
+        padding: 1.5rem;
+      }
+
+      .adventure-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        background: white;
+
+        &:hover:not(.pending) {
+          border-color: $primary-color;
+          box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+          cursor: pointer;
+        }
+
+        &.pending {
+          background: #fef3c7;
+          border-color: #fbbf24;
+        }
+
+        .adventure-info {
+          flex: 1;
+
+          h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.25rem;
+            color: $text-dark;
+            font-weight: 600;
+          }
+
+          .adventure-description {
+            margin: 0 0 1rem 0;
+            color: $text-light;
+            font-size: 0.95rem;
+            line-height: 1.5;
+          }
+
+          .adventure-meta {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+
+            .adventure-date {
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              color: $text-light;
+              font-size: 0.9rem;
+
+              i {
+                color: $primary-color;
+              }
+            }
+
+            .invitation-status {
+              display: inline-flex;
+              align-items: center;
+              gap: 0.5rem;
+              padding: 0.375rem 0.75rem;
+              border-radius: 6px;
+              font-size: 0.85rem;
+              font-weight: 600;
+
+              i {
+                font-size: 0.9rem;
+              }
+
+              &.pending {
+                background: #fef3c7;
+                color: #92400e;
+                border: 1px solid #fbbf24;
+              }
+
+              &.accepted {
+                background: #d1fae5;
+                color: #065f46;
+                border: 1px solid #10b981;
+              }
+            }
+          }
+        }
+
+        .view-adventure-btn {
+          padding: 0.75rem 1.5rem;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 0.95rem;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+          margin-left: 1rem;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+          }
+
+          i {
+            font-size: 0.9rem;
+          }
+
+          @media (max-width: 768px) {
+            margin-left: 0;
+            margin-top: 1rem;
+            width: 100%;
+            justify-content: center;
+          }
+        }
+
+        @media (max-width: 768px) {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+    }
+
+    .no-adventures {
+      padding: 4rem 2rem;
+      text-align: center;
+      color: $text-light;
+
+      i {
+        font-size: 3rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+        display: block;
+      }
+
+      p {
+        font-size: 1.1rem;
+        margin: 0.5rem 0;
+      }
+
+      .no-adventures-hint {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        margin-top: 0.5rem;
+      }
+    }
   }
 }
 

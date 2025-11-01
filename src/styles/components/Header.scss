@@ -40,74 +40,81 @@
 .nav-brand {
   display: flex;
   align-items: center;
+  gap: 0.75rem;
   font-size: 1.5rem;
   font-weight: 700;
   color: $primary-color;
+  transition: opacity 0.2s ease;
+  user-select: none;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  &:active {
+    opacity: 0.6;
+    outline: none;
+  }
+
+  &:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $primary-color;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 
   @media (max-width: 768px) {
     font-size: 1.3rem;
+    gap: 0.5rem;
   }
 
   @media (max-width: 480px) {
     font-size: 1.1rem;
-
-    span {
-      display: none; // Nascondi testo su mobile molto piccolo
-    }
+    gap: 0.4rem;
   }
 
-  i {
-    margin-right: 0.5rem;
-    font-size: 1.8rem;
+  .logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
 
     @media (max-width: 768px) {
-      font-size: 1.5rem;
-      margin-right: 0.3rem;
+      width: 28px;
+      height: 28px;
     }
 
     @media (max-width: 480px) {
-      font-size: 1.3rem;
-      margin-right: 0;
-    }
-  }
-}
-
-.nav-links {
-  display: flex;
-  gap: 2rem;
-  flex: 1;
-
-  @media (max-width: 768px) {
-    display: none; // Nascondi link di navigazione su tablet/mobile
-  }
-
-  a {
-    text-decoration: none;
-    color: $text-dark;
-    font-weight: 500;
-    transition: $transition;
-    position: relative;
-
-    &:hover {
-      color: $primary-color;
+      width: 24px;
+      height: 24px;
     }
 
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -5px;
-      left: 0;
-      width: 0;
-      height: 2px;
-      background: $gradient-primary;
-      transition: $transition;
-    }
-
-    &:hover::after {
+    svg {
       width: 100%;
+      height: 100%;
+      transition: transform 0.2s ease;
     }
   }
+
+  &:hover .logo svg {
+    transform: scale(1.1);
+  }
+
+  span {
+    white-space: nowrap;
+  }
 }
+
+// Menu rimosso - non più necessario
 
 // Container per notifiche e profilo
 .nav-actions {

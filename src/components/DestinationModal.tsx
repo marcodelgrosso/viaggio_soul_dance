@@ -26,7 +26,7 @@ const DestinationModal: React.FC<DestinationModalProps> = ({ destinationId, onCl
 
     try {
       const { data, error } = await supabase
-        .from('destination_votes')
+        .from('adventure_destination_votes')
         .select('*')
         .eq('destination_id', destinationId)
         .eq('user_id', user.id)

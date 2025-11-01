@@ -29,9 +29,17 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
   const loadUserVote = async () => {
     if (!user) return;
     
+    // Verifica se destinationId è un UUID valido
+    // Se è un nome (come "london", "seville"), non caricare i voti dalla tabella adventure_destination_votes
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(destinationId)) {
+      // Non è un UUID, probabilmente è una destinazione statica della homepage
+      return;
+    }
+    
     try {
       const { data, error } = await supabase
-        .from('destination_votes')
+        .from('adventure_destination_votes')
         .select('*')
         .eq('destination_id', destinationId)
         .eq('user_id', user.id)
