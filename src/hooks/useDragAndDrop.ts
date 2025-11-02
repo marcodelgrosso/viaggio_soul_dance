@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 
 interface UseDragAndDropOptions<T> {
   items: T[];
@@ -10,7 +10,6 @@ interface UseDragAndDropOptions<T> {
 export const useDragAndDrop = <T>({
   items,
   onReorder,
-  getItemId,
   disabled = false,
 }: UseDragAndDropOptions<T>) => {
   const [draggedItem, setDraggedItem] = useState<T | null>(null);

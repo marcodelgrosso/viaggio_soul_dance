@@ -12,7 +12,7 @@ interface UserWithRole {
 }
 
 const RoleManagement: React.FC = () => {
-  const { isSuperAdmin, role, email } = useAuth();
+  const { isSuperAdmin } = useAuth();
   
   // Debug
   const [users, setUsers] = useState<UserWithRole[]>([]);

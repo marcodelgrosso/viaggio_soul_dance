@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { AdventureWithDestinations, AdventureDestinationWithPlaces } from '../../types/adventures';
 import Tooltip from '../Tooltip';

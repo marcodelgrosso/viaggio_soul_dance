@@ -258,7 +258,7 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
       await Promise.all(placePromises);
 
       // Verifica che i luoghi siano stati salvati correttamente
-      const { data: verifyPlaces, error: verifyError } = await supabase
+      const { error: verifyError } = await supabase
         .from('adventure_destination_places')
         .select('*')
         .eq('destination_id', destination.id)

@@ -12,7 +12,7 @@ import UserProfilePage from './UserProfilePage';
 import { useAuth } from '../context/AuthContext';
 
 const MainContent: React.FC = () => {
-  const { user, isAdmin, isSuperAdmin, hasPermission, loading, role, selectedRole, actualIsSuperAdmin, permissions } = useAuth();
+  const { user, isAdmin, isSuperAdmin, loading } = useAuth();
   const [selectedAdventureId, setSelectedAdventureId] = useState<string | null>(null);
   const [editAdventureId, setEditAdventureId] = useState<string | null>(null);
   const [votingAdventureId, setVotingAdventureId] = useState<string | null>(null);

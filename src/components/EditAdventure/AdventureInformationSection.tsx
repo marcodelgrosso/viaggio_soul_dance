@@ -24,7 +24,7 @@ const AdventureInformationSection: React.FC<AdventureInformationSectionProps> = 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   // Salvataggio automatico bozza (solo descrizione e date, non nome)
   const autoSaveData = {

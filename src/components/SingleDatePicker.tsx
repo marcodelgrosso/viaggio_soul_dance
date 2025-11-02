@@ -213,7 +213,6 @@ const SingleDatePicker: React.FC<SingleDatePickerProps> = ({
                 const isDisabled = isDateDisabled(date);
                 const isSelected =
                   selectedDateStr && formatDate(date) === selectedDateStr;
-                const dateStr = formatDate(date);
 
                 return (
                   <div

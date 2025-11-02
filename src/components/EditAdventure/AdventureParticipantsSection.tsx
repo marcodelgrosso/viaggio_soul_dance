@@ -262,7 +262,6 @@ const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> 
 interface ParticipantCardProps {
   participant: any;
   isCreator: boolean;
-  adventure: AdventureWithDestinations;
   loading: boolean;
   savingPermissions: string | null;
   handleRemoveParticipant: (id: string, name: string) => void;
@@ -273,7 +272,6 @@ interface ParticipantCardProps {
 const ParticipantCard: React.FC<ParticipantCardProps> = ({
   participant,
   isCreator,
-  adventure,
   loading,
   savingPermissions,
   handleRemoveParticipant,

@@ -30,7 +30,7 @@ type PageType =
 
 const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBack }) => {
   const { user, actualIsSuperAdmin } = useAuth();
-  const { showError, showSuccess, showInfo } = useToast();
+  const { showError, showInfo } = useToast();
   const [adventure, setAdventure] = useState<AdventureWithDestinations | null>(null);
   const [loading, setLoading] = useState(true);
   const [canEdit, setCanEdit] = useState(false);
@@ -146,13 +146,8 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
         .eq('adventure_id', adventureId);
 
       // Per ogni destinazione, carica i luoghi e i voti
-      // Usa un timestamp per forzare il refresh dalla cache
-      const cacheBuster = Date.now();
       const destinationsWithPlaces = await Promise.all(
         (destinationsData || []).map(async (destination) => {
-          // Query senza cache per ottenere dati sempre freschi
-          // Usa un timestamp unico per evitare cache
-          const timestamp = new Date().getTime();
           const { data: placesData, error: placesError } = await supabase
             .from('adventure_destination_places')
             .select('id, destination_id, name, description, order_index, created_at, visit_date')
@@ -227,7 +222,7 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
           ...adventureData,
           destinations: destinationsWithPlaces.map(dest => ({
             ...dest,
-            places: dest.places.map(place => ({
+            places: dest.places.map((place: any) => ({
               ...place,
               // Assicurati che visit_date sia incluso
               visit_date: (place as any).visit_date || null
