@@ -1029,13 +1029,18 @@
       border-radius: 8px;
       border: 1px solid #e2e8f0;
       transition: all 0.2s ease;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
 
       @media (max-width: 768px) {
         padding: 1rem;
+        min-height: 130px;
       }
 
       @media (max-width: 480px) {
         padding: 0.875rem;
+        min-height: 120px;
       }
 
       &:hover {
@@ -1092,19 +1097,28 @@
         }
       }
 
+      .vote-content-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
       .vote-comment {
-        margin: 0.75rem 0;
+        margin: 0;
         padding: 0.75rem;
-        background: #f8fafc;
-        border-left: 3px solid $primary-color;
+        background: rgba(102, 126, 234, 0.05);
+        border-left: 3px solid rgba(102, 126, 234, 0.4);
         border-radius: 4px;
         display: flex;
         gap: 0.75rem;
+        flex: 1;
 
         i {
-          color: $primary-color;
+          color: rgba(102, 126, 234, 0.7);
           margin-top: 0.2rem;
           flex-shrink: 0;
+          font-size: 0.85rem;
         }
 
         p {
@@ -1112,7 +1126,13 @@
           color: $text-dark;
           line-height: 1.6;
           flex: 1;
+          font-size: 0.9rem;
         }
+      }
+
+      .vote-comment-placeholder {
+        flex: 1;
+        min-height: 0;
       }
 
       .vote-date {
@@ -1121,6 +1141,9 @@
         gap: 0.5rem;
         color: $text-light;
         font-size: 0.85rem;
+        margin-top: auto;
+        padding-top: 0.5rem;
+        border-top: 1px solid #f1f5f9;
 
         i {
           font-size: 0.8rem;
@@ -1357,10 +1380,12 @@
         flex-direction: column;
         gap: 0.75rem;
         min-width: 200px;
+        min-height: 140px;
 
         @media (max-width: 480px) {
           min-width: auto;
           gap: 0.625rem;
+          min-height: 120px;
         }
 
       .participant-vote-badge {
@@ -1379,18 +1404,27 @@
         }
       }
 
+      .participant-vote-content-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
       .participant-vote-comment {
         padding: 0.75rem;
-        background: #f8fafc;
-        border-left: 3px solid $primary-color;
+        background: rgba(102, 126, 234, 0.05);
+        border-left: 3px solid rgba(102, 126, 234, 0.4);
         border-radius: 4px;
         display: flex;
         gap: 0.75rem;
+        flex: 1;
 
         i {
-          color: $primary-color;
+          color: rgba(102, 126, 234, 0.7);
           margin-top: 0.2rem;
           flex-shrink: 0;
+          font-size: 0.85rem;
         }
 
         p {
@@ -1402,12 +1436,20 @@
         }
       }
 
+      .participant-vote-comment-placeholder {
+        flex: 1;
+        min-height: 0;
+      }
+
       .participant-vote-date {
         display: flex;
         align-items: center;
         gap: 0.5rem;
         color: $text-light;
         font-size: 0.85rem;
+        margin-top: auto;
+        padding-top: 0.5rem;
+        border-top: 1px solid #f1f5f9;
 
         i {
           font-size: 0.8rem;

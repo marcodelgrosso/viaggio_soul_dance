@@ -349,6 +349,12 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
     }
   };
 
+  const handleNotifyParticipant = (participantId: string, participantUserId: string) => {
+    // TODO: Implementare la logica di invio notifica
+    console.log('Invio notifica al partecipante:', participantId, participantUserId);
+    // Placeholder per ora
+  };
+
   // Mostra la pagina dettaglio destinazione se selezionata
   if (selectedDestinationId) {
     return (
@@ -662,24 +668,28 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
                       </div>
                     )}
                     {user && (
-                      <div 
-                        className="user-vote-display" 
-                        data-vote={destination.user_vote?.vote_type || ''}
-                      >
-                        <i className="fas fa-user-circle"></i>
-                        <span>
-                          {destination.user_vote ? (
-                            destination.user_vote.vote_type === 'yes' ? 'La destinazione ti piace' : 
-                            destination.user_vote.vote_type === 'no' ? 'La destinazione non ti piace' : 
-                            'Hai fatto una proposta'
-                          ) : 'Devi ancora votare'}
-                        </span>
-                      </div>
-                    )}
-                    {user && destination.user_vote && destination.user_vote.comment && (
-                      <div className="user-vote-comment">
-                        <i className="fas fa-comment"></i>
-                        <p>{destination.user_vote.comment}</p>
+                      <div className="user-vote-wrapper">
+                        <div 
+                          className="user-vote-display" 
+                          data-vote={destination.user_vote?.vote_type || ''}
+                        >
+                          <i className="fas fa-user-circle"></i>
+                          <span>
+                            {destination.user_vote ? (
+                              destination.user_vote.vote_type === 'yes' ? 'La destinazione ti piace' : 
+                              destination.user_vote.vote_type === 'no' ? 'La destinazione non ti piace' : 
+                              'Hai fatto una proposta'
+                            ) : 'Devi ancora votare'}
+                          </span>
+                        </div>
+                        {destination.user_vote && destination.user_vote.comment ? (
+                          <div className="user-vote-comment">
+                            <i className="fas fa-comment"></i>
+                            <p>{destination.user_vote.comment}</p>
+                          </div>
+                        ) : (
+                          <div className="user-vote-comment-placeholder"></div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -701,7 +711,8 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
                 className="add-participant-btn"
                 onClick={() => setShowAddParticipantModal(true)}
               >
-                <i className="fas fa-user-plus"></i> Aggiungi Partecipante
+                <i className="fas fa-user-plus"></i>
+                <span className="add-participant-btn-text">Aggiungi Partecipante</span>
               </button>
             )}
           </div>
@@ -730,13 +741,22 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
                         </span>
                       </div>
                       {canManageParticipants && !isCreator && participant.user_id !== user?.id && (
-                        <button
-                          className="remove-participant-btn"
-                          onClick={() => handleRemoveParticipant(participant.id)}
-                          title="Rimuovi partecipante"
-                        >
-                          <i className="fas fa-times"></i>
-                        </button>
+                        <div className="participant-actions">
+                          <button
+                            className="notify-participant-btn"
+                            onClick={() => handleNotifyParticipant(participant.id, participant.user_id)}
+                            title="Invia notifica al partecipante"
+                          >
+                            <i className="fas fa-bell"></i>
+                          </button>
+                          <button
+                            className="remove-participant-btn"
+                            onClick={() => handleRemoveParticipant(participant.id)}
+                            title="Rimuovi partecipante"
+                          >
+                            <i className="fas fa-times"></i>
+                          </button>
+                        </div>
                       )}
                     </li>
                   );

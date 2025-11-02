@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { enrichParticipant } from '../lib/userUtils';
 import { AdventureWithDestinations, AdventureDestinationWithPlaces } from '../types/adventures';
+import { getDestinationVoteCount } from '../config/supabase.config';
 import AdventureInformationSection from './EditAdventure/AdventureInformationSection';
 import AdventureDestinationsSection from './EditAdventure/AdventureDestinationsSection';
 import AdventureParticipantsSection from './EditAdventure/AdventureParticipantsSection';
@@ -160,23 +161,45 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
             console.error(`Errore nel caricamento dei luoghi per destinazione ${destination.id}:`, placesError);
           }
 
-          // Carica i voti per la destinazione (opzionale, gestisce errori)
+          // Carica i voti per la destinazione
           let voteCountYes = 0;
           let voteCountNo = 0;
+          let voteCountProponi = 0;
           try {
+            // Prova prima con il client Supabase (con autenticazione)
             const { data: votesData, error: votesError } = await supabase
               .from('adventure_destination_votes')
               .select('vote_type')
               .eq('destination_id', destination.id);
 
             if (votesError) {
-              // Se c'è un errore (es. RLS, tabella non accessibile), ignora silenziosamente
-              console.warn(`Non è stato possibile caricare i voti per la destinazione ${destination.id}:`, votesError);
+              // Se fallisce, prova con chiamata REST diretta come fallback
+              console.warn(`Errore con client Supabase, provo con REST per ${destination.id}:`, votesError);
+              try {
+                const voteCounts = await getDestinationVoteCount(destination.id);
+                voteCountYes = voteCounts.yes;
+                voteCountNo = voteCounts.no;
+                voteCountProponi = voteCounts.proponi;
+              } catch (restError) {
+                console.warn(`Errore anche con chiamata REST per ${destination.id}:`, restError);
+              }
             } else if (votesData) {
               voteCountYes = votesData.filter(v => v.vote_type === 'yes').length;
               voteCountNo = votesData.filter(v => v.vote_type === 'no').length;
+              voteCountProponi = votesData.filter(v => v.vote_type === 'proponi').length;
+              
+              // Debug: log temporaneo per verificare i dati
+              if (votesData.length > 0) {
+                console.log(`[EditAdventure] Destinazione ${destination.name} (${destination.id}):`, {
+                  totalVotes: votesData.length,
+                  votes: votesData.map(v => v.vote_type),
+                  yes: voteCountYes,
+                  no: voteCountNo,
+                  proponi: voteCountProponi
+                });
+              }
             }
-          } catch (error) {
+          } catch (error: any) {
             // Gestisci errori in modo silenzioso per non interrompere il caricamento
             console.warn(`Errore nel caricamento dei voti per destinazione ${destination.id}:`, error);
           }
@@ -186,6 +209,7 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
             places: placesData || [],
             vote_count_yes: voteCountYes,
             vote_count_no: voteCountNo,
+            vote_count_proponi: voteCountProponi,
             // I tags vengono restituiti come array JSON da Supabase
             tags: destination.tags ? (Array.isArray(destination.tags) ? destination.tags : JSON.parse(destination.tags as any)) : [],
           };
@@ -457,13 +481,11 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
             className="back-btn"
             aria-label="Torna indietro"
           >
-            <i className="fas fa-arrow-left"></i> Torna Indietro
+            <i className="fas fa-arrow-left"></i>
+            <span className="back-btn-text">Torna Indietro</span>
           </button>
         </Tooltip>
-        <h1>
-          <i className="fas fa-edit"></i>
-          Modifica Avventura: {adventure.name}
-        </h1>
+        <h1>Modifica la tua Avventura</h1>
         {hasUnsavedChanges && (
           <div className="unsaved-changes-indicator" role="status" aria-live="polite">
             <i className="fas fa-exclamation-circle"></i>
@@ -472,7 +494,7 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
         )}
       </div>
 
-      <div className="edit-adventure-layout">
+      <div className={`edit-adventure-layout ${!sidebarOpen ? 'sidebar-closed' : ''}`}>
         <aside className={`edit-adventure-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
           <button
             className="sidebar-toggle"
@@ -528,7 +550,11 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
           )}
         </aside>
 
-        <main className="edit-adventure-content" role="main">
+        <div className="edit-adventure-content-wrapper">
+          <div className="edit-adventure-section-header">
+            <h2>{adventure.name}</h2>
+          </div>
+          <main className="edit-adventure-content" role="main">
           {activeSection === 'information' && (
             <AdventureInformationSection
               adventure={adventure}
@@ -564,6 +590,7 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
             />
           )}
         </main>
+        </div>
       </div>
     </div>
   );

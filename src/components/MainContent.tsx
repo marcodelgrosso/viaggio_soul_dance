@@ -17,12 +17,22 @@ const MainContent: React.FC = () => {
   const [editAdventureId, setEditAdventureId] = useState<string | null>(null);
   const [votingAdventureId, setVotingAdventureId] = useState<string | null>(null);
   const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
 
   const navigateToHome = () => {
     setSelectedAdventureId(null);
     setEditAdventureId(null);
     setVotingAdventureId(null);
     setShowUserProfile(false);
+    setShowAdminDashboard(false);
+  };
+
+  const navigateToAdminDashboard = () => {
+    setSelectedAdventureId(null);
+    setEditAdventureId(null);
+    setVotingAdventureId(null);
+    setShowUserProfile(false);
+    setShowAdminDashboard(true);
   };
 
   return (
@@ -34,6 +44,7 @@ const MainContent: React.FC = () => {
           setSelectedAdventureId(adventureId);
         }}
         onNavigateToHome={navigateToHome}
+        onNavigateToAdminDashboard={navigateToAdminDashboard}
       />
       {loading ? (
         <div style={{ padding: '2rem', textAlign: 'center' }}>
@@ -48,6 +59,32 @@ const MainContent: React.FC = () => {
             setSelectedAdventureId(adventureId);
           }}
         />
+      ) : showAdminDashboard ? (
+        <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button
+              onClick={() => setShowAdminDashboard(false)}
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <i className="fas fa-arrow-left"></i> Torna Indietro
+            </button>
+            <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 400, color: '#1a202c' }}>
+              Admin Control
+            </h1>
+          </div>
+          {isAdmin && <AdminDashboard />}
+        </div>
       ) : (
         <>
           {isSuperAdmin && (
@@ -83,7 +120,7 @@ const MainContent: React.FC = () => {
               )}
             </div>
           )}
-          {isAdmin && <AdminDashboard />}
+          {isAdmin && !showAdminDashboard && <AdminDashboard />}
           {isSuperAdmin && (
             <>
               <Destinations />

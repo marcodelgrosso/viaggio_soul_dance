@@ -23,6 +23,7 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
   const { showError, showSuccess } = useToast();
   const [loading, setLoading] = useState(false);
   const [isReordering, setIsReordering] = useState(false);
+  const [expandedDestinations, setExpandedDestinations] = useState<Set<string>>(new Set());
 
   // Drag & Drop per riordinare destinazioni
   const handleReorder = useCallback(async (reorderedDestinations: AdventureDestinationWithPlaces[]) => {
@@ -96,6 +97,18 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
     onOpenEditModal(destination);
   };
 
+  const toggleDestination = (destinationId: string) => {
+    setExpandedDestinations(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(destinationId)) {
+        newSet.delete(destinationId);
+      } else {
+        newSet.add(destinationId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="edit-section">
       <div className="section-header">
@@ -134,11 +147,12 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
             const dragProps = getDragProps(index, destination);
             const isDragged = draggedItem?.id === destination.id;
             const isDraggedOver = draggedOverIndex === index;
+            const isExpanded = expandedDestinations.has(destination.id);
 
             return (
               <div
                 key={destination.id}
-                className={`destination-card-editable ${isDragged ? 'dragged' : ''} ${isDraggedOver ? 'drag-over' : ''}`}
+                className={`destination-card-editable ${isDragged ? 'dragged' : ''} ${isDraggedOver ? 'drag-over' : ''} ${isExpanded ? 'expanded' : ''}`}
                 {...dragProps}
               >
                 <div className="drag-handle" title="Trascina per riordinare">
@@ -160,6 +174,18 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
                   )}
                 </div>
                 <div className="card-actions">
+                  <Tooltip content={isExpanded ? "Nascondi dettagli" : "Mostra dettagli"}>
+                    <button
+                      className="btn-icon btn-toggle"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleDestination(destination.id);
+                      }}
+                      aria-label={isExpanded ? "Nascondi dettagli" : "Mostra dettagli"}
+                    >
+                      <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+                    </button>
+                  </Tooltip>
                   <Tooltip content="Modifica questa destinazione">
                     <button
                       className="btn-icon btn-edit"
@@ -182,7 +208,7 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
                 </div>
               </div>
 
-              <div className="card-content">
+              <div className={`card-content ${isExpanded ? 'expanded' : 'collapsed'}`}>
                 {destination.tags && (Array.isArray(destination.tags) ? destination.tags : []).length > 0 && (
                   <div className="destination-tags">
                     {(Array.isArray(destination.tags) ? destination.tags : []).map((tag: string, index: number) => (
@@ -258,16 +284,20 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
                     <p className="no-items">Nessun luogo aggiunto</p>
                   )}
                 </div>
+              </div>
 
-                <div className="vote-stats-compact">
-                  <div className="vote-stat">
-                    <i className="fas fa-thumbs-up"></i>
-                    <span>{destination.vote_count_yes || 0}</span>
-                  </div>
-                  <div className="vote-stat">
-                    <i className="fas fa-thumbs-down"></i>
-                    <span>{destination.vote_count_no || 0}</span>
-                  </div>
+              <div className="vote-stats-compact">
+                <div className="vote-stat">
+                  <i className="fas fa-thumbs-up"></i>
+                  <span>{destination.vote_count_yes || 0}</span>
+                </div>
+                <div className="vote-stat">
+                  <i className="fas fa-thumbs-down"></i>
+                  <span>{destination.vote_count_no || 0}</span>
+                </div>
+                <div className="vote-stat">
+                  <i className="fas fa-lightbulb"></i>
+                  <span>{destination.vote_count_proponi || 0}</span>
                 </div>
               </div>
               </div>

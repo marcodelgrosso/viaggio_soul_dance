@@ -8,6 +8,7 @@ interface HeaderProps {
   onShowProfile?: () => void;
   onNavigateToAdventure?: (adventureId: string) => void;
   onNavigateToHome?: () => void;
+  onNavigateToAdminDashboard?: () => void;
 }
 
 interface Notification {
@@ -26,8 +27,8 @@ interface Notification {
   created_at: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure, onNavigateToHome }) => {
-  const { email, isAdmin, logout, isSuperAdmin: actualIsSuperAdmin, selectRole, selectedRole, user } = useAuth();
+const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure, onNavigateToHome, onNavigateToAdminDashboard }) => {
+  const { email, isAdmin, logout, actualIsSuperAdmin, selectRole, selectedRole, user } = useAuth();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -508,6 +509,24 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure, o
                           <span>Modalità Utente</span>
                         </button>
                       ) : null}
+                    </>
+                  )}
+                  {actualIsSuperAdmin && (
+                    <>
+                      <div className="profile-dropdown-divider"></div>
+                      <button 
+                        className="profile-dropdown-item" 
+                        onClick={() => {
+                          if (onNavigateToAdminDashboard) {
+                            onNavigateToAdminDashboard();
+                          }
+                          setShowProfileDropdown(false);
+                        }}
+                        style={!onNavigateToAdminDashboard ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                      >
+                        <i className="fas fa-shield-alt"></i>
+                        <span>Admin Control</span>
+                      </button>
                     </>
                   )}
                   {onShowProfile && (

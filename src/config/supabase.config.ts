@@ -121,7 +121,7 @@ export async function getVoteStatistics() {
 }
 
 // Funzione per ottenere il conteggio delle votazioni per una destinazione
-export async function getDestinationVoteCount(destinationId: string): Promise<{ yes: number; no: number; total: number }> {
+export async function getDestinationVoteCount(destinationId: string): Promise<{ yes: number; no: number; proponi: number; total: number }> {
   try {
     const response = await fetch(
       `${SUPABASE_CONFIG.url}/rest/v1/adventure_destination_votes?destination_id=eq.${destinationId}&select=vote_type`,
@@ -140,11 +140,12 @@ export async function getDestinationVoteCount(destinationId: string): Promise<{ 
     const votes = await response.json();
     const yesCount = votes.filter((v: any) => v.vote_type === 'yes').length;
     const noCount = votes.filter((v: any) => v.vote_type === 'no').length;
+    const proponiCount = votes.filter((v: any) => v.vote_type === 'proponi').length;
 
-    return { yes: yesCount, no: noCount, total: votes.length };
+    return { yes: yesCount, no: noCount, proponi: proponiCount, total: votes.length };
   } catch (error) {
     console.error('Errore nel recupero dei conteggi:', error);
-    return { yes: 0, no: 0, total: 0 };
+    return { yes: 0, no: 0, proponi: 0, total: 0 };
   }
 }
 

@@ -306,11 +306,11 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({
 
   return (
     <div className={`participant-card participant-card-${roleType}`}>
-      <div className="participant-info">
+      <div className="participant-header">
         <div className="participant-avatar">
           {initials}
         </div>
-        <div className="participant-details">
+        <div className="participant-info">
           <h4>
             {displayName}
             {isCreator && (
@@ -323,10 +323,27 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({
             <i className="fas fa-calendar-alt"></i>
             <span>{new Date(participant.created_at).toLocaleDateString('it-IT')}</span>
           </p>
-          
-          {/* Permessi solo per non-creator - solo in vista dettagliata */}
-          {!isCreator && viewMode === 'detailed' && (
-            <div className="participant-permissions detailed">
+        </div>
+        {!isCreator && (
+          <div className="participant-actions">
+            <Tooltip content="Rimuovi questo partecipante">
+              <button
+                className="btn-icon btn-delete"
+                onClick={() => handleRemoveParticipant(participant.id, displayName)}
+                disabled={loading || savingPermissions === participant.user_id}
+                aria-label={`Rimuovi partecipante ${displayName}`}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </Tooltip>
+          </div>
+        )}
+      </div>
+      
+      {/* Permessi solo per non-creator - solo in vista dettagliata */}
+      {!isCreator && viewMode === 'detailed' && (
+        <div className="participant-body">
+          <div className="participant-permissions detailed">
               {/* Visualizza statistiche - checkbox indipendente */}
               <div className="permission-item">
                 <label className="permission-toggle">
@@ -381,23 +398,8 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({
                 </div>
               )}
             </div>
-          )}
-        </div>
-      </div>
-      <div className="participant-actions">
-        {!isCreator && (
-          <Tooltip content="Rimuovi questo partecipante">
-            <button
-              className="btn-icon btn-delete"
-              onClick={() => handleRemoveParticipant(participant.id, displayName)}
-              disabled={loading || savingPermissions === participant.user_id}
-              aria-label={`Rimuovi partecipante ${displayName}`}
-            >
-              <i className="fas fa-times"></i>
-            </button>
-          </Tooltip>
+          </div>
         )}
-      </div>
     </div>
   );
 };

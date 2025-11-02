@@ -554,26 +554,30 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
                                   <span>{getVoteTypeLabel(vote.vote_type)}</span>
                                 </div>
                               </div>
-                              {vote.comment && (
-                                <div className="vote-comment">
-                                  <i className="fas fa-comment"></i>
-                                  <p>{vote.comment}</p>
-                                </div>
-                              )}
-                              <div className="vote-date">
-                                <i className="fas fa-clock"></i>
-                                <span>
-                                  {new Date(vote.created_at).toLocaleString('it-IT', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
-                                </span>
-                                {vote.updated_at !== vote.created_at && (
-                                  <span className="vote-updated">(Aggiornato)</span>
+                              <div className="vote-content-wrapper">
+                                {vote.comment ? (
+                                  <div className="vote-comment">
+                                    <i className="fas fa-comment"></i>
+                                    <p>{vote.comment}</p>
+                                  </div>
+                                ) : (
+                                  <div className="vote-comment-placeholder"></div>
                                 )}
+                                <div className="vote-date">
+                                  <i className="fas fa-clock"></i>
+                                  <span>
+                                    {new Date(vote.created_at).toLocaleString('it-IT', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
+                                  </span>
+                                  {vote.updated_at !== vote.created_at && (
+                                    <span className="vote-updated">(Aggiornato)</span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -669,23 +673,27 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
                                     <i className={`fas ${getVoteTypeIcon(vote.vote_type)}`}></i>
                                     <span>{getVoteTypeLabel(vote.vote_type)}</span>
                                   </div>
-                                  {vote.comment && (
-                                    <div className="participant-vote-comment">
-                                      <i className="fas fa-comment"></i>
-                                      <p>{vote.comment}</p>
+                                  <div className="participant-vote-content-wrapper">
+                                    {vote.comment ? (
+                                      <div className="participant-vote-comment">
+                                        <i className="fas fa-comment"></i>
+                                        <p>{vote.comment}</p>
+                                      </div>
+                                    ) : (
+                                      <div className="participant-vote-comment-placeholder"></div>
+                                    )}
+                                    <div className="participant-vote-date">
+                                      <i className="fas fa-clock"></i>
+                                      <span>
+                                        {new Date(vote.created_at).toLocaleString('it-IT', {
+                                          day: '2-digit',
+                                          month: '2-digit',
+                                          year: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
+                                      </span>
                                     </div>
-                                  )}
-                                  <div className="participant-vote-date">
-                                    <i className="fas fa-clock"></i>
-                                    <span>
-                                      {new Date(vote.created_at).toLocaleString('it-IT', {
-                                        day: '2-digit',
-                                        month: '2-digit',
-                                        year: 'numeric',
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })}
-                                    </span>
                                   </div>
                                 </div>
                               </div>

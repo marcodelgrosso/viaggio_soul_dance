@@ -319,8 +319,8 @@
 
     .add-participant-btn {
       padding: 0.75rem 1.5rem;
-      background: #10b981;
-      color: white;
+      background: transparent;
+      color: #4a5568;
       border: none;
       border-radius: 8px;
       cursor: pointer;
@@ -328,10 +328,39 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      transition: background 0.3s ease;
+      transition: all 0.3s ease;
+      width: fit-content;
+      max-width: fit-content;
+      min-width: auto;
+      flex-shrink: 0;
+      flex-grow: 0;
+      white-space: nowrap;
+
+      i {
+        color: #10b981;
+        font-size: 0.95rem;
+      }
+
+      .add-participant-btn-text {
+        color: #4a5568;
+        
+        @media (max-width: 768px) {
+          display: none;
+        }
+      }
 
       &:hover {
-        background: #059669;
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      @media (max-width: 768px) {
+        padding: 0.5rem;
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        max-width: 36px;
+        justify-content: center;
+        gap: 0;
       }
     }
   }
@@ -696,7 +725,6 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      min-height: 120px;
 
       .vote-stats {
         display: flex;
@@ -764,6 +792,17 @@
         }
       }
 
+      .user-vote-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        min-height: 140px;
+
+        @media (max-width: 480px) {
+          min-height: 120px;
+        }
+      }
+
       .user-vote-display {
         display: flex;
         align-items: center;
@@ -808,14 +847,17 @@
         align-items: flex-start;
         gap: 0.5rem;
         padding: 0.75rem 1rem;
-        background: #f8fafc;
+        background: rgba(102, 126, 234, 0.05);
         border-radius: 8px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+        border-left: 3px solid rgba(102, 126, 234, 0.4);
+        flex: 1;
 
         i {
-          font-size: 0.9rem;
-          color: #6b7280;
+          font-size: 0.85rem;
+          color: rgba(102, 126, 234, 0.7);
           margin-top: 0.15rem;
+          flex-shrink: 0;
         }
 
         p {
@@ -823,7 +865,13 @@
           color: #4a5568;
           font-size: 0.9rem;
           line-height: 1.5;
+          flex: 1;
         }
+      }
+
+      .user-vote-comment-placeholder {
+        flex: 1;
+        min-height: 0;
       }
 
     }
@@ -997,6 +1045,7 @@
           margin-bottom: 0.75rem;
           border: 1px solid transparent;
           transition: all 0.2s ease;
+          gap: 1rem;
 
           &:hover {
             background: #edf2f7;
@@ -1039,6 +1088,40 @@
             font-size: 0.875rem;
             font-weight: normal;
             margin-left: auto;
+            margin-right: 0;
+          }
+        }
+
+        .participant-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          flex-shrink: 0;
+          align-self: center;
+        }
+
+        .notify-participant-btn {
+          background: transparent;
+          color: #667eea;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          width: 32px;
+          height: 32px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.3s ease;
+          flex-shrink: 0;
+
+          i {
+            font-size: 0.85rem;
+          }
+
+          &:hover {
+            background: rgba(102, 126, 234, 0.05);
+            border-color: #667eea;
+            color: #5568d3;
           }
         }
 
@@ -1054,6 +1137,7 @@
           align-items: center;
           justify-content: center;
           transition: background 0.3s ease;
+          flex-shrink: 0;
 
           &:hover {
             background: #dc2626;
@@ -1237,13 +1321,17 @@
     }
 
     .section-header-with-action {
-      flex-direction: column;
-      align-items: flex-start;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
       gap: 1rem;
 
       .add-participant-btn {
-        width: 100%;
-        justify-content: center;
+        width: fit-content !important;
+        max-width: fit-content !important;
+        min-width: auto !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
       }
     }
 
@@ -1264,23 +1352,25 @@
     .participants-list {
       .participants-ul {
         .participant-item {
-          flex-direction: column;
-          align-items: flex-start;
+          flex-direction: row;
+          align-items: center;
           gap: 1rem;
 
           .participant-info {
+            flex: 1;
+            display: flex;
             flex-direction: column;
             align-items: flex-start;
             gap: 0.5rem;
-            width: 100%;
 
             .participant-added-date {
               margin-left: 0;
             }
           }
 
-          .remove-participant-btn {
-            align-self: flex-end;
+          .participant-actions {
+            align-self: center;
+            flex-shrink: 0;
           }
         }
       }
