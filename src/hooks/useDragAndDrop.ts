@@ -3,7 +3,6 @@ import { useState, useRef } from 'react';
 interface UseDragAndDropOptions<T> {
   items: T[];
   onReorder: (reorderedItems: T[]) => void;
-  getItemId: (item: T) => string;
   disabled?: boolean;
 }
 
