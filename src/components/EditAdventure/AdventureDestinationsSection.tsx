@@ -62,7 +62,6 @@ const AdventureDestinationsSection: React.FC<AdventureDestinationsSectionProps> 
   const { draggedItem, draggedOverIndex, isDragging, getDragProps } = useDragAndDrop({
     items: adventure.destinations,
     onReorder: handleReorder,
-    getItemId: (item) => item.id,
     disabled: loading || isReordering,
   });
 
