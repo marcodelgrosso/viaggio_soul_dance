@@ -7,6 +7,7 @@ import AddParticipantsModal from './AddParticipantsModal';
 import DateProposalModal from './DateProposalModal';
 import BookingDatePicker from './BookingDatePicker';
 import DestinationDetailPage from './DestinationDetailPage';
+import { HashLoader } from 'react-spinners';
 import '../styles/components/AdventureDetail.scss';
 
 interface AdventureDetailProps {
@@ -38,6 +39,16 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
   useEffect(() => {
     loadAdventureDetails();
   }, [adventureId, user]);
+
+  // Nascondi/mostra il footer quando il loading cambia
+  useEffect(() => {
+    const footer = document.querySelector('footer');
+    if (loading && footer) {
+      footer.style.display = 'none';
+    } else if (footer) {
+      footer.style.display = '';
+    }
+  }, [loading]);
 
   const loadAdventureDetails = async () => {
     try {
@@ -365,9 +376,65 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
 
   if (loading) {
     return (
-      <div className="adventure-detail-loading">
-        <i className="fas fa-spinner fa-spin"></i>
-        <p>Caricamento dettagli avventura...</p>
+      <div 
+        className="adventure-detail-loading"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(255, 255, 255, 0.98)',
+          zIndex: 99999,
+          margin: 0,
+          padding: '2rem',
+          pointerEvents: 'auto'
+        }}
+      >
+        <div 
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '1.5rem',
+            textAlign: 'center',
+            width: '100%',
+            maxWidth: '500px'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+            <HashLoader 
+              color="#667eea" 
+              size={60}
+              speedMultiplier={1.2}
+            />
+          </div>
+          <h3 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: 600, 
+            color: '#1a202c',
+            margin: '0 auto',
+            textAlign: 'center',
+            width: '100%'
+          }}>
+            Caricamento Avventura
+          </h3>
+          <p style={{ 
+            fontSize: '0.95rem', 
+            color: '#718096',
+            margin: '0 auto',
+            textAlign: 'center',
+            width: '100%'
+          }}>
+            Preparando i dettagli del tuo viaggio...
+          </p>
+        </div>
       </div>
     );
   }

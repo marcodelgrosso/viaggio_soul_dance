@@ -1,3 +1,5 @@
+@import '../variables';
+
 .adventure-detail {
   padding: 2rem;
   max-width: 1200px;
@@ -967,7 +969,110 @@
     }
   }
 
-  .adventure-detail-loading,
+  .adventure-detail-loading {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(10px);
+    z-index: 99999 !important;
+    margin: 0 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+
+    .loading-wrapper {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 100% !important;
+      max-width: 500px !important;
+      margin: 0 auto !important;
+      position: relative !important;
+    }
+
+    .loading-content {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 1.5rem !important;
+      text-align: center !important;
+      width: 100% !important;
+      padding: 3rem 2rem !important;
+      margin: 0 !important;
+
+      // Spinner wrapper per centratura perfetta
+      > div:first-child {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 100% !important;
+        margin: 0 auto !important;
+      }
+
+      .loading-title {
+        font-size: 1.5rem !important;
+        font-weight: 600 !important;
+        color: $text-dark !important;
+        margin: 0 auto !important;
+        letter-spacing: -0.01em !important;
+        animation: fade-in 0.4s ease-out 0.2s both;
+        text-align: center !important;
+        width: 100% !important;
+        text-align: center !important;
+        align-self: center !important;
+      }
+
+      .loading-subtitle {
+        font-size: 0.95rem !important;
+        color: $text-light !important;
+        margin: 0 auto !important;
+        font-weight: 400 !important;
+        animation: fade-in 0.4s ease-out 0.4s both;
+        text-align: center !important;
+        width: 100% !important;
+        text-align: center !important;
+        align-self: center !important;
+      }
+
+      @media (max-width: 768px) {
+        padding: 2.5rem 1.5rem;
+        gap: 1.25rem;
+      }
+
+      @media (max-width: 480px) {
+        padding: 2rem 1rem;
+        gap: 1rem;
+
+        .loading-title {
+          font-size: 1.25rem;
+        }
+
+        .loading-subtitle {
+          font-size: 0.875rem;
+        }
+      }
+    }
+  }
+
+  // Loading Animations
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
   .adventure-detail-error {
     display: flex;
     flex-direction: column;

@@ -186,22 +186,46 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
       </div>
 
       {loading ? (
-        <div className="loading">
-          <i className="fas fa-spinner fa-spin"></i>
-          <p>Caricamento avventure...</p>
+        <div className="loading-container">
+          <div className="skeleton-grid">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="skeleton-card">
+                <div className="skeleton-header">
+                  <div className="skeleton-title"></div>
+                  <div className="skeleton-badge"></div>
+                </div>
+                <div className="skeleton-description"></div>
+                <div className="skeleton-destinations"></div>
+                <div className="skeleton-footer"></div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : adventures.length === 0 ? (
         <div className="no-adventures">
-          <i className="fas fa-map"></i>
+          <div className="empty-state-illustration">
+            <i className="fas fa-map-marked-alt"></i>
+          </div>
           {canCreate ? (
             <>
-              <p>Nessuna avventura creata ancora.</p>
-              <p>Crea la tua prima avventura cliccando il pulsante sopra!</p>
+              <h3>Inizia la Tua Avventura</h3>
+              <p className="empty-state-description">
+                Crea la tua prima avventura e inizia a pianificare il tuo viaggio con gli amici!
+              </p>
+              <button 
+                className="empty-state-cta" 
+                onClick={() => setShowCreateModal(true)}
+              >
+                <i className="fas fa-plus-circle"></i>
+                Crea Prima Avventura
+              </button>
             </>
           ) : (
             <>
-              <p>Non partecipi ancora a nessuna avventura.</p>
-              <p>Quando qualcuno ti inviterà, l'avventura apparirà qui.</p>
+              <h3>Nessuna Avventura Ancora</h3>
+              <p className="empty-state-description">
+                Non partecipi ancora a nessuna avventura. Quando qualcuno ti inviterà, l'avventura apparirà qui.
+              </p>
             </>
           )}
         </div>
@@ -214,26 +238,41 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
             
             return (
             <div key={adventure.id} className="adventure-card">
-              <div className="adventure-header">
-                <h3>{adventure.name}</h3>
-                <div className="adventure-badges">
-                  {isCreator && (
-                    <span className="creator-badge">
-                      <i className="fas fa-user"></i> Creator
-                    </span>
+              <div className="adventure-card-header">
+                <div className="adventure-header-content">
+                  <div className="adventure-header">
+                    <h3>{adventure.name}</h3>
+                    <div className="adventure-badges">
+                      {isCreator && (
+                        <span className="creator-badge">
+                          <i className="fas fa-crown"></i> Creator
+                        </span>
+                      )}
+                      {isParticipant && !isCreator && (
+                        <span className={`participant-badge ${invitationStatus === 'pending' ? 'pending' : 'accepted'}`}>
+                          <i className={`fas fa-${invitationStatus === 'pending' ? 'clock' : 'check-circle'}`}></i>
+                          {invitationStatus === 'pending' ? 'In attesa' : 'Partecipante'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {adventure.description && (
+                    <p className="adventure-description">{adventure.description}</p>
                   )}
-                  {isParticipant && !isCreator && (
-                    <span className={`participant-badge ${invitationStatus === 'pending' ? 'pending' : 'accepted'}`}>
-                      <i className={`fas fa-${invitationStatus === 'pending' ? 'clock' : 'check-circle'}`}></i>
-                      {invitationStatus === 'pending' ? 'Invito in attesa' : 'Partecipante'}
+
+                  <div className="adventure-metrics">
+                    <span className="metric-item">
+                      <i className="fas fa-map-marker-alt"></i>
+                      {adventure.destinations.length} {adventure.destinations.length === 1 ? 'Destinazione' : 'Destinazioni'}
                     </span>
-                  )}
+                    <span className="metric-item">
+                      <i className="fas fa-users"></i>
+                      {(adventure.participants || []).length} {(adventure.participants || []).length === 1 ? 'Partecipante' : 'Partecipanti'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              
-              {adventure.description && (
-                <p className="adventure-description">{adventure.description}</p>
-              )}
 
               <div className="adventure-destinations">
                 <button
@@ -268,15 +307,6 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
                             <strong className="destination-item-name">{destination.name}</strong>
                             {destination.description && (
                               <p className="destination-item-desc">{destination.description}</p>
-                            )}
-                            {destination.tags && (Array.isArray(destination.tags) ? destination.tags : []).length > 0 && (
-                              <div className="destination-item-tags">
-                                {(Array.isArray(destination.tags) ? destination.tags : []).map((tag: string, index: number) => (
-                                  <span key={index} className="destination-item-tag">
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
                             )}
                           </div>
                         </div>
@@ -329,42 +359,42 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
                       Accetta
                     </button>
                   )}
-                  {(adventure.created_by === user?.id || actualIsSuperAdmin) && (
-                    <button
-                      className="add-participant-icon-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setAdventureForParticipants(adventure.id);
-                        setShowAddParticipantModal(true);
-                      }}
-                      title="Aggiungi partecipante"
-                    >
-                      <i className="fas fa-user-plus"></i>
-                    </button>
-                  )}
-                  {onViewVoting && (
-                    <button
-                      className="view-voting-icon-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onViewVoting(adventure.id);
-                      }}
-                      title="Visualizza votazioni"
-                    >
-                      <i className="fas fa-chart-bar"></i>
-                    </button>
-                  )}
                   <button
-                    className="view-adventure-icon-btn"
+                    className="view-adventure-btn"
                     onClick={() => {
                       if (onViewAdventure) {
                         onViewAdventure(adventure.id);
                       }
                     }}
-                    title="Visualizza dettagli"
                   >
                     <i className="fas fa-eye"></i>
+                    <span>Vedi</span>
                   </button>
+                  {onViewVoting && (
+                    <button
+                      className="view-voting-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onViewVoting(adventure.id);
+                      }}
+                    >
+                      <i className="fas fa-chart-bar"></i>
+                      <span>Voti</span>
+                    </button>
+                  )}
+                  {(adventure.created_by === user?.id || actualIsSuperAdmin) && (
+                    <button
+                      className="add-participant-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAdventureForParticipants(adventure.id);
+                        setShowAddParticipantModal(true);
+                      }}
+                    >
+                      <i className="fas fa-user-plus"></i>
+                      <span>Invita</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

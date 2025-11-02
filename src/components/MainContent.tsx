@@ -84,9 +84,13 @@ const MainContent: React.FC = () => {
             </div>
           )}
           {isAdmin && <AdminDashboard />}
-          {!isAdmin && (
+          {isSuperAdmin && (
             <>
               <Destinations />
+            </>
+          )}
+          {!isAdmin && !isSuperAdmin && (
+            <>
               <Footer />
             </>
           )}
