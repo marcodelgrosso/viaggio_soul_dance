@@ -185,7 +185,6 @@ const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> 
                             key={participant.id}
                             participant={participant}
                             isCreator={true}
-                            adventure={adventure}
                             loading={loading}
                             savingPermissions={savingPermissions}
                             handleRemoveParticipant={handleRemoveParticipant}
@@ -232,7 +231,6 @@ const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> 
                             key={participant.id}
                             participant={participant}
                             isCreator={false}
-                            adventure={adventure}
                             loading={loading}
                             savingPermissions={savingPermissions}
                             handleRemoveParticipant={handleRemoveParticipant}
