@@ -304,28 +304,6 @@ const ParticipantCard: React.FC<ParticipantCardProps> = ({
 
   const roleType = getRoleType();
 
-  // Preset di permessi
-  const handlePresetChange = async (preset: 'editor' | 'viewer-stats' | 'viewer-only') => {
-    const presets = {
-      'editor': { can_view_statistics: true, can_edit: true, can_view_only: false },
-      'viewer-stats': { can_view_statistics: true, can_edit: false, can_view_only: false },
-      'viewer-only': { can_view_statistics: false, can_edit: false, can_view_only: true },
-    };
-
-    const newPermissions = presets[preset];
-    
-    // Applica tutti i permessi del preset
-    for (const [key, value] of Object.entries(newPermissions)) {
-      if (value !== permissions[key as keyof typeof permissions]) {
-        await handlePermissionChange(
-          participant.user_id,
-          key as 'can_view_statistics' | 'can_edit' | 'can_view_only',
-          value
-        );
-      }
-    }
-  };
-
   return (
     <div className={`participant-card participant-card-${roleType}`}>
       <div className="participant-info">
