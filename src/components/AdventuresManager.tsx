@@ -167,13 +167,6 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
     }
   };
 
-  // Debug
-    hasPermission: hasPermission('is_creator'),
-    isSuperAdmin,
-    actualIsSuperAdmin,
-    permissions,
-  });
-
   // Superadmin ha sempre permesso, anche in modalità user
   const canCreate = hasPermission('is_creator') || actualIsSuperAdmin;
 

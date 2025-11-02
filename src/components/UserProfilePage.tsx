@@ -123,7 +123,6 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack, onViewAdventu
 
       // Carica i dettagli delle avventure
       const adventureIds = participantsData.map(p => p.adventure_id);
-      console.log('Adventure IDs da caricare:', adventureIds);
 
       const { data: adventuresData, error: adventuresError } = await supabase
         .from('adventures')

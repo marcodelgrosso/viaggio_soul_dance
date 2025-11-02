@@ -334,11 +334,9 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
     
     try {
       // Attendi un momento per assicurarsi che il database sia aggiornato
-      console.log('Attendo 1 secondo prima del refresh...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Ricarica i dati
-      console.log('Eseguendo loadAdventureData...');
       setLoading(true); // Mostra loading durante il refresh
       await loadAdventureData();
       
