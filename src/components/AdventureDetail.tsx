@@ -5,7 +5,6 @@ import { enrichParticipant, getUserDisplayName } from '../lib/userUtils';
 import { AdventureWithDestinations, AdventureParticipant } from '../types/adventures';
 import AddParticipantsModal from './AddParticipantsModal';
 import DateProposalModal from './DateProposalModal';
-import BookingDatePicker from './BookingDatePicker';
 import DestinationDetailPage from './DestinationDetailPage';
 import { HashLoader } from 'react-spinners';
 import '../styles/components/AdventureDetail.scss';
@@ -29,9 +28,6 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
   const [pendingVote, setPendingVote] = useState<{ destinationId: string; voteType: 'yes' | 'no' | 'proponi' } | null>(null);
   const [voteComment, setVoteComment] = useState('');
   const [selectedDestinationId, setSelectedDestinationId] = useState<string | null>(null);
-  const [isEditingDates, setIsEditingDates] = useState(false);
-  const [departureDate, setDepartureDate] = useState('');
-  const [arrivalDate, setArrivalDate] = useState('');
   const [showDateProposalModal, setShowDateProposalModal] = useState(false);
   const [dateProposals, setDateProposals] = useState<any[]>([]);
   const [isParticipant, setIsParticipant] = useState(false);
@@ -170,10 +166,6 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
       });
       setParticipants(participantsWithEmails);
 
-      // Inizializza le date
-      setDepartureDate(adventureData.departure_date || '');
-      setArrivalDate(adventureData.arrival_date || '');
-
       // Verifica permessi - creator originale, creator aggiunti o superadmin possono modificare
       if (user) {
         const isOriginalCreator = adventureData.created_by === user.id;
@@ -226,52 +218,46 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
     }
   };
 
-  const handleSaveDates = async () => {
-    if (!adventure || !canEditAdventure) return;
-
-    // Validazione
-    if (departureDate && arrivalDate && new Date(departureDate) >= new Date(arrivalDate)) {
-      alert('La data di arrivo deve essere successiva alla data di partenza');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('adventures')
-        .update({
-          departure_date: departureDate || null,
-          arrival_date: arrivalDate || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', adventureId);
-
-      if (error) {
-        throw error;
-      }
-
-      // Aggiorna lo stato locale
-      setAdventure({
-        ...adventure,
-        departure_date: departureDate || null,
-        arrival_date: arrivalDate || null,
-      });
-
-      setIsEditingDates(false);
-    } catch (error: any) {
-      console.error('Errore nel salvataggio delle date:', error);
-      alert('Errore nel salvataggio delle date: ' + (error.message || 'Errore sconosciuto'));
-    }
-  };
-
   const handleDateProposalSuccess = () => {
     loadDateProposals();
     loadAdventureDetails();
   };
 
-  const handleVoteClick = (destinationId: string, voteType: 'yes' | 'no' | 'proponi') => {
+  const handleRemoveVote = async (destinationId: string) => {
     if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from('adventure_destination_votes')
+        .delete()
+        .eq('destination_id', destinationId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      loadAdventureDetails();
+    } catch (error) {
+      console.error('Errore nella rimozione del voto:', error);
+      alert('Errore nella rimozione del voto');
+    }
+  };
+
+  const handleVoteClick = (destinationId: string, voteType: 'yes' | 'no' | 'proponi', currentUserVote?: any) => {
+    if (!user) return;
+    
+    // Se l'utente sta cliccando sul suo voto attuale, rimuovilo
+    if (currentUserVote && currentUserVote.vote_type === voteType) {
+      handleRemoveVote(destinationId);
+      return;
+    }
+    
+    // Se l'utente sta cambiando voto, prepopola il modal con il commento esistente
+    if (currentUserVote && currentUserVote.vote_type !== voteType) {
+      setVoteComment(currentUserVote.comment || '');
+    } else {
+      setVoteComment('');
+    }
+    
     setPendingVote({ destinationId, voteType });
-    setVoteComment('');
     setShowVoteModal(true);
   };
 
@@ -499,117 +485,43 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             <i className="fas fa-calendar-alt"></i> Date
           </h2>
           <div className="adventure-dates">
-            {canEditAdventure && !isEditingDates ? (
-              <>
-                {adventure.departure_date ? (
-                  <div className="date-item">
-                    <strong>Partenza:</strong>
-                    <span>{new Date(adventure.departure_date).toLocaleDateString('it-IT', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })}</span>
-                  </div>
-                ) : (
-                  <div className="date-item no-date">
-                    <span>Data di partenza non impostata</span>
-                  </div>
-                )}
-                {adventure.arrival_date ? (
-                  <div className="date-item">
-                    <strong>Arrivo:</strong>
-                    <span>{new Date(adventure.arrival_date).toLocaleDateString('it-IT', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })}</span>
-                  </div>
-                ) : (
-                  <div className="date-item no-date">
-                    <span>Data di arrivo non impostata</span>
-                  </div>
-                )}
-                <button
-                  className="edit-dates-btn"
-                  onClick={() => setIsEditingDates(true)}
-                  title="Modifica date"
-                >
-                  <i className="fas fa-edit"></i>
-                  Modifica Date
-                </button>
-              </>
-            ) : canEditAdventure && isEditingDates ? (
-              <div className="dates-editor">
-                <BookingDatePicker
-                  departureDate={departureDate || null}
-                  arrivalDate={arrivalDate || null}
-                  onDatesChange={(dep, arr) => {
-                    setDepartureDate(dep || '');
-                    setArrivalDate(arr || '');
-                  }}
-                  minDate={new Date().toISOString().split('T')[0]}
-                />
-                <div className="dates-actions">
-                  <button
-                    className="btn btn-cancel"
-                    onClick={() => {
-                      setIsEditingDates(false);
-                      setDepartureDate(adventure.departure_date || '');
-                      setArrivalDate(adventure.arrival_date || '');
-                    }}
-                  >
-                    Annulla
-                  </button>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleSaveDates}
-                  >
-                    <i className="fas fa-save"></i>
-                    Salva Date
-                  </button>
-                </div>
+            {adventure.departure_date ? (
+              <div className="date-item">
+                <strong>Partenza:</strong>
+                <span>{new Date(adventure.departure_date).toLocaleDateString('it-IT', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })}</span>
               </div>
             ) : (
-              <>
-                {adventure.departure_date ? (
-                  <div className="date-item">
-                    <strong>Partenza:</strong>
-                    <span>{new Date(adventure.departure_date).toLocaleDateString('it-IT', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })}</span>
-                  </div>
-                ) : (
-                  <div className="date-item no-date">
-                    <span>Data di partenza non impostata</span>
-                  </div>
-                )}
-                {adventure.arrival_date ? (
-                  <div className="date-item">
-                    <strong>Arrivo:</strong>
-                    <span>{new Date(adventure.arrival_date).toLocaleDateString('it-IT', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })}</span>
-                  </div>
-                ) : (
-                  <div className="date-item no-date">
-                    <span>Data di arrivo non impostata</span>
-                  </div>
-                )}
-                {isParticipant && (
-                  <button
-                    className="propose-dates-btn"
-                    onClick={() => setShowDateProposalModal(true)}
-                    title="Proponi date alternative"
-                  >
-                    <i className="fas fa-thumbs-up"></i>
-                    Proponi Date Alternative
-                  </button>
-                )}
-              </>
+              <div className="date-item no-date">
+                <span>Data di partenza non impostata</span>
+              </div>
+            )}
+            {adventure.arrival_date ? (
+              <div className="date-item">
+                <strong>Arrivo:</strong>
+                <span>{new Date(adventure.arrival_date).toLocaleDateString('it-IT', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })}</span>
+              </div>
+            ) : (
+              <div className="date-item no-date">
+                <span>Data di arrivo non impostata</span>
+              </div>
+            )}
+            {isParticipant && !adventure.departure_date && (
+              <button
+                className="propose-dates-btn"
+                onClick={() => setShowDateProposalModal(true)}
+                title="Proponi date alternative"
+              >
+                <i className="fas fa-thumbs-up"></i>
+                Proponi Date Alternative
+              </button>
             )}
             
             {dateProposals.length > 0 && (
@@ -705,43 +617,69 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
                   </div>
 
                   <div className="destination-voting">
-                    <div className="vote-stats">
-                      <div className="vote-stat-item">
-                        <i className="fas fa-thumbs-up"></i>
-                        <span>{destination.vote_count_yes || 0}</span>
-                      </div>
-                      <div className="vote-stat-item">
-                        <i className="fas fa-thumbs-down"></i>
-                        <span>{destination.vote_count_no || 0}</span>
-                      </div>
-                      <div className="vote-stat-item">
-                        <i className="fas fa-lightbulb"></i>
-                        <span>{destination.vote_count_proponi || 0}</span>
-                      </div>
-                    </div>
                     {user && (
-                      <div className="vote-actions">
+                      <div className="vote-stats clickable">
                         <button
-                          className={`vote-btn vote-yes ${destination.user_vote?.vote_type === 'yes' ? 'active' : ''}`}
-                          onClick={() => handleVoteClick(destination.id, 'yes')}
+                          className={`vote-stat-item clickable ${destination.user_vote?.vote_type === 'yes' ? 'active' : ''}`}
+                          onClick={() => handleVoteClick(destination.id, 'yes', destination.user_vote)}
+                          title="Vota: Ti piace"
                         >
                           <i className="fas fa-thumbs-up"></i>
-                          Sì
+                          <span>{destination.vote_count_yes || 0}</span>
                         </button>
                         <button
-                          className={`vote-btn vote-no ${destination.user_vote?.vote_type === 'no' ? 'active' : ''}`}
-                          onClick={() => handleVoteClick(destination.id, 'no')}
+                          className={`vote-stat-item clickable ${destination.user_vote?.vote_type === 'no' ? 'active' : ''}`}
+                          onClick={() => handleVoteClick(destination.id, 'no', destination.user_vote)}
+                          title="Vota: Non ti convince"
                         >
                           <i className="fas fa-thumbs-down"></i>
-                          No
+                          <span>{destination.vote_count_no || 0}</span>
                         </button>
                         <button
-                          className={`vote-btn vote-proponi ${destination.user_vote?.vote_type === 'proponi' ? 'active' : ''}`}
-                          onClick={() => handleVoteClick(destination.id, 'proponi')}
+                          className={`vote-stat-item clickable ${destination.user_vote?.vote_type === 'proponi' ? 'active' : ''}`}
+                          onClick={() => handleVoteClick(destination.id, 'proponi', destination.user_vote)}
+                          title="Proponi modifiche"
                         >
                           <i className="fas fa-lightbulb"></i>
-                          Proponi
+                          <span>{destination.vote_count_proponi || 0}</span>
                         </button>
+                      </div>
+                    )}
+                    {!user && (
+                      <div className="vote-stats">
+                        <div className="vote-stat-item">
+                          <i className="fas fa-thumbs-up"></i>
+                          <span>{destination.vote_count_yes || 0}</span>
+                        </div>
+                        <div className="vote-stat-item">
+                          <i className="fas fa-thumbs-down"></i>
+                          <span>{destination.vote_count_no || 0}</span>
+                        </div>
+                        <div className="vote-stat-item">
+                          <i className="fas fa-lightbulb"></i>
+                          <span>{destination.vote_count_proponi || 0}</span>
+                        </div>
+                      </div>
+                    )}
+                    {user && (
+                      <div 
+                        className="user-vote-display" 
+                        data-vote={destination.user_vote?.vote_type || ''}
+                      >
+                        <i className="fas fa-user-circle"></i>
+                        <span>
+                          {destination.user_vote ? (
+                            destination.user_vote.vote_type === 'yes' ? 'La destinazione ti piace' : 
+                            destination.user_vote.vote_type === 'no' ? 'La destinazione non ti piace' : 
+                            'Hai fatto una proposta'
+                          ) : 'Devi ancora votare'}
+                        </span>
+                      </div>
+                    )}
+                    {user && destination.user_vote && destination.user_vote.comment && (
+                      <div className="user-vote-comment">
+                        <i className="fas fa-comment"></i>
+                        <p>{destination.user_vote.comment}</p>
                       </div>
                     )}
                   </div>

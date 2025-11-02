@@ -17,6 +17,11 @@ $gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 $shadow-light: 0 4px 6px rgba(0, 0, 0, 0.1);
 $shadow-medium: 0 10px 25px rgba(0, 0, 0, 0.15);
 $shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.2);
+$shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.12); // Ombra solo per hover
+
+// Borders (Flat Design)
+$border-subtle: 1px solid rgba(102, 126, 234, 0.15); // Bordo sottile per card principali
+$border-colored: 2px solid rgba(102, 126, 234, 0.2); // Bordo colorato per focus
 
 // Spacing & Sizing
 $border-radius: 12px;

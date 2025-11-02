@@ -9,6 +9,10 @@
     padding: 1rem;
   }
 
+  @media (max-width: 480px) {
+    padding: 1rem 0.75rem;
+  }
+
   .profile-loading {
     text-align: center;
     padding: 4rem 2rem;
@@ -81,24 +85,29 @@
   }
 
   .profile-content {
-    .profile-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
+      .profile-card {
+        background: white;
+        border-radius: 12px;
+        border: 1px solid rgba(102, 126, 234, 0.15);
+        overflow: hidden;
 
-      .profile-card-header {
-        padding: 2rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-
-        @media (max-width: 768px) {
-          flex-direction: column;
-          text-align: center;
+        @media (max-width: 480px) {
+          border-radius: 0 !important;
+          border: none !important;
         }
+
+        .profile-card-header {
+          padding: 2rem;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+
+          @media (max-width: 768px) {
+            flex-direction: column;
+            text-align: center;
+          }
 
         .profile-avatar-large {
           width: 80px;
@@ -323,22 +332,27 @@
         padding: 1.5rem;
       }
 
-      .adventure-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 1.5rem;
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-        background: white;
+          .adventure-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem;
+            border: 1px solid rgba(102, 126, 234, 0.15);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            background: white;
 
-        &:hover:not(.pending) {
-          border-color: $primary-color;
-          box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
-          cursor: pointer;
-        }
+            &:hover:not(.pending) {
+              border-color: rgba(102, 126, 234, 0.3);
+              box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+              cursor: pointer;
+            }
+
+            @media (max-width: 480px) {
+              border-radius: 0 !important;
+              border: none !important;
+            }
 
         &.pending {
           background: #fef3c7;

@@ -64,7 +64,8 @@
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: $shadow-heavy;
+  border: $border-subtle;
+  box-shadow: $shadow-hover;
   -webkit-overflow-scrolling: touch;
 
   @media (max-width: 768px) {
@@ -270,7 +271,6 @@
   flex-direction: column;
   gap: 0.5rem;
   border-left: 4px solid $primary-color;
-  box-shadow: $shadow-light;
 
   i {
     font-size: 1.5rem;
@@ -846,11 +846,11 @@
   padding: 1rem;
   border-radius: 8px;
   margin-bottom: 1rem;
-  border: 2px solid #e2e8f0;
+  border: 1px solid rgba(102, 126, 234, 0.15);
   transition: $transition;
 
   &:hover {
-    border-color: $primary-color;
+    border-color: rgba(102, 126, 234, 0.3);
   }
 }
 
@@ -952,12 +952,11 @@
   padding: 1.5rem;
   border-radius: 12px;
   margin-bottom: 1.5rem;
-  border: 2px solid #e2e8f0;
+  border: 1px solid rgba(102, 126, 234, 0.15);
   transition: $transition;
 
   &:hover {
-    border-color: $primary-color;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-color: rgba(102, 126, 234, 0.3);
   }
 }
 

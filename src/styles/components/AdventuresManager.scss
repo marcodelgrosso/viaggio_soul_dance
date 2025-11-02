@@ -6,7 +6,7 @@
   border-radius: 12px;
   margin: 2rem auto;
   max-width: 1400px;
-  box-shadow: $shadow-light;
+  border: $border-subtle;
 
   @media (max-width: 768px) {
     padding: 1.5rem;
@@ -14,7 +14,10 @@
   }
 
   @media (max-width: 480px) {
-    padding: 1rem;
+    padding: 1rem 0.75rem !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 1rem 0 !important;
   }
 }
 
@@ -267,29 +270,33 @@
   }
 
   @media (max-width: 480px) {
-    gap: 0.75rem;
+    gap: 0;
   }
 }
 
 .adventure-card {
   background: $white;
-  border: 2px solid $light-bg;
+  border: $border-subtle;
   border-radius: 16px;
   padding: 0;
   transition: $transition;
-  box-shadow: $shadow-light;
   overflow: hidden;
   display: flex;
   flex-direction: column;
 
   &:hover {
-    transform: translateY(-8px);
-    box-shadow: $shadow-medium;
-    border-color: $primary-color;
+    transform: translateY(-6px);
+    box-shadow: $shadow-hover;
+    border-color: rgba(102, 126, 234, 0.3);
   }
 
   @media (max-width: 480px) {
-    border-radius: 12px;
+    border-radius: 0 !important;
+    border: none !important;
+    
+    &:hover {
+      border: none !important;
+    }
   }
 }
 
@@ -509,8 +516,7 @@
     transition: all 0.2s ease;
 
     &:hover {
-      border-color: $primary-color;
-      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+      border-color: rgba(102, 126, 234, 0.3);
     }
 
     .destination-item-image {
