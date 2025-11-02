@@ -31,7 +31,6 @@ export function useFirstLogin() {
           });
 
           localStorage.setItem('firstLogins', JSON.stringify(firstLogins));
-          console.log('✅ Primo login tracciato per:', userCode);
         }
       }
     } catch (error) {

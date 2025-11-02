@@ -152,7 +152,6 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure, o
         return;
       }
 
-      console.log('Invito accettato con successo:', updateData);
 
       // Segna la notifica come action_taken e letta
       const { error: notificationError } = await supabase

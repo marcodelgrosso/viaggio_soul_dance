@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { DestinationTransport } from '../types/adventures';
+import SingleDatePicker from './SingleDatePicker';
 import '../styles/components/Modal.scss';
+import '../styles/components/TransportModal.scss';
 
 interface TransportModalProps {
   isOpen: boolean;
@@ -160,11 +162,10 @@ const TransportModal: React.FC<TransportModalProps> = ({
                 <i className="fas fa-calendar-check"></i>
                 Data Partenza
               </label>
-              <input
-                type="date"
-                id="departureDate"
+              <SingleDatePicker
                 value={departureDate}
-                onChange={(e) => setDepartureDate(e.target.value)}
+                onChange={(date) => setDepartureDate(date || '')}
+                placeholder="Seleziona data partenza"
                 disabled={loading}
               />
             </div>
@@ -189,11 +190,11 @@ const TransportModal: React.FC<TransportModalProps> = ({
                 <i className="fas fa-calendar-times"></i>
                 Data Arrivo
               </label>
-              <input
-                type="date"
-                id="arrivalDate"
+              <SingleDatePicker
                 value={arrivalDate}
-                onChange={(e) => setArrivalDate(e.target.value)}
+                onChange={(date) => setArrivalDate(date || '')}
+                placeholder="Seleziona data arrivo"
+                minDate={departureDate || undefined}
                 disabled={loading}
               />
             </div>

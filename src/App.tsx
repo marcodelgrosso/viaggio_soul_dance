@@ -3,9 +3,12 @@ import LoginScreen from './components/LoginScreen';
 import MainContent from './components/MainContent';
 import RoleSelectionScreen from './components/RoleSelectionScreen';
 import { useAuth } from './context/AuthContext';
+import ToastContainer from './components/ToastContainer';
+import { useToast } from './hooks/useToast';
 
 function AppContent() {
   const { user, loading, actualIsSuperAdmin, selectedRole } = useAuth();
+  const { toasts, removeToast } = useToast();
 
   if (loading) {
     return (
@@ -32,7 +35,12 @@ function AppContent() {
     return <RoleSelectionScreen />;
   }
 
-  return <MainContent />;
+  return (
+    <>
+      <MainContent />
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
+    </>
+  );
 }
 
 function App() {

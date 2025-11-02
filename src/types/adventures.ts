@@ -26,6 +26,7 @@ export interface AdventureDestination {
   description?: string;
   image_url?: string;
   tags?: string[] | string; // Può essere array o JSON string
+  order_index?: number;
   created_at: string;
   updated_at: string;
 }
@@ -69,6 +70,12 @@ export interface AdventureParticipant {
   display_name?: string; // Nome completo (Nome Cognome) o email come fallback
   first_name?: string | null;
   last_name?: string | null;
+  // Permessi per questo partecipante in questa avventura
+  permissions?: {
+    can_view_statistics: boolean;
+    can_edit: boolean;
+    can_view_only: boolean;
+  };
 }
 
 export interface AdventureDestinationWithPlaces extends AdventureDestination {
@@ -79,6 +86,8 @@ export interface AdventureDestinationWithPlaces extends AdventureDestination {
   vote_count_proponi?: number;
   total_votes?: number;
   user_vote?: AdventureDestinationVote | null;
+  total_cost?: number;
+  transports?: any[];
 }
 
 export interface AdventureWithDestinations {

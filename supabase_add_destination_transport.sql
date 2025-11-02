@@ -1,3 +1,15 @@
+-- Assicura che la funzione is_superadmin esista (se non esiste già)
+CREATE OR REPLACE FUNCTION is_superadmin(user_uuid UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM user_roles
+    WHERE user_id = user_uuid
+    AND role = 'superadmin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Tabella per memorizzare informazioni su voli, treni, alberghi, bus, ecc. per le destinazioni
 CREATE TABLE IF NOT EXISTS destination_transport (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

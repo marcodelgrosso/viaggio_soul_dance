@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import SingleDatePicker from '../SingleDatePicker';
 import '../../styles/components/EditAdventureSection.scss';
 
 interface AddDestinationPageProps {
@@ -12,6 +13,8 @@ interface AddDestinationPageProps {
 interface Place {
   name: string;
   description: string;
+  visit_date?: string;
+  steps: string[];
 }
 
 const AddDestinationPage: React.FC<AddDestinationPageProps> = ({
@@ -25,13 +28,13 @@ const AddDestinationPage: React.FC<AddDestinationPageProps> = ({
   const [imageUrl, setImageUrl] = useState('https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop&crop=center');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
-  const [places, setPlaces] = useState<Place[]>([{ name: '', description: '' }]);
+  const [places, setPlaces] = useState<Place[]>([{ name: '', description: '', visit_date: '', steps: [''] }]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const handleAddPlace = () => {
-    setPlaces([...places, { name: '', description: '' }]);
+    setPlaces([...places, { name: '', description: '', visit_date: '', steps: [''] }]);
   };
 
   const handleRemovePlace = (index: number) => {
@@ -40,9 +43,35 @@ const AddDestinationPage: React.FC<AddDestinationPageProps> = ({
     }
   };
 
-  const handlePlaceChange = (index: number, field: 'name' | 'description', value: string) => {
+  const handlePlaceChange = (index: number, field: 'name' | 'description' | 'visit_date', value: string) => {
     const updated = [...places];
     updated[index] = { ...updated[index], [field]: value };
+    setPlaces(updated);
+  };
+
+  const handleAddStep = (placeIndex: number) => {
+    const updated = [...places];
+    updated[placeIndex] = { 
+      ...updated[placeIndex], 
+      steps: [...updated[placeIndex].steps, ''] 
+    };
+    setPlaces(updated);
+  };
+
+  const handleRemoveStep = (placeIndex: number, stepIndex: number) => {
+    const updated = [...places];
+    if (updated[placeIndex].steps.length > 1) {
+      updated[placeIndex] = {
+        ...updated[placeIndex],
+        steps: updated[placeIndex].steps.filter((_, i) => i !== stepIndex)
+      };
+      setPlaces(updated);
+    }
+  };
+
+  const handleStepChange = (placeIndex: number, stepIndex: number, value: string) => {
+    const updated = [...places];
+    updated[placeIndex].steps[stepIndex] = value;
     setPlaces(updated);
   };
 
@@ -103,19 +132,48 @@ const AddDestinationPage: React.FC<AddDestinationPageProps> = ({
 
       // Crea i luoghi
       if (destination && validPlaces.length > 0) {
-        const placesToInsert = validPlaces.map((place, index) => ({
-          destination_id: destination.id,
-          name: place.name.trim(),
-          description: place.description.trim() || null,
-          order_index: index,
-        }));
+        const placesToInsert = validPlaces.map((place, index) => {
+          // Salva le tappe nella description come stringa separata da newline
+          const descriptionWithSteps = place.steps
+            .filter(s => s.trim().length > 0)
+            .join('\n');
+          
+          const placeData: any = {
+            destination_id: destination.id,
+            name: place.name.trim(),
+            description: descriptionWithSteps || null,
+            order_index: index,
+          };
+
+          // Aggiungi visit_date se presente
+          if (place.visit_date && place.visit_date.trim()) {
+            placeData.visit_date = place.visit_date;
+          }
+
+          return placeData;
+        });
 
         const { error: placesError } = await supabase
           .from('adventure_destination_places')
           .insert(placesToInsert);
 
         if (placesError) {
-          throw placesError;
+          // Se l'errore è relativo a visit_date, prova senza
+          if (placesError.message && placesError.message.includes('visit_date')) {
+            console.warn('Colonna visit_date non trovata. Continuo senza data di visita.');
+            const placesWithoutDate = placesToInsert.map(p => {
+              const { visit_date, ...rest } = p;
+              return rest;
+            });
+            const { error: retryError } = await supabase
+              .from('adventure_destination_places')
+              .insert(placesWithoutDate);
+            if (retryError) {
+              throw retryError;
+            }
+          } else {
+            throw placesError;
+          }
         }
       }
 
@@ -257,7 +315,7 @@ const AddDestinationPage: React.FC<AddDestinationPageProps> = ({
                 <span>Genera con AI</span>
               </button>
             </div>
-            <div className="tags-input-container">
+            <div className="tags-input-wrapper">
               <input
                 type="text"
                 id="destinationTags"
@@ -266,12 +324,14 @@ const AddDestinationPage: React.FC<AddDestinationPageProps> = ({
                 onKeyDown={handleTagInputKeyDown}
                 placeholder="Inserisci un tag e premi Invio"
                 disabled={loading}
+                className="tags-input"
               />
               <button
                 type="button"
                 className="add-tag-btn"
                 onClick={handleAddTag}
                 disabled={loading || !tagInput.trim()}
+                title="Aggiungi tag"
               >
                 <i className="fas fa-plus"></i>
               </button>
@@ -293,7 +353,7 @@ const AddDestinationPage: React.FC<AddDestinationPageProps> = ({
                 ))}
               </div>
             )}
-            <p className="form-hint">
+            <p className="form-hint tags-hint">
               Aggiungi tag per categorizzare la destinazione (es: "Storia", "Cultura", "Gastronomia").
             </p>
           </div>
@@ -333,21 +393,75 @@ const AddDestinationPage: React.FC<AddDestinationPageProps> = ({
                       </button>
                     )}
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Nome del luogo (es: Torre Eiffel, Museo Louvre...)"
-                    value={place.name}
-                    onChange={(e) => handlePlaceChange(index, 'name', e.target.value)}
-                    required={index === 0}
-                    disabled={loading}
-                  />
-                  <textarea
-                    placeholder="Descrizione (opzionale)"
-                    value={place.description}
-                    onChange={(e) => handlePlaceChange(index, 'description', e.target.value)}
-                    rows={2}
-                    disabled={loading}
-                  />
+
+                  <div className="place-when-field">
+                    <label>
+                      <i className="fas fa-calendar-day"></i>
+                      Quando
+                    </label>
+                    <SingleDatePicker
+                      value={place.visit_date}
+                      onChange={(date) => handlePlaceChange(index, 'visit_date', date || '')}
+                      placeholder="Seleziona data"
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="place-title-field">
+                    <label>
+                      <i className="fas fa-heading"></i>
+                      Titolo *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Nome del luogo (es: Torre Eiffel, Museo Louvre...)"
+                      value={place.name}
+                      onChange={(e) => handlePlaceChange(index, 'name', e.target.value)}
+                      required={index === 0}
+                      disabled={loading}
+                    />
+                  </div>
+
+                  <div className="place-steps-field">
+                    <label>
+                      <i className="fas fa-list"></i>
+                      Tappe
+                    </label>
+                    <div className="steps-list">
+                      {place.steps.map((step, stepIndex) => (
+                        <div key={stepIndex} className="step-item">
+                          <div className="step-bullet-preview"></div>
+                          <input
+                            type="text"
+                            placeholder={`Tappa ${stepIndex + 1}`}
+                            value={step}
+                            onChange={(e) => handleStepChange(index, stepIndex, e.target.value)}
+                            disabled={loading}
+                          />
+                          {place.steps.length > 1 && (
+                            <button
+                              type="button"
+                              className="remove-step-btn"
+                              onClick={() => handleRemoveStep(index, stepIndex)}
+                              disabled={loading}
+                              title="Rimuovi tappa"
+                            >
+                              <i className="fas fa-times"></i>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      className="add-step-btn"
+                      onClick={() => handleAddStep(index)}
+                      disabled={loading}
+                    >
+                      <i className="fas fa-plus"></i>
+                      Aggiungi Tappa
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

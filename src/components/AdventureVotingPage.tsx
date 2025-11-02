@@ -22,6 +22,19 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
     loadVotingData();
   }, [adventureId]);
 
+  // Apri automaticamente le top 3 destinazioni al caricamento
+  useEffect(() => {
+    if (adventure && adventure.destinations && adventure.destinations.length > 0) {
+      const sortedDestinations = [...adventure.destinations].sort((a, b) => 
+        (b.total_votes || 0) - (a.total_votes || 0)
+      );
+      const top3Ids = sortedDestinations.slice(0, 3).map(d => d.id);
+      if (top3Ids.length > 0) {
+        setExpandedDestinations(new Set(top3Ids));
+      }
+    }
+  }, [adventure?.id, adventure?.destinations?.length]); // Solo quando cambia avventura o numero di destinazioni
+
   const loadVotingData = async () => {
     try {
       setLoading(true);
@@ -69,7 +82,7 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
           // Voti della destinazione
           const { data: votesData } = await supabase
             .from('adventure_destination_votes')
-            .select('*')
+            .select('id, destination_id, user_id, vote_type, comment, created_at, updated_at')
             .eq('destination_id', destination.id)
             .order('created_at', { ascending: false });
 
@@ -139,14 +152,14 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
 
   // Ottieni i voti di un partecipante per tutte le destinazioni
   const getParticipantVotes = (participantUserId: string) => {
-    if (!adventure) return [];
+    if (!adventure || !adventure.destinations) return [];
     
     const votes: Array<{
       destination: AdventureDestinationWithPlaces;
       vote: any;
     }> = [];
 
-    adventure.destinations.forEach((destination) => {
+    (adventure.destinations || []).forEach((destination) => {
       const vote = destination.votes?.find(v => v.user_id === participantUserId);
       if (vote) {
         votes.push({ destination, vote });
@@ -216,19 +229,58 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
     );
   }
 
-  const totalDestinations = adventure.destinations.length;
-  const totalVotesAll = adventure.destinations.reduce((sum, dest) => sum + (dest.total_votes || 0), 0);
+  // Calcola statistiche solo se adventure è disponibile
+  const totalDestinations = adventure?.destinations?.length || 0;
+  const totalVotesAll = (adventure?.destinations || []).reduce((sum, dest) => sum + (dest.total_votes || 0), 0);
+  const totalParticipants = adventure?.participants?.length || 0;
+  
+  // Calcola statistiche avanzate
+  const totalYes = (adventure?.destinations || []).reduce((sum, dest) => sum + (dest.vote_count_yes || 0), 0);
+  const totalNo = (adventure?.destinations || []).reduce((sum, dest) => sum + (dest.vote_count_no || 0), 0);
+  const totalProponi = (adventure?.destinations || []).reduce((sum, dest) => sum + (dest.vote_count_proponi || 0), 0);
+  
+  // Trova partecipanti che hanno votato almeno una volta
+  const participantsWhoVoted = new Set<string>();
+  (adventure?.destinations || []).forEach(dest => {
+    dest.votes?.forEach(vote => {
+      participantsWhoVoted.add(vote.user_id);
+    });
+  });
+  const participationRate = totalParticipants > 0 
+    ? Math.round((participantsWhoVoted.size / totalParticipants) * 100) 
+    : 0;
+  
+  // Trova destinazione leader (più voti positivi, in caso di pareggio usa totale voti)
+  const leaderDestination = (adventure?.destinations || []).length > 0
+    ? (adventure?.destinations || []).reduce((leader, current) => {
+        const leaderScore = (leader.vote_count_yes || 0) * 2 + (leader.total_votes || 0);
+        const currentScore = (current.vote_count_yes || 0) * 2 + (current.total_votes || 0);
+        return currentScore > leaderScore ? current : leader;
+      }, (adventure?.destinations || [])[0])
+    : null;
+  
+  // Calcola percentuale voti positivi
+  const positiveVotesPercent = totalVotesAll > 0
+    ? Math.round(((totalYes + totalProponi) / totalVotesAll) * 100)
+    : 0;
+  
+  // Ordina destinazioni per voti totali (per badge Leader, non per useEffect)
+  const sortedDestinations = [...(adventure?.destinations || [])].sort((a, b) => 
+    (b.total_votes || 0) - (a.total_votes || 0)
+  );
 
   return (
     <div className="adventure-voting-page">
       <div className="voting-page-header">
         <button onClick={onBack} className="back-btn">
-          <i className="fas fa-arrow-left"></i> Torna Indietro
+          <i className="fas fa-arrow-left"></i>
+          <span className="back-btn-text">Torna Indietro</span>
         </button>
         <div className="header-content">
           <h1>
-            <i className="fas fa-chart-bar"></i>
-            Riepilogo Votazioni: {adventure.name}
+            <span className="header-title-main">Riepilogo Votazioni</span>
+            <span className="header-title-separator">:</span>
+            <span className="header-title-adventure">{adventure.name}</span>
           </h1>
         </div>
       </div>
@@ -240,22 +292,58 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
             <i className="fas fa-chart-pie"></i> Statistiche Generali
           </h2>
           <div className="summary-stats">
-            <div className="summary-stat-card">
+            <div className="summary-stat-card stat-card-participation">
               <div className="stat-icon">
-                <i className="fas fa-map"></i>
+                <i className="fas fa-users"></i>
               </div>
               <div className="stat-content">
-                <div className="stat-value">{totalDestinations}</div>
-                <div className="stat-label">Destinazioni</div>
+                <div className="stat-value">{participationRate}%</div>
+                <div className="stat-label">Partecipazione</div>
+                <div className="stat-subtitle">
+                  {participantsWhoVoted.size} di {totalParticipants} partecipanti
+                </div>
               </div>
             </div>
-            <div className="summary-stat-card">
+            <div className="summary-stat-card stat-card-leader">
+              <div className="stat-icon">
+                <i className="fas fa-trophy"></i>
+              </div>
+              <div className="stat-content">
+                <div className="stat-value">{leaderDestination?.name || '-'}</div>
+                <div className="stat-label">Destinazione Leader</div>
+                <div className="stat-subtitle">
+                  {leaderDestination ? (
+                    <>
+                      {leaderDestination.total_votes || 0} voti | {leaderDestination.total_votes > 0 
+                        ? Math.round(((leaderDestination.vote_count_yes || 0) / leaderDestination.total_votes) * 100)
+                        : 0}% approvazione
+                    </>
+                  ) : '-'}
+                </div>
+              </div>
+            </div>
+            <div className="summary-stat-card stat-card-sentiment">
+              <div className="stat-icon">
+                <i className="fas fa-smile"></i>
+              </div>
+              <div className="stat-content">
+                <div className="stat-value">{positiveVotesPercent}%</div>
+                <div className="stat-label">Voti Positivi</div>
+                <div className="stat-subtitle">
+                  👍 {totalYes} | 👎 {totalNo} | 💡 {totalProponi}
+                </div>
+              </div>
+            </div>
+            <div className="summary-stat-card stat-card-total">
               <div className="stat-icon">
                 <i className="fas fa-vote-yea"></i>
               </div>
               <div className="stat-content">
                 <div className="stat-value">{totalVotesAll}</div>
                 <div className="stat-label">Voti Totali</div>
+                <div className="stat-subtitle">
+                  su {totalDestinations} destinazioni
+                </div>
               </div>
             </div>
           </div>
@@ -267,55 +355,93 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
             <i className="fas fa-chart-bar"></i> Grafico Votazioni per Destinazione
           </h2>
           <div className="votes-chart-container">
-            {adventure.destinations.map((destination) => {
+            {(adventure?.destinations || []).map((destination) => {
               const total = destination.total_votes || 0;
               const yes = destination.vote_count_yes || 0;
               const no = destination.vote_count_no || 0;
               const proponi = destination.vote_count_proponi || 0;
-              const maxVotes = Math.max(...adventure.destinations.map(d => d.total_votes || 0), 1);
+              
+              // Calcola percentuali rispetto al totale di questa destinazione
+              const yesPercent = total > 0 ? Math.round((yes / total) * 100) : 0;
+              const noPercent = total > 0 ? Math.round((no / total) * 100) : 0;
+              const proponiPercent = total > 0 ? Math.round((proponi / total) * 100) : 0;
+              const approvalPercent = total > 0 ? Math.round((yes / total) * 100) : 0;
+              
+              const isLeader = leaderDestination?.id === destination.id;
 
               return (
-                <div key={destination.id} className="chart-item">
-                  <div className="chart-destination-name">{destination.name}</div>
-                  <div className="chart-bars">
-                    <div className="chart-bar-container">
-                      <div className="chart-bar-label">Sì</div>
-                      <div className="chart-bar-wrapper">
-                        <div
-                          className="chart-bar chart-bar-yes"
-                          style={{ width: total > 0 ? `${(yes / maxVotes) * 100}%` : '0%' }}
-                          title={`${yes} voti`}
-                        >
-                          <span className="chart-bar-value">{yes}</span>
-                        </div>
-                      </div>
+                <div key={destination.id} className={`chart-item ${isLeader ? 'chart-item-leader' : ''}`}>
+                  <div className="chart-destination-header">
+                    <div className="chart-destination-name">
+                      {destination.name}
+                      {isLeader && (
+                        <span className="chart-leader-badge">
+                          <i className="fas fa-trophy"></i> Leader
+                        </span>
+                      )}
                     </div>
-                    <div className="chart-bar-container">
-                      <div className="chart-bar-label">No</div>
-                      <div className="chart-bar-wrapper">
-                        <div
-                          className="chart-bar chart-bar-no"
-                          style={{ width: total > 0 ? `${(no / maxVotes) * 100}%` : '0%' }}
-                          title={`${no} voti`}
-                        >
-                          <span className="chart-bar-value">{no}</span>
-                        </div>
+                    {total > 0 && (
+                      <div className="chart-approval-percent">
+                        {approvalPercent}% approvazione
                       </div>
-                    </div>
-                    <div className="chart-bar-container">
-                      <div className="chart-bar-label">Proponi</div>
-                      <div className="chart-bar-wrapper">
+                    )}
+                  </div>
+                  
+                  {/* Grafico a barre stacked con percentuali */}
+                  <div className="chart-bar-stacked-wrapper">
+                    <div className="chart-bar-stacked" style={{ width: '100%' }}>
+                      {yes > 0 && (
                         <div
-                          className="chart-bar chart-bar-proponi"
-                          style={{ width: total > 0 ? `${(proponi / maxVotes) * 100}%` : '0%' }}
-                          title={`${proponi} voti`}
+                          className="chart-bar-segment chart-bar-yes"
+                          style={{ width: `${yesPercent}%` }}
+                          title={`👍 ${yes} voti (${yesPercent}%)`}
                         >
-                          <span className="chart-bar-value">{proponi}</span>
+                          <span className="chart-bar-value">{yes > 0 ? yes : ''}</span>
                         </div>
-                      </div>
+                      )}
+                      {proponi > 0 && (
+                        <div
+                          className="chart-bar-segment chart-bar-proponi"
+                          style={{ width: `${proponiPercent}%` }}
+                          title={`💡 ${proponi} voti (${proponiPercent}%)`}
+                        >
+                          <span className="chart-bar-value">{proponi > 0 ? proponi : ''}</span>
+                        </div>
+                      )}
+                      {no > 0 && (
+                        <div
+                          className="chart-bar-segment chart-bar-no"
+                          style={{ width: `${noPercent}%` }}
+                          title={`👎 ${no} voti (${noPercent}%)`}
+                        >
+                          <span className="chart-bar-value">{no > 0 ? no : ''}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="chart-total">Totale: {total}</div>
+                  
+                  <div className="chart-details">
+                    <div className="chart-total">
+                      <strong>{total}</strong> voti totali
+                    </div>
+                    <div className="chart-percentages">
+                      {yes > 0 && (
+                        <span className="chart-percentage-item chart-percentage-yes">
+                          👍 {yesPercent}%
+                        </span>
+                      )}
+                      {proponi > 0 && (
+                        <span className="chart-percentage-item chart-percentage-proponi">
+                          💡 {proponiPercent}%
+                        </span>
+                      )}
+                      {no > 0 && (
+                        <span className="chart-percentage-item chart-percentage-no">
+                          👎 {noPercent}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -349,9 +475,9 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
               <i className="fas fa-list"></i> Dettaglio Votazioni per Destinazione
             </h2>
           <div className="destinations-voting-list">
-            {adventure.destinations.length > 0 ? (
-              adventure.destinations.map((destination) => (
-                <div key={destination.id} className="destination-voting-card">
+            {(adventure?.destinations || []).length > 0 ? (
+              (adventure?.destinations || []).map((destination) => (
+                <div key={destination.id} className={`destination-voting-card ${leaderDestination?.id === destination.id ? 'destination-voting-card-leader' : ''}`}>
                   <div className="destination-voting-header">
                     {destination.image_url && (
                       <div className="destination-voting-image">
@@ -359,7 +485,14 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
                       </div>
                     )}
                     <div className="destination-voting-info">
-                      <h3>{destination.name}</h3>
+                      <h3>
+                        {destination.name}
+                        {leaderDestination?.id === destination.id && (
+                          <span className="destination-leader-badge">
+                            <i className="fas fa-trophy"></i> Leader
+                          </span>
+                        )}
+                      </h3>
                       {destination.description && (
                         <p className="destination-description">{destination.description}</p>
                       )}
@@ -476,8 +609,8 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
               <i className="fas fa-users"></i> Dettaglio Votazioni per Partecipante
             </h2>
             <div className="participants-voting-list">
-              {adventure.participants && adventure.participants.length > 0 ? (
-                adventure.participants.map((participant) => {
+              {(adventure?.participants || []).length > 0 ? (
+                (adventure?.participants || []).map((participant) => {
                   const participantVotes = getParticipantVotes(participant.user_id);
                   const hasVotes = participantVotes.length > 0;
 

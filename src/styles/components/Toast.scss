@@ -1,0 +1,128 @@
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 400px;
+  pointer-events: none;
+
+  @media (max-width: 768px) {
+    top: 0.5rem;
+    right: 0.5rem;
+    left: 0.5rem;
+    max-width: none;
+  }
+}
+
+.toast {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 300px;
+  max-width: 100%;
+  pointer-events: auto;
+  animation: slideInRight 0.3s ease-out;
+  border-left: 4px solid;
+
+  @media (max-width: 768px) {
+    min-width: auto;
+    width: 100%;
+  }
+
+  &.toast-success {
+    border-left-color: #10b981;
+    background: #f0fdf4;
+
+    .toast-content i {
+      color: #10b981;
+    }
+  }
+
+  &.toast-error {
+    border-left-color: #ef4444;
+    background: #fef2f2;
+
+    .toast-content i {
+      color: #ef4444;
+    }
+  }
+
+  &.toast-warning {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+
+    .toast-content i {
+      color: #f59e0b;
+    }
+  }
+
+  &.toast-info {
+    border-left-color: #667eea;
+    background: #f0f4ff;
+
+    .toast-content i {
+      color: #667eea;
+    }
+  }
+
+  .toast-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+
+    i {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+
+    span {
+      color: #1a202c;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+  }
+
+  .toast-close {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.05);
+      color: #1a202c;
+    }
+
+    i {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+

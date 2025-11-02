@@ -15,7 +15,6 @@ const RoleManagement: React.FC = () => {
   const { isSuperAdmin, role, email } = useAuth();
   
   // Debug
-  console.log('RoleManagement render:', { isSuperAdmin, role, email });
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);

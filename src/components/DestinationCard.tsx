@@ -40,22 +40,27 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
     try {
       const { data, error } = await supabase
         .from('adventure_destination_votes')
-        .select('*')
+        .select('id, destination_id, user_id, vote_type, comment, created_at, updated_at')
         .eq('destination_id', destinationId)
         .eq('user_id', user.id)
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        // PGRST116 = no rows returned, è normale
-        console.error('Errore nel caricamento del voto:', error);
+        // Ignora errori 400 (Bad Request) che potrebbero essere causati da RLS
+        if (error.code !== '400' && error.status !== 400) {
+          console.error('Errore nel caricamento del voto:', error);
+        }
         return;
       }
 
       if (data) {
         setUserVote(data);
       }
-    } catch (error) {
-      console.error('Errore nel caricamento del voto:', error);
+    } catch (error: any) {
+      // Ignora errori 400 (Bad Request) che potrebbero essere causati da RLS
+      if (error?.code !== '400' && error?.status !== 400) {
+        console.error('Errore nel caricamento del voto:', error);
+      }
     }
   };
 

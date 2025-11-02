@@ -94,6 +94,14 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
     }
   };
 
+  // Calcola il costo totale di tutti i trasporti
+  const totalCost = transports.reduce((sum, transport) => {
+    if (transport.cost && typeof transport.cost === 'number') {
+      return sum + transport.cost;
+    }
+    return sum;
+  }, 0);
+
   const handleAddTransport = () => {
     setEditingTransport(null);
     setShowTransportModal(true);
@@ -266,6 +274,22 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
               )}
             </div>
             <div className="section-content">
+              {transports.length > 0 && totalCost > 0 && (
+                <div className="total-cost-summary">
+                  <div className="total-cost-content">
+                    <div className="total-cost-icon-wrapper">
+                      <i className="fas fa-calculator"></i>
+                    </div>
+                    <div className="total-cost-info">
+                      <span className="total-cost-label">Costo totale destinazione</span>
+                      <div className="total-cost-amount">
+                        <span className="currency">€</span>
+                        <span className="amount">{totalCost.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               {transports.length > 0 ? (
                 <div className="transports-grid">
                   {transports.map((transport) => (
@@ -380,23 +404,46 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
             </h2>
             <div className="section-content">
               {destination.places.length > 0 ? (
-                <div className="places-grid">
-                  {destination.places.map((place, index) => (
-                    <div key={place.id} className="place-card">
-                      <div className="place-number">
-                        <span>{index + 1}</span>
-                      </div>
-                      <div className="place-content">
-                        <h3 className="place-name">
-                          <i className="fas fa-map-marker-alt"></i>
-                          {place.name}
-                        </h3>
-                        {place.description && (
-                          <p className="place-description">{place.description}</p>
+                <div className="places-list">
+                  {destination.places.map((place, index) => {
+                    // Parse delle tappe dalla description (separate da newline o punto e virgola)
+                    const steps = place.description 
+                      ? place.description.split(/\n+|;+/).filter(s => s.trim().length > 0)
+                      : [];
+                    
+                    // Formatta la data (usando created_at per ora, o potremmo aggiungere un campo visit_date)
+                    const formatVisitDate = (dateString: string) => {
+                      const date = new Date(dateString);
+                      const options: Intl.DateTimeFormatOptions = { 
+                        weekday: 'long', 
+                        day: 'numeric', 
+                        month: 'long' 
+                      };
+                      return date.toLocaleDateString('it-IT', options);
+                    };
+
+                    return (
+                      <div key={place.id} className="place-item">
+                        <div className="place-when">
+                          <i className="fas fa-calendar-day"></i>
+                          <span>{formatVisitDate(place.created_at)}</span>
+                        </div>
+                        <div className="place-title">
+                          <h3>{place.name}</h3>
+                        </div>
+                        {steps.length > 0 && (
+                          <div className="place-steps">
+                            {steps.map((step, stepIndex) => (
+                              <div key={stepIndex} className="place-step">
+                                <div className="step-bullet"></div>
+                                <span>{step.trim()}</span>
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="no-places">

@@ -40,12 +40,10 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
       setLoading(true);
       
       if (!user) {
-        console.log('AdventuresManager: Nessun utente, esco');
         setAdventures([]);
         return;
       }
 
-      console.log('AdventuresManager: Caricamento avventure per user_id:', user.id);
 
       // Prima carica le avventure dove l'utente è partecipante
       const { data: participantsData, error: participantsError } = await supabase
@@ -53,7 +51,6 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
         .select('adventure_id, invitation_status, user_id')
         .eq('user_id', user.id);
 
-      console.log('AdventuresManager: Tutte le partecipazioni trovate:', participantsData);
       
       if (participantsError) {
         console.error('Errore nel caricamento delle partecipazioni:', participantsError);
@@ -66,7 +63,6 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
         p.invitation_status === 'pending'
       );
 
-      console.log('AdventuresManager: Partecipazioni filtrate:', filteredParticipants);
 
       // Raccogli gli ID delle avventure dove l'utente è partecipante o creator
       const participantAdventureIds = filteredParticipants.map(p => p.adventure_id);
@@ -122,7 +118,6 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
         throw adventuresError;
       }
 
-      console.log('AdventuresManager: Avventure caricate dal database:', adventuresData?.length || 0, adventuresData);
 
       // Per ogni avventura, carica le destinazioni e i partecipanti
       const adventuresWithDestinations = await Promise.all(
@@ -147,10 +142,6 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
             invitationStatus = 'accepted';
           }
           
-          // Debug log
-          if (userParticipant) {
-            console.log(`Avventura ${adventure.name}: userParticipant status =`, invitationStatus, 'userParticipant:', userParticipant);
-          }
 
           // Processa le destinazioni per includere tags (se sono array JSON)
           const processedDestinations = (destinationsData || []).map((dest: any) => ({
@@ -168,7 +159,6 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
         })
       );
 
-      console.log('AdventuresManager: Avventure finali processate:', adventuresWithDestinations.length, adventuresWithDestinations);
       setAdventures(adventuresWithDestinations);
     } catch (error) {
       console.error('Errore nel caricamento delle avventure:', error);
@@ -178,7 +168,6 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
   };
 
   // Debug
-  console.log('AdventuresManager debug:', {
     hasPermission: hasPermission('is_creator'),
     isSuperAdmin,
     actualIsSuperAdmin,

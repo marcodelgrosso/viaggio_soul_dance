@@ -168,7 +168,6 @@ const AddParticipantsModal: React.FC<AddParticipantsModalProps> = ({
         console.error('Errore nella creazione della notifica:', notificationError);
         // Non blocchiamo il flusso se la notifica non viene creata
       } else {
-        console.log('Notifica creata con successo:', notificationId);
       }
 
       setSuccess('Invito inviato con successo! L\'utente riceverà una notifica per accettare o rifiutare l\'invito.');

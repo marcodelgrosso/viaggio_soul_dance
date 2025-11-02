@@ -127,7 +127,6 @@ const AddParticipantPage: React.FC<AddParticipantPageProps> = ({
         console.error('Errore nella creazione della notifica:', notificationError);
         // Non blocchiamo il flusso se la notifica non viene creata
       } else {
-        console.log('Notifica creata con successo:', notificationId);
       }
 
       setSuccess(true);

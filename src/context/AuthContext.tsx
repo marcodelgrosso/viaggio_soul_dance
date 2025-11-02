@@ -44,7 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       // Prima controlla se l'email è quella del superadmin
       if (user?.email === SUPERADMIN_EMAIL || user?.email?.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()) {
-        console.log('Superadmin rilevato via email:', user?.email);
         setRole('superadmin');
         setPermissions(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator']);
         setLoading(false);
@@ -111,7 +110,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
           
           if (!insertError) {
-            console.log('Ruolo utente creato automaticamente');
             userRole = 'user';
           } else if (insertError.code !== '23505') { // Ignora se già esiste (unique constraint)
             console.warn('Errore nella creazione automatica del ruolo:', insertError);
@@ -124,7 +122,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Se è superadmin, imposta come superadmin
       if (userRole === 'superadmin') {
-        console.log('Superadmin rilevato dal database');
         setRole('superadmin');
         setPermissions(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator']);
         setLoading(false);
@@ -160,7 +157,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Errore nel caricamento di ruolo e permessi:', error);
       // In caso di errore, assegna ruolo base
       if (user?.email === SUPERADMIN_EMAIL || user?.email?.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()) {
-        console.log('Superadmin rilevato via email (fallback)');
         setRole('superadmin');
         setPermissions(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator']);
       } else {
@@ -298,19 +294,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Debug logging
-  useEffect(() => {
-    if (user && !loading) {
-      console.log('Auth State:', {
-        email: user.email,
-        role,
-        selectedRole,
-        isSuperAdmin,
-        isAdmin,
-        permissions: effectivePermissions,
-      });
-    }
-  }, [user, role, selectedRole, isSuperAdmin, isAdmin, effectivePermissions, loading]);
 
   const hasPermission = (permission: UserPermission): boolean => {
     // Se preview mode è attivo, nessun permesso

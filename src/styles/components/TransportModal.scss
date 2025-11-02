@@ -1,0 +1,104 @@
+// Stili specifici per TransportModal - modal-header e close-button
+.modal.open .modal-content .modal-header,
+.modal-content .modal-header,
+body .modal .modal-content .modal-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  position: relative !important;
+  margin-bottom: 2rem !important;
+
+  @media (max-width: 768px) {
+    margin-bottom: 1.5rem !important;
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 1.25rem !important;
+  }
+
+  h2 {
+    flex: 1 !important;
+    margin: 0 !important;
+    margin-right: 1rem !important;
+  }
+
+  .close-button {
+    order: 2 !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+// Spazio aggiuntivo per il transport-form dopo l'header
+.modal-content .transport-form {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.modal.open .modal-content .modal-header .close-button,
+.modal-content .modal-header .close-button,
+.transport-form ~ .modal-header .close-button,
+body .modal .modal-content .modal-header .close-button {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  min-height: 36px !important;
+  border-radius: 8px !important;
+  border: none !important;
+  background: transparent !important;
+  color: #64748b !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s ease !important;
+  font-size: 1.2rem !important;
+  flex-shrink: 0 !important;
+  padding: 0 !important;
+  margin: 0 0 0 auto !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  line-height: 1 !important;
+
+  i,
+  i.fas,
+  i.fas.fa-times {
+    font-size: 1.2rem !important;
+    line-height: 1 !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  &:hover {
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+  }
+
+  &:active {
+    transform: scale(0.95) !important;
+  }
+
+  &:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.1) !important;
+  }
+
+  @media (max-width: 480px) {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    min-height: 32px !important;
+    font-size: 1.1rem !important;
+
+    i,
+    i.fas,
+    i.fas.fa-times {
+      font-size: 1.1rem !important;
+    }
+  }
+}
+

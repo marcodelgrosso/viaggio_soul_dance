@@ -96,7 +96,6 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack, onViewAdventu
     try {
       setLoadingAdventures(true);
 
-      console.log('Caricamento avventure per user_id:', user.id);
 
       // Carica le partecipazioni dell'utente
       // Prova prima una query semplice per vedere tutte le partecipazioni
@@ -105,7 +104,6 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack, onViewAdventu
         .select('id, adventure_id, invitation_status, user_id')
         .eq('user_id', user.id);
 
-      console.log('Tutte le partecipazioni:', allParticipants);
       if (allError) {
         console.error('Errore nel caricamento di tutte le partecipazioni:', allError);
       }
@@ -117,10 +115,8 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack, onViewAdventu
         p.invitation_status === 'pending'
       );
 
-      console.log('Partecipazioni filtrate:', participantsData);
 
       if (!participantsData || participantsData.length === 0) {
-        console.log('Nessuna partecipazione trovata per questo utente');
         setUserAdventures([]);
         return;
       }
@@ -141,7 +137,6 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack, onViewAdventu
         throw adventuresError;
       }
 
-      console.log('Avventure caricate:', adventuresData);
 
       // Combina i dati
       // Se invitation_status è NULL, lo trattiamo come 'accepted' per retrocompatibilità
@@ -155,7 +150,6 @@ const UserProfilePage: React.FC<UserProfilePageProps> = ({ onBack, onViewAdventu
         };
       });
 
-      console.log('Avventure finali:', adventures);
       setUserAdventures(adventures);
     } catch (err: any) {
       console.error('Errore nel caricamento delle avventure:', err);

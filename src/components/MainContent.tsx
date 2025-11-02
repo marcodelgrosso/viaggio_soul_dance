@@ -25,18 +25,6 @@ const MainContent: React.FC = () => {
     setShowUserProfile(false);
   };
 
-  // Debug
-  console.log('MainContent render:', { 
-    isSuperAdmin, 
-    actualIsSuperAdmin,
-    role, 
-    loading, 
-    email: user?.email, 
-    selectedRole,
-    hasIsCreator: hasPermission('is_creator'),
-    permissions
-  });
-
   return (
     <div className="main-content">
       <Header 

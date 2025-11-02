@@ -41,12 +41,17 @@ export async function submitVoteToSupabase(
     // Verifica se esiste già un voto usando user_id
     const { data: existingVotes, error: checkError } = await supabaseClient
       .from('adventure_destination_votes')
-      .select('*')
+      .select('id, destination_id, user_id, vote_type, comment, created_at, updated_at')
       .eq('destination_id', voteData.destination)
       .eq('user_id', userId);
 
     if (checkError) {
-      throw checkError;
+      // Ignora errori 400 (Bad Request) che potrebbero essere causati da RLS
+      if (checkError.code !== '400' && checkError.status !== 400) {
+        throw checkError;
+      }
+      // Se è un errore 400, considera che non ci sono voti esistenti e procedi con l'inserimento
+      // Continua con la logica normale di inserimento
     }
 
     if (existingVotes && existingVotes.length > 0) {

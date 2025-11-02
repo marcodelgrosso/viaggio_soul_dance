@@ -73,10 +73,29 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             .order('order_index', { ascending: true });
 
           // Voti della destinazione
-          const { data: votesData } = await supabase
+          const { data: votesData, error: votesError } = await supabase
             .from('adventure_destination_votes')
+            .select('id, destination_id, user_id, vote_type, comment, created_at, updated_at')
+            .eq('destination_id', destination.id);
+
+          // Ignora errori 400 silenziosamente se causati da RLS
+          if (votesError && votesError.code !== '400' && votesError.status !== 400) {
+            console.warn(`Errore nel caricamento dei voti per destinazione ${destination.id}:`, votesError);
+          }
+
+          // Trasporti della destinazione
+          const { data: transportsData } = await supabase
+            .from('destination_transport')
             .select('*')
             .eq('destination_id', destination.id);
+
+          // Calcola il costo totale (somma di tutti i costi dei trasporti)
+          const totalCost = (transportsData || []).reduce((sum: number, transport: any) => {
+            if (transport.cost && typeof transport.cost === 'number') {
+              return sum + transport.cost;
+            }
+            return sum;
+          }, 0);
 
           // Arricchisci i voti con nome completo
           const votesWithEmails = await Promise.all(
@@ -103,6 +122,8 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             vote_count_no: voteCountNo,
             vote_count_proponi: voteCountProponi,
             user_vote: userVote,
+            total_cost: totalCost,
+            transports: transportsData || [],
             // I tags vengono restituiti come array JSON da Supabase
             tags: destination.tags ? (Array.isArray(destination.tags) ? destination.tags : JSON.parse(destination.tags as any)) : [],
           };
@@ -254,12 +275,17 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
 
     try {
       // Verifica se esiste già un voto
-      const { data: existingVote } = await supabase
+      const { data: existingVote, error: existingVoteError } = await supabase
         .from('adventure_destination_votes')
-        .select('*')
+        .select('id, destination_id, user_id, vote_type, comment, created_at, updated_at')
         .eq('destination_id', pendingVote.destinationId)
         .eq('user_id', user.id)
         .single();
+
+      // Ignora errori 400 se causati da RLS
+      if (existingVoteError && existingVoteError.code !== 'PGRST116' && existingVoteError.code !== '400' && existingVoteError.status !== 400) {
+        console.warn('Errore nel recupero del voto esistente:', existingVoteError);
+      }
 
       const commentToSave = voteComment.trim() || null;
 
@@ -588,6 +614,14 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
                           {tag}
                         </span>
                       ))}
+                    </div>
+                  )}
+
+                  {destination.total_cost !== undefined && destination.total_cost > 0 && (
+                    <div className="destination-total-cost">
+                      <i className="fas fa-euro-sign"></i>
+                      <span className="cost-label">Costo totale:</span>
+                      <span className="cost-value">€{destination.total_cost.toFixed(2)}</span>
                     </div>
                   )}
 
