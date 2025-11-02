@@ -17,7 +17,7 @@ interface AdventureDetailProps {
 }
 
 const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, onEdit, onViewVoting }) => {
-  const { user, actualIsSuperAdmin } = useAuth();
+  const { user, actualIsSuperAdmin, hasPermission } = useAuth();
   const [adventure, setAdventure] = useState<AdventureWithDestinations | null>(null);
   const [participants, setParticipants] = useState<AdventureParticipant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -452,7 +452,7 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
         <div className="header-content">
           <h1>{adventure.name}</h1>
           <div className="header-actions">
-            {onViewVoting && (
+            {onViewVoting && (hasPermission('view_statistics') || actualIsSuperAdmin || adventure?.created_by === user?.id || participants.find(p => p.user_id === user?.id && p.permissions?.can_view_statistics)) && (
               <button
                 className="view-voting-btn"
                 title="Visualizza riepilogo votazioni"

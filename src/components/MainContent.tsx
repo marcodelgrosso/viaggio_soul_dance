@@ -12,7 +12,7 @@ import UserProfilePage from './UserProfilePage';
 import { useAuth } from '../context/AuthContext';
 
 const MainContent: React.FC = () => {
-  const { user, isAdmin, isSuperAdmin, loading } = useAuth();
+  const { user, isAdmin, isSuperAdmin, loading, hasPermission, actualIsSuperAdmin } = useAuth();
   const [selectedAdventureId, setSelectedAdventureId] = useState<string | null>(null);
   const [editAdventureId, setEditAdventureId] = useState<string | null>(null);
   const [votingAdventureId, setVotingAdventureId] = useState<string | null>(null);
@@ -110,12 +110,23 @@ const MainContent: React.FC = () => {
                   adventureId={selectedAdventureId}
                   onBack={() => setSelectedAdventureId(null)}
                   onEdit={(adventureId) => setEditAdventureId(adventureId)}
-                  onViewVoting={(adventureId) => setVotingAdventureId(adventureId)}
+                  onViewVoting={(adventureId) => {
+                    // Il controllo completo dei permessi viene fatto in AdventureVotingPage
+                    // Qui permettiamo la navigazione, ma AdventureVotingPage bloccherà se necessario
+                    setVotingAdventureId(adventureId);
+                  }}
                 />
               ) : (
                 <AdventuresManager
                   onViewAdventure={(adventureId) => setSelectedAdventureId(adventureId)}
-                  onViewVoting={(adventureId) => setVotingAdventureId(adventureId)}
+                  onViewVoting={(adventureId) => {
+                    // Controlla permessi prima di permettere l'accesso
+                    if (hasPermission('view_statistics') || actualIsSuperAdmin) {
+                      setVotingAdventureId(adventureId);
+                    } else {
+                      alert('Non hai i permessi necessari per visualizzare le statistiche.');
+                    }
+                  }}
                 />
               )}
             </div>

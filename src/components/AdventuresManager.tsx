@@ -370,7 +370,7 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
                     <i className="fas fa-eye"></i>
                     <span>Vedi</span>
                   </button>
-                  {onViewVoting && (
+                  {onViewVoting && (hasPermission('view_statistics') || actualIsSuperAdmin || adventure.created_by === user?.id || (adventure.participants || []).find((p: any) => p.user_id === user?.id && p.permissions?.can_view_statistics)) && (
                     <button
                       className="view-voting-btn"
                       onClick={(e) => {

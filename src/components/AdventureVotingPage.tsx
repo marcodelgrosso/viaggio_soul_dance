@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { enrichParticipant, getUserDisplayName } from '../lib/userUtils';
 import { AdventureWithDestinations, AdventureDestinationWithPlaces } from '../types/adventures';
 import '../styles/components/AdventureVotingPage.scss';
@@ -12,15 +13,19 @@ interface AdventureVotingPageProps {
 type ViewMode = 'by-destination' | 'by-participant';
 
 const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, onBack }) => {
+  const { user, hasPermission, actualIsSuperAdmin } = useAuth();
   const [adventure, setAdventure] = useState<AdventureWithDestinations | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [expandedDestinations, setExpandedDestinations] = useState<Set<string>>(new Set());
   const [expandedParticipants, setExpandedParticipants] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<ViewMode>('by-destination');
 
   useEffect(() => {
-    loadVotingData();
-  }, [adventureId]);
+    if (hasAccess === true) {
+      loadVotingData();
+    }
+  }, [adventureId, hasAccess]);
 
   // Apri automaticamente le top 3 destinazioni al caricamento
   useEffect(() => {
@@ -35,7 +40,77 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
     }
   }, [adventure?.id, adventure?.destinations?.length]); // Solo quando cambia avventura o numero di destinazioni
 
+  // Verifica permessi prima di caricare i dati
+  useEffect(() => {
+    checkPermissions();
+  }, [adventureId, user]);
+
+  const checkPermissions = async () => {
+    if (!user) {
+      setHasAccess(false);
+      setLoading(false);
+      return;
+    }
+
+    // Superadmin ha sempre accesso
+    if (actualIsSuperAdmin || hasPermission('view_statistics')) {
+      setHasAccess(true);
+      return;
+    }
+
+    try {
+      // Se l'utente è il creator, ha sempre accesso
+      const { data: adventureData } = await supabase
+        .from('adventures')
+        .select('created_by')
+        .eq('id', adventureId)
+        .maybeSingle();
+
+      if (adventureData?.created_by === user.id) {
+        setHasAccess(true);
+        return;
+      }
+
+      // Verifica se l'utente è partecipante con permesso can_view_statistics
+      // I permessi sono nella tabella adventure_participant_permissions
+      const { data: permissionsData, error: permissionsError } = await supabase
+        .from('adventure_participant_permissions')
+        .select('can_view_statistics')
+        .eq('adventure_id', adventureId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (permissionsError && permissionsError.code !== 'PGRST116') {
+        console.error('Errore nel controllo permessi:', permissionsError);
+        // Se non ci sono permessi nella tabella, nega l'accesso
+        setHasAccess(false);
+        setLoading(false);
+        return;
+      }
+
+      // Se non esistono permessi (PGRST116), l'utente non ha il permesso
+      if (!permissionsData) {
+        setHasAccess(false);
+        setLoading(false);
+        return;
+      }
+
+      // Verifica il permesso del partecipante
+      setHasAccess(permissionsData?.can_view_statistics === true);
+    } catch (error) {
+      console.error('Errore nel controllo permessi:', error);
+      setHasAccess(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const loadVotingData = async () => {
+    // Non caricare se non ha accesso
+    if (hasAccess === false) {
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -208,11 +283,26 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
     }
   };
 
-  if (loading) {
+  if (loading || hasAccess === null) {
     return (
       <div className="voting-page-loading">
         <i className="fas fa-spinner fa-spin"></i>
         <p>Caricamento dati votazioni...</p>
+      </div>
+    );
+  }
+
+  if (hasAccess === false) {
+    return (
+      <div className="voting-page-error">
+        <i className="fas fa-lock"></i>
+        <p>Accesso negato</p>
+        <p style={{ fontSize: '0.9rem', color: '#64748b', marginTop: '0.5rem' }}>
+          Non hai i permessi necessari per visualizzare le statistiche di questa avventura.
+        </p>
+        <button onClick={onBack} className="back-btn" style={{ marginTop: '1.5rem' }}>
+          <i className="fas fa-arrow-left"></i> Torna Indietro
+        </button>
       </div>
     );
   }
