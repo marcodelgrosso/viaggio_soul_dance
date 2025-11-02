@@ -264,10 +264,6 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
     ? Math.round(((totalYes + totalProponi) / totalVotesAll) * 100)
     : 0;
   
-  // Ordina destinazioni per voti totali (per badge Leader, non per useEffect)
-  const sortedDestinations = [...(adventure?.destinations || [])].sort((a, b) => 
-    (b.total_votes || 0) - (a.total_votes || 0)
-  );
 
   return (
     <div className="adventure-voting-page">
@@ -314,8 +310,8 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
                 <div className="stat-subtitle">
                   {leaderDestination ? (
                     <>
-                      {leaderDestination.total_votes || 0} voti | {leaderDestination.total_votes > 0 
-                        ? Math.round(((leaderDestination.vote_count_yes || 0) / leaderDestination.total_votes) * 100)
+                      {leaderDestination.total_votes || 0} voti | {(leaderDestination.total_votes || 0) > 0 
+                        ? Math.round(((leaderDestination.vote_count_yes || 0) / (leaderDestination.total_votes || 1)) * 100)
                         : 0}% approvazione
                     </>
                   ) : '-'}

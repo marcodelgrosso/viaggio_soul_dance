@@ -107,7 +107,7 @@ const AddParticipantPage: React.FC<AddParticipantPageProps> = ({
       // Crea la notifica di invito usando la funzione RPC
       const notificationMessage = `${creatorDisplayName} ti ha invitato a partecipare all'avventura "${adventureData.name}".`;
       
-      const { data: notificationId, error: notificationError } = await supabase.rpc(
+      const { error: notificationError } = await supabase.rpc(
         'create_user_notification',
         {
           p_user_id: userId,

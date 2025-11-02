@@ -12,7 +12,7 @@ interface AdventuresManagerProps {
 }
 
 const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, onViewVoting }) => {
-  const { user, hasPermission, isSuperAdmin, actualIsSuperAdmin, permissions } = useAuth();
+  const { user, hasPermission, actualIsSuperAdmin } = useAuth();
   const [adventures, setAdventures] = useState<AdventureWithDestinations[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);

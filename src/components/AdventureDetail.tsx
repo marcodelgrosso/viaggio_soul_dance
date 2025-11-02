@@ -79,7 +79,7 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             .eq('destination_id', destination.id);
 
           // Ignora errori 400 silenziosamente se causati da RLS
-          if (votesError && votesError.code !== '400' && votesError.status !== 400) {
+          if (votesError && votesError.code !== '400') {
             console.warn(`Errore nel caricamento dei voti per destinazione ${destination.id}:`, votesError);
           }
 
@@ -283,7 +283,7 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
         .single();
 
       // Ignora errori 400 se causati da RLS
-      if (existingVoteError && existingVoteError.code !== 'PGRST116' && existingVoteError.code !== '400' && existingVoteError.status !== 400) {
+      if (existingVoteError && existingVoteError.code !== 'PGRST116' && existingVoteError.code !== '400') {
         console.warn('Errore nel recupero del voto esistente:', existingVoteError);
       }
 

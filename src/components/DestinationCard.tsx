@@ -47,7 +47,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
 
       if (error && error.code !== 'PGRST116') {
         // Ignora errori 400 (Bad Request) che potrebbero essere causati da RLS
-        if (error.code !== '400' && error.status !== 400) {
+        if (error.code !== '400') {
           console.error('Errore nel caricamento del voto:', error);
         }
         return;

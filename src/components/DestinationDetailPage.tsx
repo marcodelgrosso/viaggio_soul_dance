@@ -405,7 +405,7 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
             <div className="section-content">
               {destination.places.length > 0 ? (
                 <div className="places-list">
-                  {destination.places.map((place, index) => {
+                  {destination.places.map((place) => {
                     // Parse delle tappe dalla description (separate da newline o punto e virgola)
                     const steps = place.description 
                       ? place.description.split(/\n+|;+/).filter(s => s.trim().length > 0)
