@@ -1,6 +1,10 @@
-export type UserRole = 'superadmin' | 'user';
+export type UserRole = 'platform_superadmin' | 'platform_user';
 
-export type UserPermission = 'travel_editor' | 'prices_editor' | 'view_statistics' | 'is_creator';
+export type UserPermission =
+  | 'perm_manage_travel'
+  | 'perm_manage_budget'
+  | 'perm_view_statistics'
+  | 'perm_create_adventures';
 
 export interface UserRoleData {
   role: UserRole;

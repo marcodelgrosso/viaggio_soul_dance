@@ -5,7 +5,7 @@ BEGIN
   RETURN EXISTS (
     SELECT 1 FROM user_roles
     WHERE user_id = user_uuid
-    AND role = 'superadmin'
+    AND role = 'platform_superadmin'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -37,6 +37,8 @@ CREATE INDEX IF NOT EXISTS idx_destination_transport_type ON destination_transpo
 ALTER TABLE destination_transport ENABLE ROW LEVEL SECURITY;
 
 -- Policy: tutti i partecipanti possono vedere i mezzi di trasporto delle destinazioni
+DROP POLICY IF EXISTS "Users can view destination transport" ON destination_transport;
+
 CREATE POLICY "Users can view destination transport"
   ON destination_transport
   FOR SELECT
@@ -51,6 +53,8 @@ CREATE POLICY "Users can view destination transport"
   );
 
 -- Policy: solo i creator possono inserire/modificare
+DROP POLICY IF EXISTS "Creators can manage destination transport" ON destination_transport;
+
 CREATE POLICY "Creators can manage destination transport"
   ON destination_transport
   FOR ALL
@@ -83,6 +87,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Trigger per aggiornare updated_at automaticamente
+DROP TRIGGER IF EXISTS update_destination_transport_updated_at ON destination_transport;
+
 CREATE TRIGGER update_destination_transport_updated_at
   BEFORE UPDATE ON destination_transport
   FOR EACH ROW

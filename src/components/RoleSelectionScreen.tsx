@@ -18,7 +18,7 @@ const RoleSelectionScreen: React.FC = () => {
         <div className="role-cards-container">
           <div 
             className="role-card role-card-user"
-            onClick={() => selectRole('user')}
+            onClick={() => selectRole('platform_user')}
           >
             <div className="role-card-icon">
               <i className="fas fa-user"></i>
@@ -47,7 +47,7 @@ const RoleSelectionScreen: React.FC = () => {
 
           <div 
             className="role-card role-card-admin"
-            onClick={() => selectRole('superadmin')}
+            onClick={() => selectRole('platform_superadmin')}
           >
             <div className="role-card-icon">
               <i className="fas fa-crown"></i>

@@ -464,12 +464,12 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure, o
                     <i className="fas fa-user-circle"></i>
                     <div className="profile-info">
                       <span className="profile-email">{email}</span>
-                      {actualIsSuperAdmin && selectedRole === 'superadmin' && (
+                      {actualIsSuperAdmin && selectedRole === 'platform_superadmin' && (
                         <span className="profile-badge profile-badge-superadmin">
                           <i className="fas fa-crown"></i> Amministratore
                         </span>
                       )}
-                      {actualIsSuperAdmin && selectedRole === 'user' && (
+                      {actualIsSuperAdmin && selectedRole === 'platform_user' && (
                         <span className="profile-badge">
                           <i className="fas fa-user"></i> Utente
                         </span>
@@ -484,11 +484,11 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure, o
                   {actualIsSuperAdmin && (
                     <>
                       <div className="profile-dropdown-divider"></div>
-                      {selectedRole === 'user' ? (
+                      {selectedRole === 'platform_user' ? (
                         <button 
                           className="profile-dropdown-item"
                           onClick={() => {
-                            selectRole('superadmin');
+                            selectRole('platform_superadmin');
                             setShowProfileDropdown(false);
                           }}
                           title="Passa a modalità Amministratore"
@@ -496,11 +496,11 @@ const Header: React.FC<HeaderProps> = ({ onShowProfile, onNavigateToAdventure, o
                           <i className="fas fa-crown"></i>
                           <span>Modalità Amministratore</span>
                         </button>
-                      ) : selectedRole === 'superadmin' ? (
+                      ) : selectedRole === 'platform_superadmin' ? (
                         <button 
                           className="profile-dropdown-item"
                           onClick={() => {
-                            selectRole('user');
+                            selectRole('platform_user');
                             setShowProfileDropdown(false);
                           }}
                           title="Passa a modalità Utente"

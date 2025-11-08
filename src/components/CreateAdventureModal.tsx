@@ -178,6 +178,9 @@ const CreateAdventureModal: React.FC<CreateAdventureModalProps> = ({ isOpen, onC
         .insert({
           adventure_id: adventure.id,
           user_id: user.id,
+          added_by: user.id,
+          invitation_status: 'accepted',
+          role: 'adventure_manager',
         });
 
       if (participantError) {

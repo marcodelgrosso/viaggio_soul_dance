@@ -99,7 +99,7 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="admin-votes-preview">
-          {!hasPermission('view_statistics') ? (
+          {!hasPermission('perm_view_statistics') ? (
             <div className="no-votes-message">
               <i className="fas fa-lock" style={{ fontSize: '3rem', color: 'var(--text-light)', marginBottom: '1rem' }}></i>
               <p style={{ fontSize: '1.2rem', color: 'var(--text-light)' }}>Accesso negato</p>
@@ -143,7 +143,7 @@ const AdminDashboard: React.FC = () => {
           )}
         </div>
 
-        {hasPermission('view_statistics') && (
+        {hasPermission('perm_view_statistics') && (
           <div className="first-logins-section">
             <h3><i className="fas fa-user-check"></i> Primi accessi oggi</h3>
           <div className="first-logins-list">

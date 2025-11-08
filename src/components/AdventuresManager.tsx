@@ -168,7 +168,7 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
   };
 
   // Superadmin ha sempre permesso, anche in modalità user
-  const canCreate = hasPermission('is_creator') || actualIsSuperAdmin;
+  const canCreate = hasPermission('perm_create_adventures') || actualIsSuperAdmin;
 
   return (
     <div className="adventures-manager">
@@ -370,7 +370,7 @@ const AdventuresManager: React.FC<AdventuresManagerProps> = ({ onViewAdventure, 
                     <i className="fas fa-eye"></i>
                     <span>Vedi</span>
                   </button>
-                  {onViewVoting && (hasPermission('view_statistics') || actualIsSuperAdmin || adventure.created_by === user?.id || (adventure.participants || []).find((p: any) => p.user_id === user?.id && p.permissions?.can_view_statistics)) && (
+                  {onViewVoting && (hasPermission('perm_view_statistics') || actualIsSuperAdmin || adventure.created_by === user?.id || (adventure.participants || []).find((p: any) => p.user_id === user?.id && p.permissions?.can_view_statistics)) && (
                     <button
                       className="view-voting-btn"
                       onClick={(e) => {

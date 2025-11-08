@@ -51,7 +51,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM user_roles
-    WHERE user_id = user_uuid AND role = 'superadmin'
+    WHERE user_id = user_uuid AND role = 'platform_superadmin'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -64,7 +64,7 @@ BEGIN
     WHERE user_id = user_uuid AND permission = perm
   ) OR EXISTS (
     SELECT 1 FROM user_roles
-    WHERE user_id = user_uuid AND role = 'superadmin'
+    WHERE user_id = user_uuid AND role = 'platform_superadmin'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -83,7 +83,7 @@ CREATE POLICY "Creators can create adventures"
   FOR INSERT
   TO authenticated
   WITH CHECK (
-    user_has_permission(auth.uid(), 'is_creator')
+    user_has_permission(auth.uid(), 'perm_create_adventures')
   );
 
 -- Policy per adventures: solo creator e superadmin possono modificare
@@ -172,7 +172,7 @@ CREATE TRIGGER update_adventures_updated_at
 CREATE OR REPLACE FUNCTION can_create_adventures(user_uuid UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
-  RETURN user_has_permission(user_uuid, 'is_creator');
+  RETURN user_has_permission(user_uuid, 'perm_create_adventures');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

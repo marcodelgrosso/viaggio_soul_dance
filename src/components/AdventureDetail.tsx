@@ -170,7 +170,8 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
       if (user) {
         const isOriginalCreator = adventureData.created_by === user.id;
         const isAdventureCreator = creatorsData?.some(c => c.user_id === user.id) || false;
-        const canManage = isOriginalCreator || isAdventureCreator || actualIsSuperAdmin;
+        const isAdventureManagerRole = participantsWithEmails?.some(p => p.user_id === user.id && p.role === 'adventure_manager') || false;
+        const canManage = isOriginalCreator || isAdventureCreator || isAdventureManagerRole || actualIsSuperAdmin;
         setCanManageParticipants(canManage);
         setCanEditAdventure(canManage);
 
@@ -452,7 +453,7 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
         <div className="header-content">
           <h1>{adventure.name}</h1>
           <div className="header-actions">
-            {onViewVoting && (hasPermission('view_statistics') || actualIsSuperAdmin || adventure?.created_by === user?.id || participants.find(p => p.user_id === user?.id && p.permissions?.can_view_statistics)) && (
+            {onViewVoting && (hasPermission('perm_view_statistics') || actualIsSuperAdmin || adventure?.created_by === user?.id || participants.find(p => p.user_id === user?.id && p.permissions?.can_view_statistics)) && (
               <button
                 className="view-voting-btn"
                 title="Visualizza riepilogo votazioni"

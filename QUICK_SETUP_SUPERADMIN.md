@@ -12,8 +12,8 @@ Vai su **Supabase Dashboard** → **SQL Editor** e esegui il contenuto del file 
 
 Lo script:
 1. Verifica che il tuo account esista
-2. Inserisce il ruolo `superadmin` per il tuo account
-3. Aggiunge i permessi `is_creator` e `view_statistics`
+2. Inserisce il ruolo `platform_superadmin` per il tuo account
+3. Aggiunge i permessi `perm_create_adventures` e `perm_view_statistics`
 4. Verifica che tutto sia stato inserito correttamente
 
 ### Passo 2: Verifica
@@ -28,7 +28,7 @@ JOIN auth.users u ON u.id = ur.user_id
 WHERE u.email = 'marco.delgrosso88@gmail.com';
 ```
 
-Risultato atteso: `role = 'superadmin'`
+Risultato atteso: `role = 'platform_superadmin'`
 
 ### Passo 3: Ricarica l'Applicazione
 
@@ -43,20 +43,20 @@ Risultato atteso: `role = 'superadmin'`
 ```sql
 -- Setup Superadmin
 INSERT INTO user_roles (user_id, role)
-SELECT id, 'superadmin' 
+SELECT id, 'platform_superadmin' 
 FROM auth.users 
 WHERE email = 'marco.delgrosso88@gmail.com'
 ON CONFLICT (user_id) 
-DO UPDATE SET role = 'superadmin', updated_at = NOW();
+DO UPDATE SET role = 'platform_superadmin', updated_at = NOW();
 
 -- Aggiungi permessi
 INSERT INTO user_permissions (user_id, permission)
-SELECT u.id, 'is_creator'
+SELECT u.id, 'perm_create_adventures'
 FROM auth.users u
 WHERE u.email = 'marco.delgrosso88@gmail.com'
   AND NOT EXISTS (
     SELECT 1 FROM user_permissions up 
-    WHERE up.user_id = u.id AND up.permission = 'is_creator'
+    WHERE up.user_id = u.id AND up.permission = 'perm_create_adventures'
   );
 ```
 

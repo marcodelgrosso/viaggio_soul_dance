@@ -1,12 +1,13 @@
 -- Script per aggiungere automaticamente tutti i creators come partecipanti
 -- Se un creator non è già presente nella tabella adventure_participants, viene aggiunto
 
-INSERT INTO adventure_participants (adventure_id, user_id, added_by, created_at)
+INSERT INTO adventure_participants (adventure_id, user_id, added_by, created_at, role)
 SELECT 
     ac.adventure_id,
     ac.user_id,
     ac.user_id as added_by,  -- Il creator si aggiunge come partecipante
-    COALESCE(a.created_at, NOW()) as created_at
+    COALESCE(a.created_at, NOW()) as created_at,
+    'adventure_manager' as role
 FROM adventure_creators ac
 INNER JOIN adventures a ON a.id = ac.adventure_id
 WHERE NOT EXISTS (

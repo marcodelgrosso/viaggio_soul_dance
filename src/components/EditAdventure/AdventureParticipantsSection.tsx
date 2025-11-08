@@ -162,10 +162,12 @@ const AdventureParticipantsSection: React.FC<AdventureParticipantsSectionProps> 
             {/* Separazione Creator e Partecipanti */}
             {(() => {
               const creators = (adventure.participants || []).filter(p => 
+                p.role === 'adventure_manager' ||
                 (adventure.creators || []).some(c => c.user_id === p.user_id) || 
                 adventure.created_by === p.user_id
               );
               const regularParticipants = (adventure.participants || []).filter(p => 
+                p.role !== 'adventure_manager' &&
                 !(adventure.creators || []).some(c => c.user_id === p.user_id) && 
                 adventure.created_by !== p.user_id
               );

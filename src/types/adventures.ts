@@ -66,6 +66,7 @@ export interface AdventureParticipant {
   added_by: string;
   created_at: string;
   invitation_status?: 'pending' | 'accepted' | 'declined';
+  role?: 'adventure_manager' | 'adventure_participant';
   user_email?: string; // Aggiunto per visualizzazione
   display_name?: string; // Nome completo (Nome Cognome) o email come fallback
   first_name?: string | null;

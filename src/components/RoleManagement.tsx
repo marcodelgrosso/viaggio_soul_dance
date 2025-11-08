@@ -4,6 +4,41 @@ import { useAuth } from '../context/AuthContext';
 import { UserRole, UserPermission } from '../types/permissions';
 import '../styles/components/RoleManagement.scss';
 
+const ROLE_OPTIONS: Array<{ value: UserRole; label: string }> = [
+  { value: 'platform_user', label: 'Utente piattaforma' },
+  { value: 'platform_superadmin', label: 'Amministratore piattaforma' },
+];
+
+const ROLE_BADGE_LABEL: Record<UserRole, string> = {
+  platform_user: '👤 Utente piattaforma',
+  platform_superadmin: '👑 Amministratore piattaforma',
+};
+
+const LEGACY_ROLE_MAP: Record<string, UserRole> = {
+  user: 'platform_user',
+  platform_user: 'platform_user',
+  superadmin: 'platform_superadmin',
+  platform_superadmin: 'platform_superadmin',
+};
+
+const PERMISSION_OPTIONS: Array<{ value: UserPermission; label: string }> = [
+  { value: 'perm_manage_travel', label: '✏️ Gestione itinerari' },
+  { value: 'perm_manage_budget', label: '💰 Gestione budget' },
+  { value: 'perm_view_statistics', label: '📊 Visualizza statistiche' },
+  { value: 'perm_create_adventures', label: '🎯 Crea avventure' },
+];
+
+const LEGACY_PERMISSION_MAP: Record<string, UserPermission> = {
+  travel_editor: 'perm_manage_travel',
+  perm_manage_travel: 'perm_manage_travel',
+  prices_editor: 'perm_manage_budget',
+  perm_manage_budget: 'perm_manage_budget',
+  view_statistics: 'perm_view_statistics',
+  perm_view_statistics: 'perm_view_statistics',
+  is_creator: 'perm_create_adventures',
+  perm_create_adventures: 'perm_create_adventures',
+};
+
 interface UserWithRole {
   id: string;
   email: string;
@@ -18,7 +53,7 @@ const RoleManagement: React.FC = () => {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
-  const [selectedRole, setSelectedRole] = useState<UserRole>('user');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('platform_user');
   const [selectedPermissions, setSelectedPermissions] = useState<UserPermission[]>([]);
 
   useEffect(() => {
@@ -56,17 +91,23 @@ const RoleManagement: React.FC = () => {
       // Crea una mappa di userId -> permissions
       const permissionsMap: { [key: string]: UserPermission[] } = {};
       (permissionsData || []).forEach((p: any) => {
+        const mapped = LEGACY_PERMISSION_MAP[p.permission];
+        if (!mapped) {
+          return;
+        }
         if (!permissionsMap[p.user_id]) {
           permissionsMap[p.user_id] = [];
         }
-        permissionsMap[p.user_id].push(p.permission as UserPermission);
+        if (!permissionsMap[p.user_id].includes(mapped)) {
+          permissionsMap[p.user_id].push(mapped);
+        }
       });
 
       // Combina ruoli con permessi
       const usersList: UserWithRole[] = (rolesData || []).map((r: any) => ({
         id: r.user_id,
         email: '', // L'email dovrà essere caricata da una vista o funzione custom
-        role: r.role as UserRole,
+        role: LEGACY_ROLE_MAP[r.role] ?? null,
         permissions: permissionsMap[r.user_id] || [],
       }));
 
@@ -80,7 +121,7 @@ const RoleManagement: React.FC = () => {
 
   const handleEditUser = (user: UserWithRole) => {
     setEditingUserId(user.id);
-    setSelectedRole(user.role || 'user');
+    setSelectedRole(user.role || 'platform_user');
     setSelectedPermissions([...user.permissions]);
   };
 
@@ -189,32 +230,32 @@ const RoleManagement: React.FC = () => {
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value as UserRole)}
                     >
-                      <option value="user">User</option>
-                      <option value="superadmin">Superadmin</option>
+                      {ROLE_OPTIONS.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div className="form-group">
                     <label>Permessi:</label>
                     <div className="permissions-list">
-                      {(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator'] as UserPermission[]).map(perm => (
-                        <label key={perm} className="permission-checkbox">
+                      {PERMISSION_OPTIONS.map(option => (
+                        <label key={option.value} className="permission-checkbox">
                           <input
                             type="checkbox"
-                            checked={selectedPermissions.includes(perm)}
-                            onChange={() => togglePermission(perm)}
-                            disabled={selectedRole === 'superadmin'}
+                            checked={selectedPermissions.includes(option.value)}
+                            onChange={() => togglePermission(option.value)}
+                            disabled={selectedRole === 'platform_superadmin'}
                           />
                           <span>
-                            {perm === 'travel_editor' && '✏️ Editor Viaggi'}
-                            {perm === 'prices_editor' && '💰 Editor Prezzi'}
-                            {perm === 'view_statistics' && '📊 Visualizza Statistiche'}
-                            {perm === 'is_creator' && '🎯 Creator Avventure'}
+                            {option.label}
                           </span>
                         </label>
                       ))}
                     </div>
-                    {selectedRole === 'superadmin' && (
+                    {selectedRole === 'platform_superadmin' && (
                       <p className="info-text">
                         <i className="fas fa-info-circle"></i>
                         I superadmin hanno automaticamente tutti i permessi.
@@ -242,7 +283,7 @@ const RoleManagement: React.FC = () => {
                     </div>
                     <div className="user-role">
                       <span className={`role-badge role-${user.role}`}>
-                        {user.role === 'superadmin' ? '👑 Superadmin' : '👤 User'}
+                        {user.role ? ROLE_BADGE_LABEL[user.role] : '👤 Ruolo non assegnato'}
                       </span>
                     </div>
                   </div>
@@ -253,10 +294,7 @@ const RoleManagement: React.FC = () => {
                       <div className="permissions-tags">
                         {user.permissions.map(perm => (
                           <span key={perm} className="permission-tag">
-                            {perm === 'travel_editor' && '✏️ Editor Viaggi'}
-                            {perm === 'prices_editor' && '💰 Editor Prezzi'}
-                            {perm === 'view_statistics' && '📊 Visualizza Statistiche'}
-                            {perm === 'is_creator' && '🎯 Creator Avventure'}
+                            {PERMISSION_OPTIONS.find(option => option.value === perm)?.label || perm}
                           </span>
                         ))}
                       </div>
@@ -280,14 +318,14 @@ const RoleManagement: React.FC = () => {
           Note
         </h3>
         <ul>
-          <li>I <strong>Superadmin</strong> hanno automaticamente tutti i permessi</li>
-          <li>Gli utenti <strong>User</strong> possono avere permessi specifici assegnati</li>
+          <li>I <strong>Amministratori piattaforma</strong> hanno automaticamente tutti i permessi</li>
+          <li>Gli utenti <strong>Utente piattaforma</strong> possono avere permessi specifici assegnati</li>
           <li>I permessi disponibili sono:
             <ul>
-              <li><strong>travel_editor</strong>: Modificare le destinazioni di viaggio</li>
-              <li><strong>prices_editor</strong>: Modificare i prezzi</li>
-              <li><strong>view_statistics</strong>: Visualizzare le statistiche</li>
-              <li><strong>is_creator</strong>: Creare e gestire avventure</li>
+              <li><strong>perm_manage_travel</strong>: Modificare le destinazioni di viaggio</li>
+              <li><strong>perm_manage_budget</strong>: Modificare i prezzi e i budget</li>
+              <li><strong>perm_view_statistics</strong>: Visualizzare le statistiche</li>
+              <li><strong>perm_create_adventures</strong>: Creare e gestire nuove avventure</li>
             </ul>
           </li>
         </ul>

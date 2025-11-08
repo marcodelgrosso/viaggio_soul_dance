@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  role VARCHAR(50) NOT NULL DEFAULT 'user' CHECK (role IN ('superadmin', 'user')),
+  role VARCHAR(50) NOT NULL DEFAULT 'platform_user' CHECK (role IN ('platform_superadmin', 'platform_user')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id)
@@ -18,7 +18,7 @@ DROP TABLE IF EXISTS user_permissions CASCADE;
 CREATE TABLE user_permissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  permission VARCHAR(50) NOT NULL CHECK (permission IN ('travel_editor', 'prices_editor', 'view_statistics', 'is_creator')),
+  permission VARCHAR(50) NOT NULL CHECK (permission IN ('perm_manage_travel', 'perm_manage_budget', 'perm_view_statistics', 'perm_create_adventures')),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, permission)
 );
@@ -33,6 +33,8 @@ ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_permissions ENABLE ROW LEVEL SECURITY;
 
 -- Policy per user_roles: gli utenti possono vedere solo il proprio ruolo
+DROP POLICY IF EXISTS "Users can view their own role" ON user_roles;
+
 CREATE POLICY "Users can view their own role"
   ON user_roles
   FOR SELECT
@@ -46,7 +48,7 @@ RETURNS BOOLEAN AS $$
 BEGIN
   RETURN EXISTS (
     SELECT 1 FROM user_roles
-    WHERE user_id = user_uuid AND role = 'superadmin'
+    WHERE user_id = user_uuid AND role = 'platform_superadmin'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -60,13 +62,15 @@ BEGIN
     WHERE user_id = user_uuid AND permission = perm
   ) OR EXISTS (
     SELECT 1 FROM user_roles
-    WHERE user_id = user_uuid AND role = 'superadmin'
+    WHERE user_id = user_uuid AND role = 'platform_superadmin'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Policy per user_roles: solo superadmin può modificare ruoli
 -- Usa la funzione is_superadmin per evitare ricorsione RLS
+DROP POLICY IF EXISTS "Superadmin can manage roles" ON user_roles;
+
 CREATE POLICY "Superadmin can manage roles"
   ON user_roles
   FOR ALL
@@ -120,7 +124,7 @@ BEGIN
     WHERE user_id = user_uuid AND permission = perm
   ) OR EXISTS (
     SELECT 1 FROM user_roles
-    WHERE user_id = user_uuid AND role = 'superadmin'
+    WHERE user_id = user_uuid AND role = 'platform_superadmin'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -134,17 +138,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_user_roles_updated_at ON user_roles;
+
 CREATE TRIGGER update_user_roles_updated_at
   BEFORE UPDATE ON user_roles
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- Inserisci il superadmin (sostituisci EMAIL_SUPERADMIN con la tua email)
+-- Inserisci l'amministratore piattaforma (sostituisci EMAIL_SUPERADMIN con la tua email)
 -- NOTA: Dovrai eseguire questa query dopo aver creato l'account, sostituendo l'UUID
 -- Esempio (dopo aver creato l'account):
 -- INSERT INTO user_roles (user_id, role)
--- SELECT id, 'superadmin' FROM auth.users WHERE email = 'marco.delgrosso@example.com';
+-- SELECT id, 'platform_superadmin' FROM auth.users WHERE email = 'marco.delgrosso@example.com';
 
-COMMENT ON TABLE user_roles IS 'Tabella per gestire i ruoli degli utenti (superadmin, user)';
+COMMENT ON TABLE user_roles IS 'Tabella per gestire i ruoli degli utenti (platform_superadmin, platform_user)';
 COMMENT ON TABLE user_permissions IS 'Tabella per gestire i permessi specifici degli utenti';
 

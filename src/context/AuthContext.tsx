@@ -21,14 +21,42 @@ interface AuthContextType {
   previewMode: boolean;
   togglePreviewMode: () => void;
   // Role selection
-  selectedRole: 'user' | 'superadmin' | null;
-  selectRole: (role: 'user' | 'superadmin') => void;
+  selectedRole: 'platform_user' | 'platform_superadmin' | null;
+  selectRole: (role: 'platform_user' | 'platform_superadmin') => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Email superadmin - puoi cambiarla in base alle tue esigenze
 const SUPERADMIN_EMAIL = 'marco.delgrosso88@gmail.com';
+
+const PLATFORM_SUPERADMIN: UserRole = 'platform_superadmin';
+const PLATFORM_USER: UserRole = 'platform_user';
+
+const ALL_PERMISSIONS: UserPermission[] = [
+  'perm_manage_travel',
+  'perm_manage_budget',
+  'perm_view_statistics',
+  'perm_create_adventures',
+];
+
+const LEGACY_ROLE_MAP: Record<string, UserRole> = {
+  superadmin: PLATFORM_SUPERADMIN,
+  user: PLATFORM_USER,
+  platform_superadmin: PLATFORM_SUPERADMIN,
+  platform_user: PLATFORM_USER,
+};
+
+const LEGACY_PERMISSION_MAP: Record<string, UserPermission> = {
+  travel_editor: 'perm_manage_travel',
+  prices_editor: 'perm_manage_budget',
+  view_statistics: 'perm_view_statistics',
+  is_creator: 'perm_create_adventures',
+  perm_manage_travel: 'perm_manage_travel',
+  perm_manage_budget: 'perm_manage_budget',
+  perm_view_statistics: 'perm_view_statistics',
+  perm_create_adventures: 'perm_create_adventures',
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -37,15 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [permissions, setPermissions] = useState<UserPermission[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewMode, setPreviewMode] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'user' | 'superadmin' | null>(null);
+  const [selectedRole, setSelectedRole] = useState<'platform_user' | 'platform_superadmin' | null>(null);
 
   // Carica ruolo e permessi dell'utente
   const loadUserRoleAndPermissions = async (userId: string) => {
     try {
       // Prima controlla se l'email è quella del superadmin
       if (user?.email === SUPERADMIN_EMAIL || user?.email?.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()) {
-        setRole('superadmin');
-        setPermissions(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator']);
+        setRole(PLATFORM_SUPERADMIN);
+        setPermissions(ALL_PERMISSIONS);
         setLoading(false);
         return;
       }
@@ -94,8 +122,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Se non c'è un ruolo nel database, crealo automaticamente come 'user'
-      let userRole: UserRole = roleData?.role || 'user';
+      // Se non c'è un ruolo nel database, crealo automaticamente come ruolo utente
+      let userRole: UserRole = roleData?.role ? LEGACY_ROLE_MAP[roleData.role] ?? PLATFORM_USER : PLATFORM_USER;
       
       // Se non esiste un ruolo per l'utente e non c'è stato un errore grave, crealo
       const errorStatus = roleError && 'status' in roleError ? (roleError as any).status : undefined;
@@ -106,11 +134,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .from('user_roles')
             .insert({
               user_id: userId,
-              role: 'user',
+              role: PLATFORM_USER,
             });
           
           if (!insertError) {
-            userRole = 'user';
+            userRole = PLATFORM_USER;
           } else if (insertError.code !== '23505') { // Ignora se già esiste (unique constraint)
             console.warn('Errore nella creazione automatica del ruolo:', insertError);
           }
@@ -121,9 +149,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Se è superadmin, imposta come superadmin
-      if (userRole === 'superadmin') {
-        setRole('superadmin');
-        setPermissions(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator']);
+      if (userRole === PLATFORM_SUPERADMIN) {
+        setRole(PLATFORM_SUPERADMIN);
+        setPermissions(ALL_PERMISSIONS);
         setLoading(false);
         return;
       } else {
@@ -147,7 +175,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setPermissions([]);
           }
         } else {
-          setPermissions((permissionsData || []).map((p: { permission: UserPermission }) => p.permission));
+          const mappedPermissions = (permissionsData || [])
+            .map((p: { permission: string }) => LEGACY_PERMISSION_MAP[p.permission])
+            .filter(Boolean) as UserPermission[];
+          setPermissions(mappedPermissions);
         }
       } catch (permError: any) {
         console.warn('Errore nel tentativo di caricare permessi (tabella potrebbe non esistere):', permError);
@@ -157,10 +188,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Errore nel caricamento di ruolo e permessi:', error);
       // In caso di errore, assegna ruolo base
       if (user?.email === SUPERADMIN_EMAIL || user?.email?.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()) {
-        setRole('superadmin');
-        setPermissions(['travel_editor', 'prices_editor', 'view_statistics', 'is_creator']);
+        setRole(PLATFORM_SUPERADMIN);
+        setPermissions(ALL_PERMISSIONS);
       } else {
-        setRole('user');
+        setRole(PLATFORM_USER);
         setPermissions([]);
       }
     } finally {
@@ -206,14 +237,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
     });
 
-    // Dopo la registrazione, assegna ruolo 'user' di default
+    // Dopo la registrazione, assegna ruolo base di default
     if (!error && data.user) {
       try {
         await supabase
           .from('user_roles')
           .insert({
             user_id: data.user.id,
-            role: 'user',
+            role: PLATFORM_USER,
           });
       } catch (roleError) {
         console.error('Errore nell\'assegnazione del ruolo:', roleError);
@@ -249,10 +280,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('previewMode');
   };
 
-  const actualIsSuperAdmin = role === 'superadmin' || 
+  const actualIsSuperAdmin = role === PLATFORM_SUPERADMIN || 
     user?.email?.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase() ||
     user?.email === SUPERADMIN_EMAIL;
-  const actualIsAdmin = actualIsSuperAdmin || permissions.includes('view_statistics');
+  const actualIsAdmin = actualIsSuperAdmin || permissions.includes('perm_view_statistics');
 
   // Se l'utente è superadmin e ha selezionato un ruolo, usa quello selezionato
   // Altrimenti usa il ruolo reale (per utenti normali o se non ha ancora selezionato)
@@ -260,8 +291,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   // Se preview mode è attivo, maschera i permessi superadmin
   // Se è superadmin ma ha scelto "user", maschera i permessi
-  const useUserMode = previewMode || (actualIsSuperAdmin && effectiveSelectedRole === 'user');
-  const isSuperAdmin = useUserMode ? false : (effectiveSelectedRole === 'superadmin' || (!effectiveSelectedRole && actualIsSuperAdmin));
+  const useUserMode = previewMode || (actualIsSuperAdmin && effectiveSelectedRole === PLATFORM_USER);
+  const isSuperAdmin = useUserMode ? false : (effectiveSelectedRole === PLATFORM_SUPERADMIN || (!effectiveSelectedRole && actualIsSuperAdmin));
   const isAdmin = useUserMode ? false : (isSuperAdmin || (!effectiveSelectedRole && actualIsAdmin));
   const effectivePermissions = useUserMode ? [] : permissions;
   
@@ -273,7 +304,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('previewMode', String(!previewMode));
   };
 
-  const selectRole = (role: 'user' | 'superadmin') => {
+  const selectRole = (role: 'platform_user' | 'platform_superadmin') => {
     setSelectedRole(role);
     localStorage.setItem('selectedRole', role);
     // Reset preview mode quando si cambia ruolo
@@ -289,8 +320,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const savedSelectedRole = localStorage.getItem('selectedRole');
-    if (savedSelectedRole === 'user' || savedSelectedRole === 'superadmin') {
-      setSelectedRole(savedSelectedRole as 'user' | 'superadmin');
+    if (savedSelectedRole) {
+      const mappedRole = LEGACY_ROLE_MAP[savedSelectedRole];
+      if (mappedRole) {
+        setSelectedRole(mappedRole);
+      }
     }
   }, []);
 
@@ -301,7 +335,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
     // Se è superadmin ma ha scelto modalità user, nessun permesso admin
-    if (actualIsSuperAdmin && effectiveSelectedRole === 'user') {
+    if (actualIsSuperAdmin && effectiveSelectedRole === PLATFORM_USER) {
       return false;
     }
     // Superadmin ha tutti i permessi (solo se ha scelto modalità superadmin)

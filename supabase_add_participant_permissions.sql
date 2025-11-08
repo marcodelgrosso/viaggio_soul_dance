@@ -27,6 +27,8 @@ CREATE INDEX IF NOT EXISTS idx_adventure_participant_permissions_composite
 ALTER TABLE adventure_participant_permissions ENABLE ROW LEVEL SECURITY;
 
 -- Policy: i creator dell'avventura e superadmin possono vedere tutti i permessi
+DROP POLICY IF EXISTS "Creators can view participant permissions" ON adventure_participant_permissions;
+
 CREATE POLICY "Creators can view participant permissions"
   ON adventure_participant_permissions
   FOR SELECT
@@ -47,6 +49,8 @@ CREATE POLICY "Creators can view participant permissions"
   );
 
 -- Policy: gli utenti possono vedere i propri permessi
+DROP POLICY IF EXISTS "Users can view their own permissions" ON adventure_participant_permissions;
+
 CREATE POLICY "Users can view their own permissions"
   ON adventure_participant_permissions
   FOR SELECT
@@ -54,6 +58,8 @@ CREATE POLICY "Users can view their own permissions"
   USING (auth.uid() = user_id);
 
 -- Policy: solo creator originale e superadmin possono gestire i permessi
+DROP POLICY IF EXISTS "Creators can manage participant permissions" ON adventure_participant_permissions;
+
 CREATE POLICY "Creators can manage participant permissions"
   ON adventure_participant_permissions
   FOR ALL
@@ -77,6 +83,8 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_adventure_participant_permissions_updated_at ON adventure_participant_permissions;
 
 CREATE TRIGGER update_adventure_participant_permissions_updated_at
   BEFORE UPDATE ON adventure_participant_permissions

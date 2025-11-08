@@ -53,7 +53,7 @@ const AdventureVotingPage: React.FC<AdventureVotingPageProps> = ({ adventureId, 
     }
 
     // Superadmin ha sempre accesso
-    if (actualIsSuperAdmin || hasPermission('view_statistics')) {
+    if (actualIsSuperAdmin || hasPermission('perm_view_statistics')) {
       setHasAccess(true);
       return;
     }

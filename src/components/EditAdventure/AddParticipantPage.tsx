@@ -95,6 +95,7 @@ const AddParticipantPage: React.FC<AddParticipantPageProps> = ({
           user_id: userId,
           added_by: user.id,
           invitation_status: 'pending',
+          role: 'adventure_participant',
         });
 
       if (insertError) {

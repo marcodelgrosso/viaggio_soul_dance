@@ -9,10 +9,20 @@ import AdventureDetail from './AdventureDetail';
 import EditAdventurePage from './EditAdventurePage';
 import AdventureVotingPage from './AdventureVotingPage';
 import UserProfilePage from './UserProfilePage';
+import SuperAdminPanel from './SuperAdminPanel';
 import { useAuth } from '../context/AuthContext';
 
 const MainContent: React.FC = () => {
-  const { user, isAdmin, isSuperAdmin, loading, hasPermission, actualIsSuperAdmin } = useAuth();
+  const {
+    user,
+    isAdmin,
+    isSuperAdmin,
+    loading,
+    hasPermission,
+    actualIsSuperAdmin,
+    selectedRole,
+    selectRole,
+  } = useAuth();
   const [selectedAdventureId, setSelectedAdventureId] = useState<string | null>(null);
   const [editAdventureId, setEditAdventureId] = useState<string | null>(null);
   const [votingAdventureId, setVotingAdventureId] = useState<string | null>(null);
@@ -34,6 +44,14 @@ const MainContent: React.FC = () => {
     setShowUserProfile(false);
     setShowAdminDashboard(true);
   };
+
+  if (!loading && actualIsSuperAdmin && selectedRole === 'platform_superadmin') {
+    return (
+      <div className="main-content superadmin-mode">
+        <SuperAdminPanel onClose={() => selectRole('platform_user')} />
+      </div>
+    );
+  }
 
   return (
     <div className="main-content">
@@ -92,7 +110,7 @@ const MainContent: React.FC = () => {
               <RoleManagement />
             </div>
           )}
-          {/* Mostra AdventuresManager a tutti gli utenti autenticati, non solo a quelli con is_creator */}
+          {/* Mostra AdventuresManager a tutti gli utenti autenticati, non solo a quelli con perm_create_adventures */}
           {user && (
             <div style={{ marginBottom: '2rem' }}>
               {editAdventureId ? (
@@ -121,7 +139,7 @@ const MainContent: React.FC = () => {
                   onViewAdventure={(adventureId) => setSelectedAdventureId(adventureId)}
                   onViewVoting={(adventureId) => {
                     // Controlla permessi prima di permettere l'accesso
-                    if (hasPermission('view_statistics') || actualIsSuperAdmin) {
+                    if (hasPermission('perm_view_statistics') || actualIsSuperAdmin) {
                       setVotingAdventureId(adventureId);
                     } else {
                       alert('Non hai i permessi necessari per visualizzare le statistiche.');
