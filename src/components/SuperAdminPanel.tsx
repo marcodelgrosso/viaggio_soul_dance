@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import AdminDashboard from './AdminDashboard';
 import RoleManagement from './RoleManagement';
@@ -37,7 +37,23 @@ interface SectionDescriptor {
 
 const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onClose }) => {
   const { user, actualIsSuperAdmin } = useAuth();
+  const getIsDesktop = () => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : false);
   const [activeSection, setActiveSection] = useState<SuperAdminSection>('overview');
+  const [isDesktop, setIsDesktop] = useState<boolean>(getIsDesktop);
+  const [isSidebarOpen, setSidebarOpen] = useState<boolean>(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true));
+
+  useEffect(() => {
+    const handleResize = () => {
+      const desktop = getIsDesktop();
+      setIsDesktop(desktop);
+      setSidebarOpen(desktop);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sections = useMemo<SectionDescriptor[]>(() => {
     return [
@@ -92,6 +108,13 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onClose }) => {
     ];
   }, []);
 
+  const handleSectionChange = (section: SuperAdminSection) => {
+    setActiveSection(section);
+    if (!isDesktop) {
+      setSidebarOpen(false);
+    }
+  };
+
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'overview':
@@ -139,9 +162,20 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onClose }) => {
     );
   }
 
+  const panelClassNames = [
+    'superadmin-panel',
+    isDesktop ? 'is-desktop' : 'is-mobile',
+    isSidebarOpen ? 'sidebar-open' : 'sidebar-closed',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className="superadmin-panel">
-      <aside className="superadmin-sidebar">
+    <div className={panelClassNames}>
+      <aside
+        className="superadmin-sidebar"
+        aria-hidden={!isDesktop && !isSidebarOpen}
+      >
         <div className="superadmin-sidebar-header">
           <div className="superadmin-sidebar-title">
             <i className="fas fa-crown"></i>
@@ -156,12 +190,22 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onClose }) => {
               <span>{user.email}</span>
             </div>
           )}
+          {!isDesktop && (
+            <button
+              className="superadmin-sidebar-close"
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Chiudi menu amministratore"
+            >
+              <i className="fas fa-times" />
+            </button>
+          )}
         </div>
 
         <nav className="superadmin-nav">
           {sections.map((section) => {
             const isActive = section.id === activeSection;
-            const handleClick = () => setActiveSection(section.id);
+            const handleClick = () => handleSectionChange(section.id);
             return (
               <button
                 key={section.id}
@@ -197,10 +241,27 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onClose }) => {
           )}
         </div>
       </aside>
+      {!isDesktop && (
+        <div
+          className={`superadmin-sidebar-backdrop ${isSidebarOpen ? 'visible' : ''}`}
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden={!isSidebarOpen}
+        />
+      )}
 
       <main className="superadmin-content">
         <header className="superadmin-content-header">
-          <div>
+          {!isDesktop && (
+            <button
+              className="superadmin-sidebar-toggle"
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Apri menu amministratore"
+            >
+              <i className="fas fa-bars" />
+            </button>
+          )}
+          <div className="superadmin-header-body">
             <h1>{sections.find((section) => section.id === activeSection)?.label}</h1>
             <p>{sections.find((section) => section.id === activeSection)?.description}</p>
           </div>
