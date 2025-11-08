@@ -2,6 +2,11 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '../lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { UserRole, UserPermission } from '../types/permissions';
+import {
+  logAccessEvent,
+  rememberLoginTimestamp,
+  consumeSessionDurationSeconds,
+} from '../lib/accessLogs';
 
 interface AuthContextType {
   user: User | null;
@@ -216,11 +221,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Ascolta i cambiamenti di autenticazione
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+
+      if (event === 'SIGNED_IN' && session?.user) {
+        rememberLoginTimestamp();
+        const provider = session.user.app_metadata?.provider;
+        const context = provider
+          ? `Login tramite ${provider}`
+          : 'Login via credenziali';
+        await logAccessEvent({
+          action: 'login_success',
+          context,
+          sessionId: session.access_token ?? null,
+        });
+      }
+
       if (session?.user) {
-        loadUserRoleAndPermissions(session.user.id).then(() => setLoading(false));
+        await loadUserRoleAndPermissions(session.user.id);
+        setLoading(false);
       } else {
         setRole(null);
         setPermissions([]);
@@ -269,6 +289,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
+    const sessionDurationSeconds = consumeSessionDurationSeconds();
+    await logAccessEvent({
+      action: 'logout',
+      context: 'Logout manuale dalla web app',
+      sessionDurationSeconds,
+    });
+
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
