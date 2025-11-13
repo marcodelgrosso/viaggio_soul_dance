@@ -33,6 +33,9 @@ const TransportModal: React.FC<TransportModalProps> = ({
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [extractingInfo, setExtractingInfo] = useState(false);
+  const [extractError, setExtractError] = useState('');
+  const [extractedData, setExtractedData] = useState<Record<string, any> | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -58,11 +61,178 @@ const TransportModal: React.FC<TransportModalProps> = ({
         setInfoLink('');
         setNotes('');
       }
+      setExtractError('');
+      setExtractedData(null);
+      setExtractingInfo(false);
       setError('');
     }
   }, [isOpen, transport]);
 
   if (!isOpen) return null;
+
+  const parseDateFromString = (value?: string | null): string | null => {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const explicitMatch = trimmed.match(/(\d{1,2})[\/\-\.\s](\d{1,2})[\/\-\.\s](\d{2,4})/);
+    if (explicitMatch) {
+      let [, day, month, year] = explicitMatch;
+      if (!day || !month || !year) return null;
+      if (year.length === 2) {
+        year = `20${year}`;
+      }
+      const isoCandidate = `${year.padStart(4, '0')}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      return isoCandidate;
+    }
+
+    const parsed = new Date(trimmed);
+    if (!Number.isNaN(parsed.getTime())) {
+      const iso = parsed.toISOString().split('T')[0];
+      return iso;
+    }
+
+    return null;
+  };
+
+  const parsePriceFromString = (value?: string | null): string | null => {
+    if (!value) return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    let sanitized = trimmed.replace(/[^0-9,\.]/g, '');
+    if (!sanitized) return null;
+
+    if (sanitized.includes(',') && sanitized.includes('.')) {
+      if (sanitized.lastIndexOf('.') > sanitized.lastIndexOf(',')) {
+        sanitized = sanitized.replace(/,/g, '');
+      } else {
+        sanitized = sanitized.replace(/\./g, '').replace(',', '.');
+      }
+    } else if (sanitized.includes(',')) {
+      sanitized = sanitized.replace(',', '.');
+    }
+
+    const amount = parseFloat(sanitized);
+    if (Number.isNaN(amount)) return null;
+
+    return amount.toFixed(2);
+  };
+
+  const handleExtractInfo = async () => {
+    if (!infoLink.trim()) {
+      setExtractError('Inserisci un link valido prima di estrarre le informazioni.');
+      return;
+    }
+
+    setExtractError('');
+    setError('');
+    setExtractingInfo(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const accessToken = session?.access_token;
+      if (!accessToken) {
+        throw new Error('Sessione non valida: impossibile ottenere il token di autenticazione.');
+      }
+
+      const response = await fetch('https://n8n.srv1072753.hstgr.cloud/webhook-test/booking-parser', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ booking_url: infoLink.trim() }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Risposta non valida dal servizio (status ${response.status})`);
+      }
+
+      const parsedResponse = await response.json();
+      setExtractedData(parsedResponse);
+
+      const rawData = parsedResponse?.data ?? {};
+      const formattedData = parsedResponse?.formatted ?? {};
+
+      if (transportType !== 'hotel') {
+        setTransportType('hotel');
+      }
+
+      const pickIsoDate = (value?: string | null) => {
+        if (!value) return null;
+        const trimmed = value.trim();
+        if (!trimmed) return null;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+          return trimmed;
+        }
+        return parseDateFromString(trimmed);
+      };
+
+      const checkIn =
+        pickIsoDate(rawData.check_in_date) ??
+        pickIsoDate(rawData.check_in) ??
+        pickIsoDate(formattedData['Check-in']);
+      const checkOut =
+        pickIsoDate(rawData.check_out_date) ??
+        pickIsoDate(rawData.check_out) ??
+        pickIsoDate(formattedData['Check-out']);
+
+      const numericPrice =
+        typeof rawData.prezzo_numerico === 'number'
+          ? rawData.prezzo_numerico.toFixed(2)
+          : undefined;
+      const price =
+        numericPrice ??
+        parsePriceFromString(rawData.prezzo_totale) ??
+        parsePriceFromString(formattedData['Prezzo totale']) ??
+        parsePriceFromString(formattedData['Prezzo']);
+
+      if (checkIn) {
+        setArrivalDate(checkIn);
+      }
+      if (checkOut) {
+        setDepartureDate(checkOut);
+      }
+      if (price) {
+        setCost(price);
+        setCostType('fixed');
+      }
+
+      const details: string[] = [];
+      const hotelName = formattedData['Hotel'] ?? rawData.hotel;
+      if (hotelName) details.push(`Hotel: ${hotelName}`);
+
+      const guests =
+        formattedData['Ospiti'] ?? rawData.ospiti ?? rawData.adulti ?? rawData.bambini;
+      if (guests) details.push(`Ospiti: ${guests}`);
+
+      const rooms = formattedData['Camere'] ?? rawData.camere;
+      if (rooms) details.push(`Camere: ${rooms}`);
+
+      const duration = formattedData['Durata'] ?? rawData.durata_notti;
+      if (duration) details.push(`Durata: ${duration}${typeof rawData.durata_notti === 'number' ? ' notti' : ''}`);
+
+      if (details.length) {
+        setNotes((prev) => {
+          if (!prev) {
+            return `Dettagli estratti:\n${details.join('\n')}`;
+          }
+          if (prev.includes('Dettagli estratti:')) {
+            return prev;
+          }
+          return `${prev}\n\nDettagli estratti:\n${details.join('\n')}`;
+        });
+      }
+    } catch (err: any) {
+      console.error('Errore durante l\'estrazione delle info Booking:', err);
+      setExtractError(err?.message || 'Errore durante l\'estrazione delle informazioni.');
+    } finally {
+      setExtractingInfo(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,21 +420,57 @@ const TransportModal: React.FC<TransportModalProps> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="infoLink">
-              <i className="fas fa-link"></i>
-              Info Link (opzionale)
-            </label>
+            <div className="form-label-with-ai">
+              <label htmlFor="infoLink">
+                <i className="fas fa-link"></i>
+                Info Link (opzionale)
+              </label>
+              <button
+                type="button"
+                className="generate-ai-btn extract-info-btn"
+                onClick={handleExtractInfo}
+                disabled={loading || extractingInfo}
+                title="Estrai informazioni dalla pagina Booking"
+              >
+                {extractingInfo ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <span>Estrazione...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-wand-magic-sparkles"></i>
+                    <span>Estrai info</span>
+                  </>
+                )}
+              </button>
+            </div>
             <input
               type="url"
               id="infoLink"
               value={infoLink}
               onChange={(e) => setInfoLink(e.target.value)}
               placeholder="https://..."
-              disabled={loading}
+              disabled={loading || extractingInfo}
             />
             <small className="form-hint">
               Link esterno per informazioni aggiuntive (es. sito compagnia aerea, booking)
             </small>
+            {extractError && (
+              <div className="alert-message warning" role="alert">
+                <i className="fas fa-exclamation-triangle"></i>
+                <span>{extractError}</span>
+              </div>
+            )}
+            {extractedData && (
+              <div className="extracted-info-preview">
+                <div className="preview-header">
+                  <i className="fas fa-file-alt"></i>
+                  <span>Dati estratti (preview JSON)</span>
+                </div>
+                <pre>{JSON.stringify(extractedData, null, 2)}</pre>
+              </div>
+            )}
           </div>
 
           <div className="form-group">

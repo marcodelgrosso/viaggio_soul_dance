@@ -73,33 +73,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [selectedRole, setSelectedRole] = useState<'platform_user' | 'platform_superadmin' | null>(null);
 
   // Carica ruolo e permessi dell'utente
-  const loadUserRoleAndPermissions = async (userId: string) => {
+  const loadUserRoleAndPermissions = async (userId: string, userEmail?: string | null) => {
     try {
+      console.log('[AuthContext] loadUserRoleAndPermissions start', userId);
       // Prima controlla se l'email è quella del superadmin
-      if (user?.email === SUPERADMIN_EMAIL || user?.email?.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()) {
+      const emailToCheck = userEmail ?? user?.email ?? null;
+      if (emailToCheck && emailToCheck.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()) {
         setRole(PLATFORM_SUPERADMIN);
         setPermissions(ALL_PERMISSIONS);
         setLoading(false);
+        console.log('[AuthContext] loadUserRoleAndPermissions superadmin shortcut', userId);
         return;
       }
 
       // Carica ruolo dal database (gestisce gracefully se la tabella non esiste)
-      let roleData = null;
-      let roleError = null;
-      
+      let roleData: { role: string } | null = null;
+      let roleError: any = null;
+
       try {
-        const result = await supabase
+        console.log('[AuthContext] loadUserRoleAndPermissions querying user_roles', userId);
+        const { data, error } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', userId)
-          .maybeSingle(); // Usa maybeSingle invece di single per evitare errori se non esiste
-        
-        roleData = result.data;
-        roleError = result.error;
-      } catch (err: any) {
-        // Se la tabella non esiste o c'è un errore di accesso, ignoralo
-        console.warn('Errore nel caricamento ruolo (tabella potrebbe non esistere o accesso negato):', err);
-        roleError = { code: 'TABLE_NOT_FOUND', message: err.message };
+          .maybeSingle<{ role: string }>();
+        console.log('[AuthContext] loadUserRoleAndPermissions user_roles result', { data, error });
+
+        roleData = data ? { role: data.role } : null;
+        roleError = error;
+      } catch (err) {
+        roleError = err;
+        console.warn(
+          '[AuthContext] Errore nel caricamento ruolo (eccezione durante query):',
+          err,
+        );
+      }
+
+      if (roleError) {
+        console.warn('[AuthContext] Errore nel caricamento ruolo (post query):', roleError);
       }
 
       // Gestisce errori 406 (Not Acceptable) che possono verificarsi con problemi RLS
@@ -144,6 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           if (!insertError) {
             userRole = PLATFORM_USER;
+            console.log('[AuthContext] loadUserRoleAndPermissions ruolo creato automaticamente', userId);
           } else if (insertError.code !== '23505') { // Ignora se già esiste (unique constraint)
             console.warn('Errore nella creazione automatica del ruolo:', insertError);
           }
@@ -165,10 +177,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Carica permessi (se la tabella esiste)
       try {
+        console.log('[AuthContext] loadUserRoleAndPermissions querying user_permissions', userId);
         const { data: permissionsData, error: permissionsError } = await supabase
           .from('user_permissions')
           .select('permission')
           .eq('user_id', userId);
+        console.log('[AuthContext] loadUserRoleAndPermissions user_permissions result', {
+          permissionsData,
+          permissionsError,
+        });
 
         if (permissionsError) {
           // Se l'errore è perché la tabella non esiste (42501 o PGRST116), ignoralo
@@ -201,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       setLoading(false);
+      console.log('[AuthContext] loadUserRoleAndPermissions end', userId);
     }
   };
 
@@ -210,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        loadUserRoleAndPermissions(session.user.id);
+        loadUserRoleAndPermissions(session.user.id, session.user.email);
       } else {
         setRole(null);
         setPermissions([]);
@@ -222,16 +240,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AuthContext] Auth state change', event, {
+        hasSession: Boolean(session),
+        userId: session?.user?.id,
+      });
+
       setSession(session);
       setUser(session?.user ?? null);
 
       if (event === 'SIGNED_IN' && session?.user) {
+        console.log('[AuthContext] SIGNED_IN, preparo log accesso', session.user.id);
         rememberLoginTimestamp();
         const provider = session.user.app_metadata?.provider;
         const context = provider
           ? `Login tramite ${provider}`
           : 'Login via credenziali';
-        await logAccessEvent({
+        void logAccessEvent({
           action: 'login_success',
           context,
           sessionId: session.access_token ?? null,
@@ -239,9 +263,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (session?.user) {
-        await loadUserRoleAndPermissions(session.user.id);
+        console.log('[AuthContext] Carico ruolo e permessi per', session.user.id);
+        await loadUserRoleAndPermissions(session.user.id, session.user.email);
+        console.log('[AuthContext] Ruolo e permessi caricati', session.user.id);
         setLoading(false);
       } else {
+        console.log('[AuthContext] Nessuna sessione attiva, reset stato auth');
         setRole(null);
         setPermissions([]);
         setLoading(false);
@@ -282,7 +309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     if (!error && data.user) {
-      await loadUserRoleAndPermissions(data.user.id);
+      await loadUserRoleAndPermissions(data.user.id, data.user.email);
     }
 
     return { error };
