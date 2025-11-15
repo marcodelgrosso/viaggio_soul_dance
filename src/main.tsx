@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './lib/setupLogging';
 import './styles/main.scss';
 
 // In produzione, StrictMode può causare rimontaggi non desiderati

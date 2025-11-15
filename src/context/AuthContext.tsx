@@ -35,6 +35,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Email superadmin - puoi cambiarla in base alle tue esigenze
 const SUPERADMIN_EMAIL = 'marco.delgrosso88@gmail.com';
 
+const AUTH_DEBUG = import.meta.env.DEV;
+const debugLog = (...args: unknown[]) => {
+  if (AUTH_DEBUG) {
+    console.log(...args);
+  }
+};
+
 const PLATFORM_SUPERADMIN: UserRole = 'platform_superadmin';
 const PLATFORM_USER: UserRole = 'platform_user';
 
@@ -75,14 +82,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Carica ruolo e permessi dell'utente
   const loadUserRoleAndPermissions = async (userId: string, userEmail?: string | null) => {
     try {
-      console.log('[AuthContext] loadUserRoleAndPermissions start', userId);
+      debugLog('[AuthContext] loadUserRoleAndPermissions start', userId);
       // Prima controlla se l'email è quella del superadmin
       const emailToCheck = userEmail ?? user?.email ?? null;
       if (emailToCheck && emailToCheck.toLowerCase() === SUPERADMIN_EMAIL.toLowerCase()) {
         setRole(PLATFORM_SUPERADMIN);
         setPermissions(ALL_PERMISSIONS);
         setLoading(false);
-        console.log('[AuthContext] loadUserRoleAndPermissions superadmin shortcut', userId);
+        debugLog('[AuthContext] loadUserRoleAndPermissions superadmin shortcut', userId);
         return;
       }
 
@@ -91,13 +98,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let roleError: any = null;
 
       try {
-        console.log('[AuthContext] loadUserRoleAndPermissions querying user_roles', userId);
+        debugLog('[AuthContext] loadUserRoleAndPermissions querying user_roles', userId);
         const { data, error } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', userId)
           .maybeSingle<{ role: string }>();
-        console.log('[AuthContext] loadUserRoleAndPermissions user_roles result', { data, error });
+        debugLog('[AuthContext] loadUserRoleAndPermissions user_roles result', { data, error });
 
         roleData = data ? { role: data.role } : null;
         roleError = error;
@@ -155,7 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           if (!insertError) {
             userRole = PLATFORM_USER;
-            console.log('[AuthContext] loadUserRoleAndPermissions ruolo creato automaticamente', userId);
+            debugLog('[AuthContext] loadUserRoleAndPermissions ruolo creato automaticamente', userId);
           } else if (insertError.code !== '23505') { // Ignora se già esiste (unique constraint)
             console.warn('Errore nella creazione automatica del ruolo:', insertError);
           }
@@ -177,12 +184,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Carica permessi (se la tabella esiste)
       try {
-        console.log('[AuthContext] loadUserRoleAndPermissions querying user_permissions', userId);
+        debugLog('[AuthContext] loadUserRoleAndPermissions querying user_permissions', userId);
         const { data: permissionsData, error: permissionsError } = await supabase
           .from('user_permissions')
           .select('permission')
           .eq('user_id', userId);
-        console.log('[AuthContext] loadUserRoleAndPermissions user_permissions result', {
+        debugLog('[AuthContext] loadUserRoleAndPermissions user_permissions result', {
           permissionsData,
           permissionsError,
         });
@@ -218,7 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } finally {
       setLoading(false);
-      console.log('[AuthContext] loadUserRoleAndPermissions end', userId);
+      debugLog('[AuthContext] loadUserRoleAndPermissions end', userId);
     }
   };
 
@@ -240,7 +247,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AuthContext] Auth state change', event, {
+      debugLog('[AuthContext] Auth state change', event, {
         hasSession: Boolean(session),
         userId: session?.user?.id,
       });
@@ -249,7 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
 
       if (event === 'SIGNED_IN' && session?.user) {
-        console.log('[AuthContext] SIGNED_IN, preparo log accesso', session.user.id);
+        debugLog('[AuthContext] SIGNED_IN, preparo log accesso', session.user.id);
         rememberLoginTimestamp();
         const provider = session.user.app_metadata?.provider;
         const context = provider
@@ -263,12 +270,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (session?.user) {
-        console.log('[AuthContext] Carico ruolo e permessi per', session.user.id);
+        debugLog('[AuthContext] Carico ruolo e permessi per', session.user.id);
         await loadUserRoleAndPermissions(session.user.id, session.user.email);
-        console.log('[AuthContext] Ruolo e permessi caricati', session.user.id);
+        debugLog('[AuthContext] Ruolo e permessi caricati', session.user.id);
         setLoading(false);
       } else {
-        console.log('[AuthContext] Nessuna sessione attiva, reset stato auth');
+        debugLog('[AuthContext] Nessuna sessione attiva, reset stato auth');
         setRole(null);
         setPermissions([]);
         setLoading(false);
