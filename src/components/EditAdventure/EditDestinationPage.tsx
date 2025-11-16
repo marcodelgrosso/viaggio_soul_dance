@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
 import { AdventureDestinationWithPlaces, DestinationTransport } from '../../types/adventures';
+import { MeggieEngine } from '../../services/MeggieEngineAPI';
 import SingleDatePicker from '../SingleDatePicker';
 import TransportModal from '../TransportModal';
 import '../../styles/components/EditAdventureSection.scss';
@@ -33,6 +34,8 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiError, setAiError] = useState('');
   const [activeTab, setActiveTab] = useState<'viaggio' | 'trasporti' | 'alloggi'>('viaggio');
   const [transports, setTransports] = useState<DestinationTransport[]>([]);
   const [transportsLoading, setTransportsLoading] = useState(false);
@@ -65,6 +68,9 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
             })
           : [{ name: '', description: '', visit_date: '', steps: [''] }]
       );
+      // Reset stati AI
+      setAiError('');
+      setGeneratingAI(false);
     }
   }, [destination]);
 
@@ -628,14 +634,64 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
                 type="button"
                 className="generate-ai-btn"
                 onClick={async () => {
-                  // TODO: Implementare integrazione AI
-                  alert('Funzionalità AI in arrivo! Genererà automaticamente una descrizione per la destinazione.');
+                  if (!name.trim()) {
+                    setAiError('Inserisci prima il nome della destinazione.');
+                    return;
+                  }
+
+                  setAiError('');
+                  setGeneratingAI(true);
+
+                  try {
+                    const destinationName = name.trim();
+                    const options = {
+                      language: 'italiano',
+                      style: 'engaging' as const,
+                      length: 'medium' as const,
+                    };
+
+                    const response = await MeggieEngine.createDestinationDescription(
+                      destinationName,
+                      options
+                    );
+
+                    // Estrai la descrizione dalla risposta
+                    const generatedDescription = response?.data?.description || 
+                                                 response?.description || 
+                                                 response?.data?.travel_description ||
+                                                 response?.travel_description ||
+                                                 '';
+
+                    if (generatedDescription) {
+                      setDescription(generatedDescription);
+                    } else {
+                      setAiError('Nessuna descrizione generata. Riprova.');
+                    }
+                  } catch (err: any) {
+                    console.error('Errore durante la generazione con AI:', err);
+                    if (err?.code === 'WEBHOOK_URL_NOT_CONFIGURED' || err?.message === 'WEBHOOK_URL_NOT_CONFIGURED') {
+                      setAiError('Servizio non configurato. Contatta l\'amministratore.');
+                    } else {
+                      setAiError(err?.message || 'Errore durante la generazione della descrizione.');
+                    }
+                  } finally {
+                    setGeneratingAI(false);
+                  }
                 }}
-                disabled={loading || !name.trim()}
+                disabled={loading || generatingAI || !name.trim()}
                 title="Genera descrizione con AI"
               >
-                <i className="fas fa-magic"></i>
-                <span>Genera con AI</span>
+                {generatingAI ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <span>Generazione...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-wand-magic-sparkles"></i>
+                    <span>Genera con AI</span>
+                  </>
+                )}
               </button>
             </div>
             <textarea
@@ -644,8 +700,14 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Aggiungi una descrizione della destinazione..."
               rows={4}
-              disabled={loading}
+              disabled={loading || generatingAI}
             />
+            {aiError && (
+              <div className="alert-message warning" role="alert" style={{ marginTop: '8px' }}>
+                <i className="fas fa-exclamation-triangle"></i>
+                <span>{aiError}</span>
+              </div>
+            )}
           </div>
 
           <div className="form-group">

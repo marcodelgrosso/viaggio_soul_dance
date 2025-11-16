@@ -68,12 +68,45 @@ class MeggieEngineAPIService {
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
+        let errorText = '';
+        try {
+          errorText = await response.text();
+        } catch (e) {
+          errorText = `Errore HTTP ${response.status}: ${response.statusText}`;
+        }
         console.error(`[${this.serviceName}] HTTP Error ${response.status}:`, errorText);
-        throw new Error(`${this.serviceName} Error: ${response.status} - ${response.statusText}`);
+        throw new Error(`${this.serviceName} Error: ${response.status} - ${response.statusText}${errorText ? ` - ${errorText}` : ''}`);
       }
 
-      const result = await response.json();
+      // Verifica il content-type della risposta
+      const contentType = response.headers.get('content-type');
+      const isJson = contentType && contentType.includes('application/json');
+      
+      // Leggi il testo della risposta
+      const responseText = await response.text();
+      
+      // Se la risposta è vuota
+      if (!responseText || responseText.trim() === '') {
+        console.warn(`[${this.serviceName}] Risposta vuota dal server`);
+        return { data: null, message: 'Risposta vuota dal server' };
+      }
+
+      // Se non è JSON, restituisci il testo come stringa
+      if (!isJson) {
+        console.warn(`[${this.serviceName}] Risposta non-JSON ricevuta (content-type: ${contentType})`);
+        return { data: { raw_response: responseText }, message: 'Risposta non-JSON' };
+      }
+
+      // Prova a parsare come JSON
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error(`[${this.serviceName}] Errore nel parsing JSON:`, parseError);
+        console.error(`[${this.serviceName}] Contenuto ricevuto:`, responseText.substring(0, 500));
+        throw new Error(`Risposta non valida dal server: formato JSON non valido. Contenuto: ${responseText.substring(0, 200)}...`);
+      }
+
       return result;
     } catch (error) {
       console.error(`[${this.serviceName}] Fatal Error:`, error);
@@ -94,6 +127,24 @@ class MeggieEngineAPIService {
   // Esempi di metodi futuri (placeholders per evoluzioni):
   async analyzeAirbnb(airbnbUrl: string) {
     return this.execute('analyze_airbnb', { airbnb_url: airbnbUrl });
+  }
+
+  /**
+   * createDestinationDescription: genera una descrizione per una destinazione usando AI.
+   * @param destinationName - Nome della destinazione (stringa)
+   * @param options - Opzioni per la generazione (language, style, length)
+   */
+  async createDestinationDescription(destinationName: string, options: {
+    language?: string;
+    style?: 'engaging' | 'professional' | 'casual' | 'poetic';
+    length?: 'short' | 'medium' | 'long';
+  } = {}) {
+    return this.execute('create_travel_description', {
+      destination: destinationName,
+      language: options.language || 'italiano',
+      style: options.style || 'engaging',
+      length: options.length || 'medium',
+    });
   }
 }
 

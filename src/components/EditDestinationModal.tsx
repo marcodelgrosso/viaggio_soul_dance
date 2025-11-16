@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { AdventureDestinationWithPlaces } from '../types/adventures';
+import { MeggieEngine } from '../services/MeggieEngineAPI';
 import '../styles/components/Modal.scss';
 
 interface EditDestinationModalProps {
@@ -27,6 +28,8 @@ const EditDestinationModal: React.FC<EditDestinationModalProps> = ({
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiError, setAiError] = useState('');
 
   useEffect(() => {
     if (destination && isOpen) {
@@ -38,6 +41,8 @@ const EditDestinationModal: React.FC<EditDestinationModalProps> = ({
           : [{ name: '', description: '' }]
       );
       setError('');
+      setAiError('');
+      setGeneratingAI(false);
     }
   }, [destination, isOpen]);
 
@@ -57,6 +62,53 @@ const EditDestinationModal: React.FC<EditDestinationModalProps> = ({
     const updated = [...places];
     updated[index] = { ...updated[index], [field]: value };
     setPlaces(updated);
+  };
+
+  const handleGenerateWithAI = async () => {
+    if (!name.trim()) {
+      setAiError('Inserisci prima il nome della destinazione.');
+      return;
+    }
+
+    setAiError('');
+    setGeneratingAI(true);
+
+    try {
+      const destinationName = name.trim();
+      const options = {
+        language: 'italiano',
+        style: 'engaging' as const,
+        length: 'medium' as const,
+      };
+
+      const response = await MeggieEngine.createDestinationDescription(
+        destinationName,
+        options
+      );
+
+      // Estrai la descrizione dalla risposta
+      // La struttura della risposta dipende da come n8n restituisce i dati
+      const generatedDescription = response?.data?.description || 
+                                   response?.description || 
+                                   response?.data?.travel_description ||
+                                   response?.travel_description ||
+                                   '';
+
+      if (generatedDescription) {
+        setDescription(generatedDescription);
+      } else {
+        setAiError('Nessuna descrizione generata. Riprova.');
+      }
+    } catch (err: any) {
+      console.error('Errore durante la generazione con AI:', err);
+      if (err?.code === 'WEBHOOK_URL_NOT_CONFIGURED' || err?.message === 'WEBHOOK_URL_NOT_CONFIGURED') {
+        setAiError('Servizio non configurato. Contatta l\'amministratore.');
+      } else {
+        setAiError(err?.message || 'Errore durante la generazione della descrizione.');
+      }
+    } finally {
+      setGeneratingAI(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,17 +227,44 @@ const EditDestinationModal: React.FC<EditDestinationModalProps> = ({
           </div>
 
           <div className="form-group">
-            <label htmlFor="destinationDescription">
-              <i className="fas fa-align-left"></i> Descrizione (opzionale)
-            </label>
+            <div className="form-label-with-ai">
+              <label htmlFor="destinationDescription">
+                <i className="fas fa-align-left"></i> Descrizione (opzionale)
+              </label>
+              <button
+                type="button"
+                className="generate-ai-btn"
+                onClick={handleGenerateWithAI}
+                disabled={loading || generatingAI}
+                title="Genera descrizione con AI"
+              >
+                {generatingAI ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <span>Generazione...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-wand-magic-sparkles"></i>
+                    <span>Genera con AI</span>
+                  </>
+                )}
+              </button>
+            </div>
             <textarea
               id="destinationDescription"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Aggiungi una descrizione della destinazione..."
               rows={3}
-              disabled={loading}
+              disabled={loading || generatingAI}
             />
+            {aiError && (
+              <div className="alert-message warning" role="alert" style={{ marginTop: '8px' }}>
+                <i className="fas fa-exclamation-triangle"></i>
+                <span>{aiError}</span>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
