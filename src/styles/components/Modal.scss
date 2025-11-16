@@ -1444,18 +1444,18 @@
 .transport-form {
   .transport-types-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     margin-top: 0.75rem;
 
     @media (max-width: 768px) {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.75rem;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.75rem;
     }
 
     @media (max-width: 480px) {
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
     }
 
     .transport-type-btn {
@@ -1577,6 +1577,31 @@
             i {
               transform: scale(1.25) rotate(-5deg);
             }
+          }
+        }
+
+        // Mobile compact icon-only layout
+        @media (max-width: 768px) {
+          min-height: 72px;
+          padding: 0.75rem;
+          border-radius: 10px;
+          gap: 0.35rem;
+
+          i {
+            font-size: 1.35rem;
+          }
+
+          span {
+            display: none;
+          }
+        }
+
+        @media (max-width: 480px) {
+          min-height: 64px;
+          padding: 0.65rem;
+
+          i {
+            font-size: 1.25rem;
           }
         }
       }

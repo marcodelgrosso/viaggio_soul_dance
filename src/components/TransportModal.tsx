@@ -12,6 +12,7 @@ interface TransportModalProps {
   transport?: DestinationTransport | null;
   onClose: () => void;
   onSuccess: () => void;
+  initialTransportType?: DestinationTransport['transport_type'];
 }
 
 const TransportModal: React.FC<TransportModalProps> = ({
@@ -20,13 +21,14 @@ const TransportModal: React.FC<TransportModalProps> = ({
   transport,
   onClose,
   onSuccess,
+  initialTransportType = 'flight',
 }) => {
   const { user } = useAuth();
-  const [transportType, setTransportType] = useState<'flight' | 'train' | 'hotel' | 'bus' | 'car' | 'other'>('flight');
-  const [departureDate, setDepartureDate] = useState('');
-  const [departureTime, setDepartureTime] = useState('');
-  const [arrivalDate, setArrivalDate] = useState('');
-  const [arrivalTime, setArrivalTime] = useState('');
+  const [transportType, setTransportType] = useState<'flight' | 'train' | 'hotel' | 'bus' | 'car' | 'other'>(initialTransportType);
+  const [checkOutDate, setCheckOutDate] = useState('');
+  const [checkOutTime, setCheckOutTime] = useState('');
+  const [checkInDate, setCheckInDate] = useState('');
+  const [checkInTime, setCheckInTime] = useState('');
   const [cost, setCost] = useState('');
   const [costType, setCostType] = useState<'fixed' | 'estimated' | 'variable'>('estimated');
   const [infoLink, setInfoLink] = useState('');
@@ -41,21 +43,21 @@ const TransportModal: React.FC<TransportModalProps> = ({
     if (isOpen) {
       if (transport) {
         setTransportType(transport.transport_type);
-        setDepartureDate(transport.departure_date || '');
-        setDepartureTime(transport.departure_time || '');
-        setArrivalDate(transport.arrival_date || '');
-        setArrivalTime(transport.arrival_time || '');
+        setCheckOutDate(transport.departure_date || '');
+        setCheckOutTime(transport.departure_time || '');
+        setCheckInDate(transport.arrival_date || '');
+        setCheckInTime(transport.arrival_time || '');
         setCost(transport.cost?.toString() || '');
         setCostType(transport.cost_type);
         setInfoLink(transport.info_link || '');
         setNotes(transport.notes || '');
       } else {
         // Reset per nuova inserzione
-        setTransportType('flight');
-        setDepartureDate('');
-        setDepartureTime('');
-        setArrivalDate('');
-        setArrivalTime('');
+        setTransportType(initialTransportType);
+        setCheckOutDate('');
+        setCheckOutTime('');
+        setCheckInDate('');
+        setCheckInTime('');
         setCost('');
         setCostType('estimated');
         setInfoLink('');
@@ -66,7 +68,7 @@ const TransportModal: React.FC<TransportModalProps> = ({
       setExtractingInfo(false);
       setError('');
     }
-  }, [isOpen, transport]);
+  }, [isOpen, transport, initialTransportType]);
 
   if (!isOpen) return null;
 
@@ -119,6 +121,10 @@ const TransportModal: React.FC<TransportModalProps> = ({
     return amount.toFixed(2);
   };
 
+  const bookingParserEndpoint =
+    import.meta.env.VITE_BOOKING_PARSER_URL ||
+    'https://n8n.srv1072753.hstgr.cloud/webhook/booking-parser';
+
   const handleExtractInfo = async () => {
     if (!infoLink.trim()) {
       setExtractError('Inserisci un link valido prima di estrarre le informazioni.');
@@ -138,7 +144,7 @@ const TransportModal: React.FC<TransportModalProps> = ({
         throw new Error('Sessione non valida: impossibile ottenere il token di autenticazione.');
       }
 
-      const response = await fetch('https://n8n.srv1072753.hstgr.cloud/webhook-test/booking-parser', {
+      const response = await fetch(bookingParserEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -191,10 +197,10 @@ const TransportModal: React.FC<TransportModalProps> = ({
         parsePriceFromString(formattedData['Prezzo']);
 
       if (checkIn) {
-        setArrivalDate(checkIn);
+        setCheckInDate(checkIn);
       }
       if (checkOut) {
-        setDepartureDate(checkOut);
+        setCheckOutDate(checkOut);
       }
       if (price) {
         setCost(price);
@@ -245,10 +251,10 @@ const TransportModal: React.FC<TransportModalProps> = ({
       const transportData = {
         destination_id: destinationId,
         transport_type: transportType,
-        departure_date: departureDate || null,
-        departure_time: departureTime || null,
-        arrival_date: arrivalDate || null,
-        arrival_time: arrivalTime || null,
+        departure_date: checkOutDate || null,
+        departure_time: checkOutTime || null,
+        arrival_date: checkInDate || null,
+        arrival_time: checkInTime || null,
         cost: cost ? parseFloat(cost) : null,
         cost_type: costType,
         info_link: infoLink.trim() || null,
@@ -318,6 +324,8 @@ const TransportModal: React.FC<TransportModalProps> = ({
                   type="button"
                   className={`transport-type-btn ${transportType === type.value ? 'active' : ''}`}
                   onClick={() => setTransportType(type.value as any)}
+                  aria-label={type.label}
+                  title={type.label}
                 >
                   <i className={`fas ${type.icon}`}></i>
                   <span>{type.label}</span>
@@ -328,27 +336,27 @@ const TransportModal: React.FC<TransportModalProps> = ({
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="departureDate">
+              <label htmlFor="checkInDate">
                 <i className="fas fa-calendar-check"></i>
-                Data Partenza
+                Data Check-In
               </label>
               <SingleDatePicker
-                value={departureDate}
-                onChange={(date) => setDepartureDate(date || '')}
-                placeholder="Seleziona data partenza"
+                value={checkInDate}
+                onChange={(date) => setCheckInDate(date || '')}
+                placeholder="Seleziona data di check-in"
                 disabled={loading}
               />
             </div>
             <div className="form-group">
-              <label htmlFor="departureTime">
+              <label htmlFor="checkInTime">
                 <i className="fas fa-clock"></i>
-                Ora Partenza
+                Ora Check-In
               </label>
               <input
                 type="time"
-                id="departureTime"
-                value={departureTime}
-                onChange={(e) => setDepartureTime(e.target.value)}
+                id="checkInTime"
+                value={checkInTime}
+                onChange={(e) => setCheckInTime(e.target.value)}
                 disabled={loading}
               />
             </div>
@@ -356,28 +364,28 @@ const TransportModal: React.FC<TransportModalProps> = ({
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="arrivalDate">
+              <label htmlFor="checkOutDate">
                 <i className="fas fa-calendar-times"></i>
-                Data Arrivo
+                Data Check-Out
               </label>
               <SingleDatePicker
-                value={arrivalDate}
-                onChange={(date) => setArrivalDate(date || '')}
-                placeholder="Seleziona data arrivo"
-                minDate={departureDate || undefined}
+                value={checkOutDate}
+                onChange={(date) => setCheckOutDate(date || '')}
+                placeholder="Seleziona data di check-out"
+                minDate={checkInDate || undefined}
                 disabled={loading}
               />
             </div>
             <div className="form-group">
-              <label htmlFor="arrivalTime">
+              <label htmlFor="checkOutTime">
                 <i className="fas fa-clock"></i>
-                Ora Arrivo
+                Ora Check-Out
               </label>
               <input
                 type="time"
-                id="arrivalTime"
-                value={arrivalTime}
-                onChange={(e) => setArrivalTime(e.target.value)}
+                id="checkOutTime"
+                value={checkOutTime}
+                onChange={(e) => setCheckOutTime(e.target.value)}
                 disabled={loading}
               />
             </div>
@@ -462,7 +470,7 @@ const TransportModal: React.FC<TransportModalProps> = ({
                 <span>{extractError}</span>
               </div>
             )}
-            {extractedData && (
+            {!transport && extractedData && (
               <div className="extracted-info-preview">
                 <div className="preview-header">
                   <i className="fas fa-file-alt"></i>

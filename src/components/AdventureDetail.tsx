@@ -508,7 +508,7 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
             )}
             {adventure.arrival_date ? (
               <div className="date-item">
-                <strong>Arrivo:</strong>
+                <strong>Ritorno:</strong>
                 <span>{new Date(adventure.arrival_date).toLocaleDateString('it-IT', {
                   day: '2-digit',
                   month: '2-digit',
@@ -517,7 +517,7 @@ const AdventureDetail: React.FC<AdventureDetailProps> = ({ adventureId, onBack, 
               </div>
             ) : (
               <div className="date-item no-date">
-                <span>Data di arrivo non impostata</span>
+                <span>Data di ritorno non impostata</span>
               </div>
             )}
             {isParticipant && !adventure.departure_date && (

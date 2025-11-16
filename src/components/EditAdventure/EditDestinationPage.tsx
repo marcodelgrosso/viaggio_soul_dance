@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
-import { AdventureDestinationWithPlaces } from '../../types/adventures';
+import { AdventureDestinationWithPlaces, DestinationTransport } from '../../types/adventures';
 import SingleDatePicker from '../SingleDatePicker';
+import TransportModal from '../TransportModal';
 import '../../styles/components/EditAdventureSection.scss';
 
 interface EditDestinationPageProps {
@@ -32,6 +33,13 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [activeTab, setActiveTab] = useState<'viaggio' | 'trasporti' | 'alloggi'>('viaggio');
+  const [transports, setTransports] = useState<DestinationTransport[]>([]);
+  const [transportsLoading, setTransportsLoading] = useState(false);
+  const [transportError, setTransportError] = useState('');
+  const [showTransportModal, setShowTransportModal] = useState(false);
+  const [editingTransport, setEditingTransport] = useState<DestinationTransport | null>(null);
+  const [modalInitialType, setModalInitialType] = useState<DestinationTransport['transport_type']>('flight');
 
   useEffect(() => {
     if (destination) {
@@ -59,6 +67,35 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
       );
     }
   }, [destination]);
+
+  const loadTransports = useCallback(async () => {
+    if (!destination?.id) return;
+    setTransportsLoading(true);
+    setTransportError('');
+    try {
+      const { data, error } = await supabase
+        .from('destination_transport')
+        .select('*')
+        .eq('destination_id', destination.id)
+        .order('departure_date', { ascending: true })
+        .order('departure_time', { ascending: true });
+
+      if (error) {
+        throw error;
+      }
+
+      setTransports(data || []);
+    } catch (err: any) {
+      console.error('Errore nel caricamento dei trasporti:', err);
+      setTransportError(err.message || 'Errore nel caricamento di trasporti e alloggi');
+    } finally {
+      setTransportsLoading(false);
+    }
+  }, [destination]);
+
+  useEffect(() => {
+    loadTransports();
+  }, [loadTransports]);
 
   const handleAddPlace = () => {
     setPlaces([...places, { name: '', description: '', visit_date: '', steps: [''] }]);
@@ -283,6 +320,241 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
     }
   };
 
+  const handleAddTransportClick = (type: DestinationTransport['transport_type']) => {
+    setModalInitialType(type);
+    setEditingTransport(null);
+    setShowTransportModal(true);
+  };
+
+  const handleEditTransport = (transport: DestinationTransport) => {
+    setEditingTransport(transport);
+    setModalInitialType(transport.transport_type);
+    setShowTransportModal(true);
+  };
+
+  const handleDeleteTransport = async (transportId: string) => {
+    if (!confirm('Sei sicuro di voler eliminare questo elemento?')) return;
+
+    try {
+      const { error } = await supabase
+        .from('destination_transport')
+        .delete()
+        .eq('id', transportId);
+
+      if (error) throw error;
+
+      loadTransports();
+    } catch (err: any) {
+      console.error('Errore durante l\'eliminazione del trasporto/alloggio:', err);
+      setTransportError(err.message || 'Errore durante l\'eliminazione');
+    }
+  };
+
+  const closeTransportModal = () => {
+    setShowTransportModal(false);
+    setEditingTransport(null);
+  };
+
+  const formatDateTime = (date?: string | null, time?: string | null) => {
+    if (!date) return '';
+    const formattedDate = new Date(date).toLocaleDateString('it-IT', {
+      day: '2-digit',
+      month: 'short',
+    });
+    if (time) {
+      return `${formattedDate} alle ${time.slice(0, 5)}`;
+    }
+    return formattedDate;
+  };
+
+  const getTransportIcon = (type: string) => {
+    const icons: Record<string, string> = {
+      flight: 'fa-plane',
+      train: 'fa-train',
+      hotel: 'fa-hotel',
+      bus: 'fa-bus',
+      car: 'fa-car',
+      other: 'fa-ellipsis-h',
+    };
+    return icons[type] || 'fa-ellipsis-h';
+  };
+
+  const getTransportLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      flight: 'Volo',
+      train: 'Treno',
+      hotel: 'Alloggio',
+      bus: 'Bus',
+      car: 'Auto',
+      other: 'Altro',
+    };
+    return labels[type] || 'Altro';
+  };
+
+  const getCostTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      fixed: 'Fisso',
+      estimated: 'Stimato',
+      variable: 'Variabile',
+    };
+    return labels[type] || type;
+  };
+
+  const calculateTotalCost = (items: DestinationTransport[]) =>
+    items.reduce((sum, transport) => (typeof transport.cost === 'number' ? sum + transport.cost : sum), 0);
+
+  const renderTransportSection = (
+    items: DestinationTransport[],
+    options: {
+      title: string;
+      description: string;
+      addLabel: string;
+      defaultType: DestinationTransport['transport_type'];
+      emptyMessage: string;
+      icon: string;
+    }
+  ) => {
+    const total = calculateTotalCost(items);
+
+    return (
+      <div className="transport-management">
+        <div className="transport-management-header">
+          <div className="transport-management-title">
+            <h3>
+              <i className={`fas ${options.icon}`}></i>
+              {options.title}
+            </h3>
+            <p>{options.description}</p>
+          </div>
+          <button
+            type="button"
+            className="add-transport-btn"
+            onClick={() => handleAddTransportClick(options.defaultType)}
+          >
+            <i className="fas fa-plus"></i>
+            {options.addLabel}
+          </button>
+        </div>
+
+        {transportError && (
+          <div className="alert-message error">
+            <i className="fas fa-exclamation-triangle"></i>
+            <span>{transportError}</span>
+          </div>
+        )}
+
+        {transportsLoading ? (
+          <div className="transport-loading">
+            <i className="fas fa-spinner fa-spin"></i>
+            <span>Caricamento in corso...</span>
+          </div>
+        ) : items.length > 0 ? (
+          <>
+            {total > 0 && (
+              <div className="transport-total">
+                <i className="fas fa-coins"></i>
+                <div>
+                  <span>Totale previsto</span>
+                  <strong>€ {total.toFixed(2)}</strong>
+                </div>
+              </div>
+            )}
+            <div className="transport-card-grid">
+              {items.map((transport) => (
+                <div key={transport.id} className="transport-card">
+                  <div className="transport-card-header">
+                    <div className="transport-card-icon">
+                      <i className={`fas ${getTransportIcon(transport.transport_type)}`}></i>
+                    </div>
+                    <div className="transport-card-info">
+                      <span className="transport-type-label">{getTransportLabel(transport.transport_type)}</span>
+                      {(transport.departure_date || transport.arrival_date) && (
+                        <small>
+                          {transport.arrival_date
+                            ? `Check-in ${formatDateTime(transport.arrival_date, transport.arrival_time)}`
+                            : `Partenza ${formatDateTime(transport.departure_date, transport.departure_time)}`}
+                        </small>
+                      )}
+                    </div>
+                    <div className="transport-card-actions">
+                      <button
+                        type="button"
+                        className="icon-button"
+                        onClick={() => handleEditTransport(transport)}
+                        title="Modifica"
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-button danger"
+                        onClick={() => handleDeleteTransport(transport.id)}
+                        title="Elimina"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div className="transport-card-body">
+                    <div className="transport-card-row">
+                      {transport.arrival_date && (
+                        <div>
+                          <strong>Check-In</strong>
+                          <span>{formatDateTime(transport.arrival_date, transport.arrival_time || undefined)}</span>
+                        </div>
+                      )}
+                      {transport.departure_date && (
+                        <div>
+                          <strong>Check-Out</strong>
+                          <span>{formatDateTime(transport.departure_date, transport.departure_time || undefined)}</span>
+                        </div>
+                      )}
+                    </div>
+                    {transport.cost !== null && (
+                      <div className="transport-card-row">
+                        <div>
+                          <strong>Costo</strong>
+                          <span>
+                            € {transport.cost?.toFixed(2)}
+                            <span className={`cost-pill ${transport.cost_type}`}>
+                              {getCostTypeLabel(transport.cost_type)}
+                            </span>
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {transport.info_link && (
+                      <div className="transport-card-row">
+                        <a href={transport.info_link} target="_blank" rel="noopener noreferrer">
+                          <i className="fas fa-external-link-alt"></i>
+                          Apri info
+                        </a>
+                      </div>
+                    )}
+                    {transport.notes && (
+                      <div className="transport-card-row notes">
+                        <strong>Note</strong>
+                        <p>{transport.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="transport-empty-state">
+            <i className="fas fa-route"></i>
+            <p>{options.emptyMessage}</p>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const nonHotelTransports = transports.filter(t => t.transport_type !== 'hotel');
+  const hotelTransports = transports.filter(t => t.transport_type === 'hotel');
+
   return (
     <div className="edit-page-fullscreen">
       <div className="edit-page-header">
@@ -297,7 +569,40 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
       </div>
 
       <div className="edit-page-content">
-        <form onSubmit={handleSubmit} className="edit-form">
+        <div className="edit-destination-tabs" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'viaggio'}
+            className={`tab-button ${activeTab === 'viaggio' ? 'active' : ''}`}
+            onClick={() => setActiveTab('viaggio')}
+          >
+            <i className="fas fa-suitcase-rolling"></i>
+            Viaggio
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'trasporti'}
+            className={`tab-button ${activeTab === 'trasporti' ? 'active' : ''}`}
+            onClick={() => setActiveTab('trasporti')}
+          >
+            <i className="fas fa-route"></i>
+            Trasporti
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'alloggi'}
+            className={`tab-button ${activeTab === 'alloggi' ? 'active' : ''}`}
+            onClick={() => setActiveTab('alloggi')}
+          >
+            <i className="fas fa-hotel"></i>
+            Alloggi
+          </button>
+        </div>
+        {activeTab === 'viaggio' && (
+        <form onSubmit={handleSubmit} className="edit-form" role="tabpanel">
           <div className="form-group">
             <label htmlFor="destinationName">
               <i className="fas fa-map"></i> Nome Destinazione *
@@ -604,7 +909,39 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
             </button>
           </div>
         </form>
+        )}
+
+        {activeTab === 'trasporti' &&
+          renderTransportSection(nonHotelTransports, {
+            title: 'Trasporti',
+            description: 'Gestisci voli, treni, bus e auto collegati a questa destinazione.',
+            addLabel: 'Aggiungi Trasporto',
+            defaultType: 'flight',
+            emptyMessage: 'Non ci sono trasporti associati a questa destinazione.',
+            icon: 'fa-route',
+          })}
+
+        {activeTab === 'alloggi' &&
+          renderTransportSection(hotelTransports, {
+            title: 'Alloggi',
+            description: 'Prenotazioni hotel, appartamenti o strutture ricettive collegate.',
+            addLabel: 'Aggiungi Alloggio',
+            defaultType: 'hotel',
+            emptyMessage: 'Non ci sono alloggi per questa destinazione.',
+            icon: 'fa-hotel',
+          })}
       </div>
+
+      {showTransportModal && (
+        <TransportModal
+          isOpen={showTransportModal}
+          destinationId={destination.id}
+          transport={editingTransport}
+          onClose={closeTransportModal}
+          onSuccess={loadTransports}
+          initialTransportType={modalInitialType}
+        />
+      )}
     </div>
   );
 };

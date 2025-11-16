@@ -78,6 +78,7 @@ const AdventureInformationSection: React.FC<AdventureInformationSectionProps> = 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError('');
 
     if (!name.trim()) {
@@ -111,9 +112,6 @@ const AdventureInformationSection: React.FC<AdventureInformationSectionProps> = 
 
       showSuccess('Modifiche salvate con successo!');
       setError('');
-      setTimeout(() => {
-        onSuccess();
-      }, 1500);
     } catch (err: any) {
       console.error('Errore nella modifica dell\'avventura:', err);
       const errorMessage = err.message || 'Errore nella modifica dell\'avventura';
@@ -210,7 +208,7 @@ const AdventureInformationSection: React.FC<AdventureInformationSectionProps> = 
             minDate={new Date().toISOString().split('T')[0]}
           />
           <span className="form-hint">
-            Seleziona le date di partenza e arrivo dell'avventura.
+            Seleziona le date di partenza e ritorno dell'avventura.
           </span>
         </div>
 
@@ -228,11 +226,12 @@ const AdventureInformationSection: React.FC<AdventureInformationSectionProps> = 
               className="btn btn-primary" 
               disabled={loading}
               aria-label="Salva modifiche"
+              aria-busy={loading}
             >
               {loading ? (
                 <>
                   <i className="fas fa-spinner fa-spin"></i>
-                  Salvataggio...
+                  Applicazione modifiche...
                 </>
               ) : (
                 <>

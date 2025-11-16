@@ -323,23 +323,48 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
                       <div className="transport-details">
                         {(transport.departure_date || transport.arrival_date) && (
                           <div className="transport-dates">
-                            {transport.departure_date && (
-                              <div className="transport-date-item">
-                                <i className="fas fa-plane-departure"></i>
-                                <div>
-                                  <strong>Partenza:</strong>
-                                  <span>{formatDateTime(transport.departure_date, transport.departure_time || null)}</span>
-                                </div>
-                              </div>
-                            )}
-                            {transport.arrival_date && (
-                              <div className="transport-date-item">
-                                <i className="fas fa-plane-arrival"></i>
-                                <div>
-                                  <strong>Arrivo:</strong>
-                                  <span>{formatDateTime(transport.arrival_date, transport.arrival_time || null)}</span>
-                                </div>
-                              </div>
+                            {transport.transport_type === 'hotel' ? (
+                              <>
+                                {transport.arrival_date && (
+                                  <div className="transport-date-item">
+                                    <i className="fas fa-plane-arrival"></i>
+                                    <div>
+                                      <strong>Check-In:</strong>
+                                      <span>{formatDateTime(transport.arrival_date, transport.arrival_time || null)}</span>
+                                    </div>
+                                  </div>
+                                )}
+                                {transport.departure_date && (
+                                  <div className="transport-date-item">
+                                    <i className="fas fa-plane-departure"></i>
+                                    <div>
+                                      <strong>Check-Out:</strong>
+                                      <span>{formatDateTime(transport.departure_date, transport.departure_time || null)}</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {transport.departure_date && (
+                                  <div className="transport-date-item">
+                                    <i className="fas fa-plane-departure"></i>
+                                    <div>
+                                      <strong>Partenza:</strong>
+                                      <span>{formatDateTime(transport.departure_date, transport.departure_time || null)}</span>
+                                    </div>
+                                  </div>
+                                )}
+                                {transport.arrival_date && (
+                                  <div className="transport-date-item">
+                                    <i className="fas fa-plane-arrival"></i>
+                                    <div>
+                                      <strong>Arrivo:</strong>
+                                      <span>{formatDateTime(transport.arrival_date, transport.arrival_time || null)}</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         )}
