@@ -14,7 +14,7 @@ interface AdventureInformationSectionProps {
 
 const AdventureInformationSection: React.FC<AdventureInformationSectionProps> = ({
   adventure,
-  onSuccess,
+  onSuccess: _onSuccess,
 }) => {
   const { showSuccess, showError } = useToast();
   const [name, setName] = useState(adventure.name);
