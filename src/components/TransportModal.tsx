@@ -5,6 +5,7 @@ import { DestinationTransport } from '../types/adventures';
 import SingleDatePicker from './SingleDatePicker';
 import '../styles/components/Modal.scss';
 import '../styles/components/TransportModal.scss';
+import { MeggieEngine } from '../services/MeggieEngineAPI';
 
 interface TransportModalProps {
   isOpen: boolean;
@@ -121,9 +122,7 @@ const TransportModal: React.FC<TransportModalProps> = ({
     return amount.toFixed(2);
   };
 
-  const bookingParserEndpoint =
-    import.meta.env.VITE_BOOKING_PARSER_URL ||
-    'https://n8n.srv1072753.hstgr.cloud/webhook/booking-parser';
+  // Usa MeggieEngine per orchestrare le chiamate (endpoint/URL lette dal service)
 
   const handleExtractInfo = async () => {
     if (!infoLink.trim()) {
@@ -135,29 +134,7 @@ const TransportModal: React.FC<TransportModalProps> = ({
     setError('');
     setExtractingInfo(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const accessToken = session?.access_token;
-      if (!accessToken) {
-        throw new Error('Sessione non valida: impossibile ottenere il token di autenticazione.');
-      }
-
-      const response = await fetch(bookingParserEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ booking_url: infoLink.trim() }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Risposta non valida dal servizio (status ${response.status})`);
-      }
-
-      const parsedResponse = await response.json();
+      const parsedResponse = await MeggieEngine.analyzeBooking(infoLink.trim());
       setExtractedData(parsedResponse);
 
       const rawData = parsedResponse?.data ?? {};
@@ -435,7 +412,7 @@ const TransportModal: React.FC<TransportModalProps> = ({
               </label>
               <button
                 type="button"
-                className="generate-ai-btn extract-info-btn"
+                className="generate-ai-btn"
                 onClick={handleExtractInfo}
                 disabled={loading || extractingInfo}
                 title="Estrai informazioni dalla pagina Booking"
@@ -448,7 +425,7 @@ const TransportModal: React.FC<TransportModalProps> = ({
                 ) : (
                   <>
                     <i className="fas fa-wand-magic-sparkles"></i>
-                    <span>Estrai info</span>
+                    <span>Estrai Info</span>
                   </>
                 )}
               </button>
