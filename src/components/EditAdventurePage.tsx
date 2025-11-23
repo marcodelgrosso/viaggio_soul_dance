@@ -146,7 +146,7 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
         .select('*')
         .eq('adventure_id', adventureId);
 
-      // Per ogni destinazione, carica i luoghi e i voti
+      // Per ogni destinazione, carica il piano di viaggio e i voti
       const destinationsWithPlaces = await Promise.all(
         (destinationsData || []).map(async (destination) => {
           const { data: placesData, error: placesError } = await supabase
@@ -158,7 +158,7 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
             .neq('id', '00000000-0000-0000-0000-000000000000'); // Questo è sempre vero ma forza il refresh
 
           if (placesError) {
-            console.error(`Errore nel caricamento dei luoghi per destinazione ${destination.id}:`, placesError);
+            console.error(`Errore nel caricamento del piano di viaggio per destinazione ${destination.id}:`, placesError);
           }
 
           // Carica i voti per la destinazione
@@ -447,6 +447,8 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
             destination={currentPage.destination}
             onBack={navigateBack}
             onSuccess={handleSuccessAndBack}
+            departureDate={adventure?.departure_date || null}
+            returnDate={adventure?.arrival_date || null}
           />
         )}
 
@@ -543,7 +545,7 @@ const EditAdventurePage: React.FC<EditAdventurePageProps> = ({ adventureId, onBa
             <div className="sidebar-stats" aria-label="Statistiche avventura">
               <div className="stat-item">
                 <i className="fas fa-map-marker-alt"></i>
-                <span className="stat-label">Luoghi totali</span>
+                <span className="stat-label">Giorni totali</span>
                 <span className="stat-value">{stats.totalPlaces}</span>
               </div>
             </div>

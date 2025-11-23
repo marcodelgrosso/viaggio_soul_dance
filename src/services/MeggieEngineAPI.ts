@@ -146,6 +146,30 @@ class MeggieEngineAPIService {
       length: options.length || 'medium',
     });
   }
+
+  /**
+   * getPhotoLink: ottiene un link a una foto per una destinazione usando AI.
+   * @param destinationName - Nome della destinazione (stringa)
+   */
+  async getPhotoLink(destinationName: string) {
+    return this.execute('get_photo_link', {
+      destination: destinationName,
+    });
+  }
+
+  /**
+   * generatePlaces: genera un itinerario di luoghi da visitare per una destinazione.
+   * @param destinationName - Nome della destinazione (stringa)
+   * @param departureDate - Data di partenza da casa/inizio viaggio (formato ISO: YYYY-MM-DD)
+   * @param returnDate - Data di ritorno a casa/fine viaggio (formato ISO: YYYY-MM-DD)
+   */
+  async generatePlaces(destinationName: string, departureDate: string, returnDate: string) {
+    return this.execute('create_travel_plan', {
+      destination: destinationName,
+      departure_date: departureDate,
+      return_date: returnDate,
+    });
+  }
 }
 
 export const MeggieEngine = new MeggieEngineAPIService();

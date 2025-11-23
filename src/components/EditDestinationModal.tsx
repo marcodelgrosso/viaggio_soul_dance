@@ -122,7 +122,7 @@ const EditDestinationModal: React.FC<EditDestinationModalProps> = ({
 
     const validPlaces = places.filter(p => p.name.trim());
     if (validPlaces.length === 0) {
-      setError('Aggiungi almeno un luogo da visitare');
+      setError('Aggiungi almeno un giorno al piano di viaggio');
       return;
     }
 
@@ -269,13 +269,13 @@ const EditDestinationModal: React.FC<EditDestinationModalProps> = ({
 
           <div className="form-group">
             <label>
-              <i className="fas fa-map-marker-alt"></i> Luoghi da Visitare *
+              <i className="fas fa-calendar-alt"></i> Piano di Viaggio *
             </label>
             <div className="places-list">
               {places.map((place, index) => (
                 <div key={index} className="place-item">
                   <div className="place-header">
-                    <span className="place-number">Luogo {index + 1}</span>
+                    <span className="place-number">Giorno {index + 1}</span>
                     {places.length > 1 && (
                       <button
                         type="button"

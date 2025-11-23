@@ -422,9 +422,9 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
           <section className="destination-detail-section destination-places-section">
             <h2>
               <i className="fas fa-map-pin"></i>
-              Luoghi da Visitare
+              Piano di Viaggio
               {destination.places.length > 0 && (
-                <span className="places-count">({destination.places.length})</span>
+                <span className="places-count">({destination.places.length} {destination.places.length === 1 ? 'giorno' : 'giorni'})</span>
               )}
             </h2>
             <div className="section-content">
@@ -472,8 +472,8 @@ const DestinationDetailPage: React.FC<DestinationDetailPageProps> = ({
                 </div>
               ) : (
                 <div className="no-places">
-                  <i className="fas fa-map-marker-alt"></i>
-                  <p>Nessun luogo da visitare aggiunto ancora.</p>
+                  <i className="fas fa-calendar-alt"></i>
+                  <p>Nessun giorno aggiunto al piano di viaggio ancora.</p>
                 </div>
               )}
             </div>

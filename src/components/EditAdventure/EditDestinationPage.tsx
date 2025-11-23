@@ -10,6 +10,8 @@ interface EditDestinationPageProps {
   destination: AdventureDestinationWithPlaces;
   onBack: () => void;
   onSuccess: () => void;
+  departureDate?: string | null;
+  returnDate?: string | null;
 }
 
 interface Place {
@@ -24,6 +26,8 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
   destination,
   onBack,
   onSuccess,
+  departureDate,
+  returnDate,
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -36,6 +40,8 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
   const [success, setSuccess] = useState(false);
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [generatingPlacesAI, setGeneratingPlacesAI] = useState(false);
+  const [placesAIError, setPlacesAIError] = useState('');
   const [activeTab, setActiveTab] = useState<'viaggio' | 'trasporti' | 'alloggi'>('viaggio');
   const [transports, setTransports] = useState<DestinationTransport[]>([]);
   const [transportsLoading, setTransportsLoading] = useState(false);
@@ -175,7 +181,7 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
 
     const validPlaces = places.filter(p => p.name.trim());
     if (validPlaces.length === 0) {
-      setError('Aggiungi almeno un luogo da visitare');
+      setError('Aggiungi almeno un giorno al piano di viaggio');
       return;
     }
 
@@ -725,6 +731,129 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
               />
               <button
                 type="button"
+                className="generate-ai-url-btn"
+                onClick={async () => {
+                  if (!name.trim()) {
+                    alert('Inserisci prima il nome della destinazione.');
+                    return;
+                  }
+
+                  try {
+                    const response = await MeggieEngine.getPhotoLink(name.trim());
+                    console.log('Risposta get_photo_link:', response);
+                    console.log('Dati completi:', JSON.stringify(response, null, 2));
+                    
+                    // Estrai photo_link dalla risposta
+                    const photoLink = response?.data?.photo_link || 
+                                     response?.photo_link || 
+                                     response?.data?.image_url ||
+                                     response?.image_url ||
+                                     '';
+                    
+                    if (photoLink) {
+                      setImageUrl(photoLink);
+                    } else {
+                      console.warn('Nessun photo_link trovato nella risposta');
+                      alert('Nessun link immagine trovato nella risposta.');
+                    }
+                  } catch (err: any) {
+                    console.error('Errore durante la generazione URL immagine con AI:', err);
+                    if (err?.code === 'WEBHOOK_URL_NOT_CONFIGURED' || err?.message === 'WEBHOOK_URL_NOT_CONFIGURED') {
+                      alert('Servizio non configurato. Contatta l\'amministratore.');
+                    } else {
+                      alert(err?.message || 'Errore durante la generazione dell\'URL immagine.');
+                    }
+                  }
+                }}
+                disabled={loading || !name.trim()}
+                title="Genera URL immagine con AI"
+              >
+                <i className="fas fa-wand-magic-sparkles"></i>
+              </button>
+              <button
+                type="button"
+                className="refresh-image-btn"
+                onClick={() => {
+                  if (!name.trim()) {
+                    alert('Inserisci prima il nome della destinazione.');
+                    return;
+                  }
+
+                  // Genera un hash semplice dal nome della destinazione per selezionare immagini
+                  const destinationName = name.trim().toLowerCase();
+                  
+                  // Funzione hash semplice per convertire il nome in un numero
+                  const hashString = (str: string): number => {
+                    let hash = 0;
+                    for (let i = 0; i < str.length; i++) {
+                      const char = str.charCodeAt(i);
+                      hash = ((hash << 5) - hash) + char;
+                      hash = hash & hash; // Convert to 32bit integer
+                    }
+                    return Math.abs(hash);
+                  };
+
+                  // Lista ampia di foto di viaggio generiche da Unsplash
+                  // Ogni destinazione avrà immagini diverse ma consistenti basate sul nome
+                  const travelPhotos = [
+                    'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1522093007474-d86e9bf7ba6f?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1508050918890-9f41c3e2d6f1?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1529260830199-42c24126f198?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1534351590666-13e3e96b5017?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1587330979470-3595ac045ab0?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1531594896955-305cf81269f1?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1541849546-216549ae216d?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1547679902-b1eae0b1b5a2?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1632145894338-2c50b3a6c113?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1585338927000-1c786b0b15b1?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1590523277598-9bb841561797?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1507959666348-4b2f9c1862ea?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1580882472252-314a2e56b38c?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1512273221322-7c2fa36b3f8f?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1572015878956-94c9e2b68528?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1506197603052-3cc9c3a201bd?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&h=600&fit=crop&crop=center',
+                    'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800&h=600&fit=crop&crop=center'
+                  ];
+
+                  // Genera un hash dal nome della destinazione combinato con un numero random per variare
+                  // Usa il timestamp per cambiare l'immagine ad ogni click
+                  const baseHash = hashString(destinationName);
+                  const randomOffset = Math.floor(Date.now() / 1000) % travelPhotos.length; // Cambia ogni secondo
+                  const photoIndex = (baseHash + randomOffset) % travelPhotos.length;
+                  
+                  const selectedUrl = travelPhotos[photoIndex];
+                  const newImageUrl = `${selectedUrl}&sig=${Date.now()}`;
+                  
+                  setImageUrl(newImageUrl);
+                }}
+                disabled={loading || !name.trim()}
+                title="Aggiorna immagine da Unsplash"
+              >
+                <i className="fas fa-sync-alt"></i>
+              </button>
+              <button
+                type="button"
                 className="paste-url-btn"
                 onClick={async () => {
                   try {
@@ -750,9 +879,14 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
             </p>
             {imageUrl && (
               <div className="image-preview">
-                <img src={imageUrl} alt="Anteprima" onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }} />
+                <img 
+                  key={imageUrl} 
+                  src={imageUrl} 
+                  alt="Anteprima" 
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }} 
+                />
               </div>
             )}
           </div>
@@ -822,27 +956,107 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
           <div className="form-group">
             <div className="form-label-with-ai">
               <label>
-                <i className="fas fa-map-marker-alt"></i> Luoghi da Visitare *
+                <i className="fas fa-calendar-alt"></i> Piano di Viaggio *
               </label>
               <button
                 type="button"
                 className="generate-ai-btn"
                 onClick={async () => {
-                  // TODO: Implementare integrazione AI
-                  alert('Funzionalità AI in arrivo! Genererà automaticamente dei luoghi interessanti da visitare per la destinazione.');
+                  if (!name.trim()) {
+                    setPlacesAIError('Inserisci prima il nome della destinazione.');
+                    return;
+                  }
+
+                  if (!departureDate || !returnDate) {
+                    setPlacesAIError('Le date dell\'avventura devono essere configurate. Vai alla sezione Informazioni per impostarle.');
+                    return;
+                  }
+
+                  setPlacesAIError('');
+                  setGeneratingPlacesAI(true);
+
+                  try {
+                    const response = await MeggieEngine.generatePlaces(
+                      name.trim(),
+                      departureDate,
+                      returnDate
+                    );
+                    
+                    console.log('Risposta generatePlaces:', response);
+                    console.log('Dati completi:', JSON.stringify(response, null, 2));
+
+                    // Estrai i luoghi dalla risposta
+                    const generatedPlaces = response?.data?.places || response?.places || [];
+                    
+                    if (generatedPlaces.length > 0) {
+                      // Converti i luoghi nel formato atteso dal componente
+                      const formattedPlaces: Place[] = generatedPlaces.map((place: any) => ({
+                        name: place.name || '',
+                        description: '',
+                        visit_date: place.visit_date || '',
+                        steps: Array.isArray(place.steps) ? place.steps.filter((s: any) => s && s.trim()) : [],
+                      }));
+
+                      // Filtra i luoghi con nome valido
+                      const validPlaces = formattedPlaces.filter(p => p.name.trim());
+                      
+                      if (validPlaces.length > 0) {
+                        setPlaces(validPlaces);
+                      } else {
+                        setPlacesAIError('Nessun giorno valido trovato nella risposta.');
+                      }
+                    } else {
+                      setPlacesAIError('Nessun itinerario generato. Verifica che le date siano corrette e riprova.');
+                    }
+                  } catch (err: any) {
+                    console.error('Errore durante la generazione luoghi con AI:', err);
+                    if (err?.code === 'WEBHOOK_URL_NOT_CONFIGURED' || err?.message === 'WEBHOOK_URL_NOT_CONFIGURED') {
+                      setPlacesAIError('Servizio non configurato. Contatta l\'amministratore.');
+                    } else {
+                      setPlacesAIError(err?.message || 'Errore durante la generazione dei luoghi.');
+                    }
+                  } finally {
+                    setGeneratingPlacesAI(false);
+                  }
                 }}
-                disabled={loading || !name.trim()}
+                disabled={loading || generatingPlacesAI || !name.trim() || !departureDate || !returnDate}
                 title="Genera luoghi con AI"
               >
-                <i className="fas fa-magic"></i>
-                <span>Genera con AI</span>
+                {generatingPlacesAI ? (
+                  <>
+                    <i className="fas fa-spinner fa-spin"></i>
+                    <span>Generazione...</span>
+                  </>
+                ) : (
+                  <>
+                    <i className="fas fa-magic"></i>
+                    <span>Genera con AI</span>
+                  </>
+                )}
               </button>
             </div>
+            {placesAIError && (
+              <div className="alert-message warning" role="alert" style={{ 
+                marginTop: '8px', 
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                backgroundColor: '#fef3c7',
+                border: '1px solid #fbbf24',
+                color: '#92400e'
+              }}>
+                <i className="fas fa-info-circle" style={{ fontSize: '1rem', flexShrink: 0 }}></i>
+                <span style={{ lineHeight: '1.4' }}>{placesAIError}</span>
+              </div>
+            )}
             <div className="places-list">
               {places.map((place, index) => (
                 <div key={index} className="place-item">
                   <div className="place-header">
-                    <span className="place-number">Luogo {index + 1}</span>
+                    <span className="place-number">Giorno {index + 1}</span>
                     {places.length > 1 && (
                       <button
                         type="button"
@@ -875,7 +1089,7 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
                     </label>
                     <input
                       type="text"
-                      placeholder="Nome del luogo (es: Torre Eiffel, Museo Louvre...)"
+                      placeholder="Titolo del giorno (es: Giorno 1 a Parigi, Esplorazione del centro...)"
                       value={place.name}
                       onChange={(e) => handlePlaceChange(index, 'name', e.target.value)}
                       required={index === 0}
@@ -933,7 +1147,7 @@ const EditDestinationPage: React.FC<EditDestinationPageProps> = ({
               disabled={loading}
             >
               <i className="fas fa-plus"></i>
-              Aggiungi Luogo
+              Aggiungi Giorno
             </button>
           </div>
 
